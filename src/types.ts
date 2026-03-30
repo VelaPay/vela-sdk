@@ -1,0 +1,105 @@
+import type { PublicKey, Connection, Commitment } from "@solana/web3.js";
+
+export interface VelaClientConfig {
+  connection: Connection;
+  wallet: VelaWallet;
+  heliusApiKey?: string;
+  commitment?: Commitment;
+  programId?: PublicKey;
+}
+
+export interface VelaWallet {
+  publicKey: PublicKey;
+  signTransaction: <T extends { serialize(): Buffer }>(tx: T) => Promise<T>;
+  signAllTransactions?: <T extends { serialize(): Buffer }>(txs: T[]) => Promise<T[]>;
+}
+
+export type MandateStatus = "active" | "cancelled" | "expired";
+export type PlanStatus = "active" | "inactive";
+
+export interface VelaMandate {
+  address: PublicKey;
+  subscriber: PublicKey;
+  plan: PublicKey;
+  merchant: PublicKey;
+  amount: bigint;
+  frequency: bigint;
+  startDate: bigint;
+  expiry: bigint;
+  maxPulls: bigint;
+  pullsExecuted: bigint;
+  nextPaymentDue: bigint;
+  status: MandateStatus;
+  bump: number;
+}
+
+export interface VelaPlan {
+  address: PublicKey;
+  merchant: PublicKey;
+  planId: bigint;
+  amount: bigint;
+  frequency: bigint;
+  trialPeriod: bigint;
+  maxPulls: bigint;
+  status: PlanStatus;
+  credentialMint: PublicKey;
+  bump: number;
+}
+
+export interface MerchantState {
+  address: PublicKey;
+  merchant: PublicKey;
+  planCount: bigint;
+  bump: number;
+}
+
+export interface VelaCreatePlanParams {
+  amount: bigint | number;
+  frequency: bigint | number;
+  trialPeriod?: bigint | number;
+  maxPulls: bigint | number;
+}
+
+export interface VelaSubscribeParams {
+  planAddress: PublicKey;
+  merchantAddress: PublicKey;
+  usdcMintAddress: PublicKey;
+}
+
+export interface VelaPullParams {
+  mandateAddress: PublicKey;
+  subscriberAddress: PublicKey;
+  merchantAddress: PublicKey;
+  planAddress: PublicKey;
+  usdcMintAddress: PublicKey;
+}
+
+export interface VelaCancelParams {
+  mandateAddress: PublicKey;
+  subscriberAddress: PublicKey;
+  planAddress: PublicKey;
+}
+
+export interface VelaMethodResult<T = void> {
+  signature: string;
+  address?: PublicKey;
+  data?: T;
+}
+
+export interface ValidationResult {
+  canPull: boolean;
+  mandate: VelaMandate;
+  reasons: string[];
+}
+
+export interface SubscribeValidationResult {
+  canSubscribe: boolean;
+  plan: VelaPlan;
+  reasons: string[];
+}
+
+export interface CancelValidationResult {
+  canCancel: boolean;
+  mandate: VelaMandate;
+  reasons: string[];
+}

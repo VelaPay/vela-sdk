@@ -1,0 +1,62 @@
+import type { Program } from "@coral-xyz/anchor";
+import {
+  type PublicKey,
+  type TransactionInstruction,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+} from "@solana/web3.js";
+import BN from "bn.js";
+import {
+  deriveMerchantStateAddress,
+  derivePlanAddress,
+  deriveCredentialMintAddress,
+} from "../accounts/pda";
+import { TOKEN_2022_PROGRAM_ID } from "../constants";
+import type { VelaCreatePlanParams } from "../types";
+
+export interface BuildCreatePlanResult {
+  instruction: TransactionInstruction;
+  planAddress: PublicKey;
+  credentialMintAddress: PublicKey;
+}
+
+/**
+ * Builds a raw `create_plan` TransactionInstruction without signing or sending.
+ *
+ * The caller must provide `planId` which is the current `merchant_state.plan_count`
+ * (the next plan ID). The convenience client fetches this automatically;
+ * the raw instruction builder requires it explicitly.
+ */
+export async function buildCreatePlanInstruction(
+  program: Program,
+  params: VelaCreatePlanParams & { merchant: PublicKey; planId: bigint },
+): Promise<BuildCreatePlanResult> {
+  const { merchant, planId, amount, frequency, maxPulls } = params;
+  const trialPeriod = params.trialPeriod ?? 0;
+
+  // Derive PDAs
+  const [merchantState] = deriveMerchantStateAddress(merchant, program.programId);
+  const [planAddress] = derivePlanAddress(merchant, planId, program.programId);
+  const [credentialMintAddress] = deriveCredentialMintAddress(merchant, planId, program.programId);
+
+  // Convert to BN for Anchor
+  const amountBN = new BN(BigInt(amount).toString());
+  const frequencyBN = new BN(BigInt(frequency).toString());
+  const trialPeriodBN = new BN(BigInt(trialPeriod).toString());
+  const maxPullsBN = new BN(BigInt(maxPulls).toString());
+
+  const instruction = await (program.methods as any)
+    .createPlan(amountBN, frequencyBN, trialPeriodBN, maxPullsBN)
+    .accounts({
+      merchant,
+      merchantState,
+      plan: planAddress,
+      credentialMint: credentialMintAddress,
+      systemProgram: SystemProgram.programId,
+      token2022Program: TOKEN_2022_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    })
+    .instruction();
+
+  return { instruction, planAddress, credentialMintAddress };
+}
