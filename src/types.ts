@@ -82,6 +82,33 @@ export interface VelaCancelParams {
   planAddress: PublicKey;
 }
 
+export interface VelaWrapParams {
+  subscriber: PublicKey;
+  amount: bigint;
+  splUsdcMint: PublicKey;
+  wrappedUsdcMint: PublicKey;
+  wrappingVault: PublicKey;
+}
+
+export interface VelaUnwrapParams {
+  user: PublicKey;
+  amount: bigint;
+  splUsdcMint: PublicKey;
+  wrappedUsdcMint: PublicKey;
+  wrappingVault: PublicKey;
+}
+
+export interface VelaWrapAndSubscribeParams {
+  subscriber: PublicKey;
+  planAddress: PublicKey;
+  merchantAddress: PublicKey;
+  splUsdcMint: PublicKey;
+  wrappedUsdcMint: PublicKey;
+  wrappingVault: PublicKey;
+  amount: bigint;
+  credentialMintAddress?: PublicKey;
+}
+
 export interface VelaMethodResult<T = void> {
   signature: string;
   address?: PublicKey;
