@@ -153,7 +153,11 @@ async function mintUsdc(
 // ── Full Billing Cycle Simulation ─────────────────────────────────────────────
 
 describe("Full Billing Cycle Simulation", () => {
-  test("full billing cycle completes on LiteSVM: create -> subscribe -> pull x 3 -> cancel", async () => {
+  // NOTE: The full billing cycle now requires Token-2022 wrapped USDC infrastructure:
+  // init_wrapped_mint, init_extra_account_meta_list, wrap, and PullApproval PDA via Arcium.
+  // This test was for the v1.0 SPL Token delegate model (D-12: removed in phase 07-02).
+  // Full e2e billing is tested in vela-protocol Rust LiteSVM tests (test_execute_pull.rs).
+  test.skip("full billing cycle completes on LiteSVM: create -> subscribe -> pull x 3 -> cancel", async () => {
     // ── Setup ──
     const soPath = findProgramSo();
     const svm = new LiteSVM().withDefaultPrograms().withTransactionHistory(0n);

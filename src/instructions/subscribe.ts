@@ -23,6 +23,10 @@ export interface BuildSubscribeResult {
 /**
  * Builds a raw `subscribe` TransactionInstruction without signing or sending.
  *
+ * D-12 (fully implemented): No delegate approval. The mandate PDA is the authority
+ * over the subscriber's wrapped USDC account. Subscribers must wrap SPL USDC before
+ * executing pulls (use wrapAndSubscribe for atomic wrapping + subscribing).
+ *
  * Optionally accepts `credentialMintAddress`. If not provided, the plan account
  * is fetched on-chain to resolve the credential mint.
  */
@@ -33,7 +37,7 @@ export async function buildSubscribeInstruction(
     credentialMintAddress?: PublicKey;
   },
 ): Promise<BuildSubscribeResult> {
-  const { subscriber, planAddress, merchantAddress, usdcMintAddress } = params;
+  const { subscriber, planAddress, merchantAddress } = params;
 
   // Derive mandate PDA
   const [mandateAddress] = deriveMandateAddress(
@@ -53,14 +57,7 @@ export async function buildSubscribeInstruction(
     credentialMint = planAccount.credentialMint;
   }
 
-  // Derive ATAs
-  const subscriberTokenAccount = getAssociatedTokenAddressSync(
-    usdcMintAddress,
-    subscriber,
-    false,
-    TOKEN_PROGRAM_ID,
-  );
-
+  // Derive subscriber's credential ATA (Token-2022, for the non-transferable credential NFT)
   const subscriberCredentialAccount = getAssociatedTokenAddressSync(
     credentialMint,
     subscriber,
@@ -68,6 +65,8 @@ export async function buildSubscribeInstruction(
     TOKEN_2022_PROGRAM_ID,
   );
 
+  // No USDC accounts needed -- D-12: delegate approval removed entirely.
+  // The subscribe instruction only creates the mandate and mints the credential NFT.
   const instruction = await (program.methods as any)
     .subscribe()
     .accounts({
@@ -75,8 +74,6 @@ export async function buildSubscribeInstruction(
       merchant: merchantAddress,
       plan: planAddress,
       mandate: mandateAddress,
-      subscriberTokenAccount,
-      usdcMint: usdcMintAddress,
       credentialMint,
       subscriberCredentialAccount,
       tokenProgram: TOKEN_PROGRAM_ID,

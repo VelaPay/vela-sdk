@@ -21,6 +21,9 @@ import {
   buildCreatePlanInstruction,
   buildExecutePullInstruction,
   buildSubscribeInstruction,
+  buildUnwrapInstruction,
+  buildWrapAndSubscribeInstructions,
+  buildWrapInstruction,
 } from "./instructions";
 import type {
   CancelValidationResult,
@@ -32,6 +35,9 @@ import type {
   VelaPlan,
   VelaPullParams,
   VelaSubscribeParams,
+  VelaUnwrapParams,
+  VelaWrapAndSubscribeParams,
+  VelaWrapParams,
   SubscribeValidationResult,
   ValidationResult,
 } from "./types";
@@ -63,6 +69,11 @@ export interface VelaClient {
   cancelSubscription: (
     params: VelaCancelParams & { usdcMintAddress: PublicKey },
   ) => Promise<VelaMethodResult<VelaMandate>>;
+  wrap: (params: VelaWrapParams) => Promise<VelaMethodResult<void>>;
+  unwrap: (params: VelaUnwrapParams) => Promise<VelaMethodResult<void>>;
+  wrapAndSubscribe: (
+    params: VelaWrapAndSubscribeParams,
+  ) => Promise<VelaMethodResult<VelaMandate>>;
   getActiveSubscriptions: (filter: {
     subscriber?: PublicKey;
     merchant?: PublicKey;
@@ -86,6 +97,13 @@ export interface VelaClient {
         credentialMintAddress?: PublicKey;
       },
     ) => ReturnType<typeof buildCancelInstruction>;
+    wrap: (params: VelaWrapParams) => ReturnType<typeof buildWrapInstruction>;
+    unwrap: (
+      params: VelaUnwrapParams,
+    ) => ReturnType<typeof buildUnwrapInstruction>;
+    wrapAndSubscribe: (
+      params: VelaWrapAndSubscribeParams,
+    ) => ReturnType<typeof buildWrapAndSubscribeInstructions>;
   };
 
   // Validation layer
@@ -111,14 +129,24 @@ export interface VelaClient {
  *   commitment: "confirmed",
  * });
  *
- * // Convenience: sign + send + confirm
- * const { signature, address } = await vela.createPlan({ amount: 10_000_000n, frequency: 2_592_000n, maxPulls: 12n });
+ * // Wrap SPL USDC and subscribe atomically
+ * const { signature, address } = await vela.wrapAndSubscribe({
+ *   planAddress,
+ *   merchantAddress,
+ *   splUsdcMint,
+ *   wrappedUsdcMint,
+ *   wrappingVault,
+ *   amount: 10_000_000n,
+ * });
  *
- * // Raw: get instruction for composability
- * const { instruction } = await vela.instructions.createPlan({ amount: 10_000_000n, frequency: 2_592_000n, maxPulls: 12n, planId: 0n });
- *
- * // Validate: pre-flight check without transaction
- * const { canPull, reasons } = await vela.validate.pullPayment(mandateAddress);
+ * // Pull payment (Token-2022 transfer_checked with transfer hook)
+ * const { signature } = await vela.pullPayment({
+ *   mandateAddress,
+ *   subscriberAddress,
+ *   merchantAddress,
+ *   planAddress,
+ *   wrappedUsdcMint,
+ * });
  * ```
  */
 export function createVelaClient(config: VelaClientConfig): VelaClient {
@@ -260,8 +288,9 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     pullPayment: (params: VelaPullParams) =>
       wrapWithErrorTranslation(
         async () => {
+          // Now requires connection for extra account meta resolution
           const { instruction, mandateAddress } =
-            await buildExecutePullInstruction(program, {
+            await buildExecutePullInstruction(program, connection, {
               ...params,
               payer: wallet.publicKey,
             });
@@ -302,6 +331,49 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         { method: "cancelSubscription" },
       ),
 
+    wrap: (params: VelaWrapParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction } = await buildWrapInstruction(program, params);
+          const signature = await sendV0Transaction([instruction]);
+          return { signature };
+        },
+        { method: "wrap" },
+      ),
+
+    unwrap: (params: VelaUnwrapParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction } = await buildUnwrapInstruction(program, params);
+          const signature = await sendV0Transaction([instruction]);
+          return { signature };
+        },
+        { method: "unwrap" },
+      ),
+
+    wrapAndSubscribe: (params: VelaWrapAndSubscribeParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instructions, mandateAddress } =
+            await buildWrapAndSubscribeInstructions(program, {
+              ...params,
+              subscriber: wallet.publicKey,
+            });
+
+          // All 3 instructions (ATA creation + wrap + subscribe) execute atomically
+          const signature = await sendV0Transaction(instructions);
+
+          // Fetch created mandate for enriched result
+          const raw = await (program.account as any).velaMandate.fetch(
+            mandateAddress,
+          );
+          const mandate = deserializeMandate(mandateAddress, raw);
+
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "wrapAndSubscribe" },
+      ),
+
     getActiveSubscriptions: (filter) => getActiveSubscriptions(program, filter),
 
     getPlanDetails: (planAddress) => getPlanDetails(program, planAddress),
@@ -319,7 +391,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           subscriber: wallet.publicKey,
         }),
       executePull: (params) =>
-        buildExecutePullInstruction(program, {
+        buildExecutePullInstruction(program, connection, {
           ...params,
           payer: wallet.publicKey,
         }),
@@ -327,6 +399,13 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         buildCancelInstruction(program, {
           ...params,
           authority: wallet.publicKey,
+        }),
+      wrap: (params) => buildWrapInstruction(program, params),
+      unwrap: (params) => buildUnwrapInstruction(program, params),
+      wrapAndSubscribe: (params) =>
+        buildWrapAndSubscribeInstructions(program, {
+          ...params,
+          subscriber: wallet.publicKey,
         }),
     },
 

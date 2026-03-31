@@ -65,7 +65,8 @@ export interface VelaCreatePlanParams {
 export interface VelaSubscribeParams {
   planAddress: PublicKey;
   merchantAddress: PublicKey;
-  usdcMintAddress: PublicKey;
+  /** @deprecated No longer used for delegate approval (D-12). Kept for backward compatibility. */
+  usdcMintAddress?: PublicKey;
 }
 
 export interface VelaPullParams {
@@ -73,7 +74,10 @@ export interface VelaPullParams {
   subscriberAddress: PublicKey;
   merchantAddress: PublicKey;
   planAddress: PublicKey;
-  usdcMintAddress: PublicKey;
+  /** The Token-2022 wrapped USDC mint used for transfer_checked */
+  wrappedUsdcMint: PublicKey;
+  /** The protocol's SPL USDC vault (used for PDA resolution) */
+  wrappingVault?: PublicKey;
 }
 
 export interface VelaCancelParams {
