@@ -1,10 +1,10 @@
 import { Command } from "commander";
-import { registerCreatePlan } from "./commands/create-plan";
-import { registerSubscribe } from "./commands/subscribe";
-import { registerPull } from "./commands/pull";
 import { registerCancel } from "./commands/cancel";
+import { registerCreatePlan } from "./commands/create-plan";
+import { registerPull } from "./commands/pull";
 import { registerSimulate } from "./commands/simulate";
 import { registerStatus } from "./commands/status";
+import { registerSubscribe } from "./commands/subscribe";
 
 const program = new Command();
 

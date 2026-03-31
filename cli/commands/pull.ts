@@ -1,11 +1,11 @@
-import type { Command } from "commander";
 import { Wallet } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { loadKeypair } from "../utils/keypair";
-import { createConnection } from "../utils/connection";
-import { formatMandateStatus } from "../utils/formatting";
+import type { Command } from "commander";
 import { createVelaClient } from "../../src/client";
 import { VelaError } from "../../src/errors/base";
+import { createConnection } from "../utils/connection";
+import { formatMandateStatus } from "../utils/formatting";
+import { loadKeypair } from "../utils/keypair";
 
 /**
  * Registers the `vela pull` command (CLI-03).
@@ -17,22 +17,10 @@ export function registerPull(parent: Command): void {
   parent
     .command("pull <mandate-address>")
     .description("Execute a pull payment")
-    .requiredOption(
-      "--subscriber <address>",
-      "Subscriber public key",
-    )
-    .requiredOption(
-      "--merchant <address>",
-      "Merchant public key",
-    )
-    .requiredOption(
-      "--plan <address>",
-      "Plan public key",
-    )
-    .requiredOption(
-      "--usdc-mint <address>",
-      "USDC mint address",
-    )
+    .requiredOption("--subscriber <address>", "Subscriber public key")
+    .requiredOption("--merchant <address>", "Merchant public key")
+    .requiredOption("--plan <address>", "Plan public key")
+    .requiredOption("--usdc-mint <address>", "USDC mint address")
     .action(async (mandateAddressStr: string, opts) => {
       try {
         const parentOpts = parent.opts();
@@ -74,7 +62,9 @@ export function registerPull(parent: Command): void {
         } else if (err instanceof Error) {
           console.error(`\nError: ${err.message}`);
         } else {
-          console.error("\nAn unexpected error occurred. Use --verbose for details.");
+          console.error(
+            "\nAn unexpected error occurred. Use --verbose for details.",
+          );
         }
         process.exit(1);
       }

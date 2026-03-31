@@ -1,6 +1,6 @@
-import { Keypair } from "@solana/web3.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { Keypair } from "@solana/web3.js";
 
 const DEFAULT_KEYPAIR_PATH = join(homedir(), ".config", "solana", "id.json");
 

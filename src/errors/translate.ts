@@ -1,15 +1,16 @@
 import { VelaError } from "./base";
 import {
-  PullTooEarlyError,
+  AmountExceedsPlanAmountError,
+  FrequencyTooLowError,
+  InsufficientFundsError,
+  MandateExpiredError,
   MandateNotActiveError,
   MaxPullsExceededError,
-  InsufficientFundsError,
-  UnauthorizedCancelError,
-  FrequencyTooLowError,
+  MaxPullsTooLowError,
   OverflowError,
   PlanNotActiveError,
-  MandateExpiredError,
-  AmountExceedsPlanAmountError,
+  PullTooEarlyError,
+  UnauthorizedCancelError,
 } from "./program-errors";
 
 type ErrorConstructor = new (context?: Record<string, unknown>) => VelaError;
@@ -25,6 +26,7 @@ const ERROR_MAP: Record<number, ErrorConstructor> = {
   6007: PlanNotActiveError,
   6008: MandateExpiredError,
   6009: AmountExceedsPlanAmountError,
+  6010: MaxPullsTooLowError,
 };
 
 /**
@@ -52,7 +54,9 @@ export function translateError(
   // Format: "InstructionErrorCustom { code: 6000 }"
   const txMessage = (error as any)?.transactionMessage;
   if (typeof txMessage === "string") {
-    const codeMatch = txMessage.match(/InstructionErrorCustom\s*\{\s*code:\s*(\d+)\s*\}/);
+    const codeMatch = txMessage.match(
+      /InstructionErrorCustom\s*\{\s*code:\s*(\d+)\s*\}/,
+    );
     if (codeMatch) {
       const code = parseInt(codeMatch[1], 10);
       if (code in ERROR_MAP) {

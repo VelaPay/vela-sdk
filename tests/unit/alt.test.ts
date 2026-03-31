@@ -1,12 +1,12 @@
-import { test, expect, describe } from "bun:test";
-import { ALTManager } from "../../src/alt/lookup-table";
+import { describe, expect, test } from "bun:test";
 import {
+  type AddressLookupTableAccount,
   PublicKey,
   SystemProgram,
   TransactionMessage,
   VersionedTransaction,
-  type AddressLookupTableAccount,
 } from "@solana/web3.js";
+import { ALTManager } from "../../src/alt/lookup-table";
 
 describe("ALTManager", () => {
   test("buildV0Transaction creates a VersionedTransaction with lookup tables", () => {

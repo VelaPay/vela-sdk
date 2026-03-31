@@ -1,27 +1,27 @@
-import type { Command } from "commander";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { BN, Program, Wallet } from "@coral-xyz/anchor";
-import { LiteSVMProvider } from "anchor-litesvm";
-import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createInitializeMint2Instruction,
+  createMintToInstruction,
+  getAssociatedTokenAddressSync,
+  MINT_SIZE,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import {
   Keypair,
-  PublicKey,
-  SystemProgram,
   LAMPORTS_PER_SOL,
+  PublicKey,
   SYSVAR_RENT_PUBKEY,
+  SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  MINT_SIZE,
-  getAssociatedTokenAddressSync,
-  createInitializeMint2Instruction,
-  createAssociatedTokenAccountIdempotentInstruction,
-  createMintToInstruction,
-} from "@solana/spl-token";
-import { join } from "node:path";
-import { existsSync } from "node:fs";
+import { LiteSVMProvider } from "anchor-litesvm";
+import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import type { Command } from "commander";
 import idl from "../../idl/vela_protocol.json";
 import { PROGRAM_ID } from "../../src/constants";
 import { formatDuration, formatLamports } from "../utils/formatting";
@@ -57,7 +57,9 @@ export function registerSimulate(parent: Command): void {
       const programSoPath = findProgramBinary();
       console.log(`Program binary: ${programSoPath}\n`);
 
-      const svm = new LiteSVM().withDefaultPrograms().withTransactionHistory(0n);
+      const svm = new LiteSVM()
+        .withDefaultPrograms()
+        .withTransactionHistory(0n);
       svm.addProgramFromFile(PROGRAM_ID, programSoPath);
 
       const merchant = Keypair.generate();
@@ -67,7 +69,10 @@ export function registerSimulate(parent: Command): void {
 
       // Create provider with merchant as default signer
       const merchantProvider = new LiteSVMProvider(svm, new Wallet(merchant));
-      const program = new Program(idl as never, merchantProvider) as Program<any>;
+      const program = new Program(
+        idl as never,
+        merchantProvider,
+      ) as Program<any>;
 
       // 2. Setup USDC mock mint
       console.log("Step 1: Setting up USDC mint...");
@@ -98,10 +103,7 @@ export function registerSimulate(parent: Command): void {
       const maxPulls = BigInt(numPulls);
       const trialPeriod = 0n;
 
-      const planAddresses = derivePlanAddresses(
-        merchant.publicKey,
-        planId,
-      );
+      const planAddresses = derivePlanAddresses(merchant.publicKey, planId);
 
       svm.expireBlockhash();
       await (program as any).methods
@@ -209,7 +211,9 @@ export function registerSimulate(parent: Command): void {
           .rpc();
 
         // Fetch updated mandate to show pulls_executed
-        const mandateAccount = await (pullProgram.account as any).velaMandate.fetch(mandate);
+        const mandateAccount = await (
+          pullProgram.account as any
+        ).velaMandate.fetch(mandate);
         const pullsExecuted = Number(mandateAccount.pullsExecuted.toString());
         console.log(
           `  Pulled: ${formatLamports(amount)} (${pullsExecuted}/${numPulls} total)`,
@@ -223,7 +227,9 @@ export function registerSimulate(parent: Command): void {
       console.log(`Step ${4 + numPulls}: Cancelling subscription...`);
 
       // Check if mandate is still active before attempting cancel
-      const finalMandate = await (program.account as any).velaMandate.fetch(mandate);
+      const finalMandate = await (program.account as any).velaMandate.fetch(
+        mandate,
+      );
       const isActive = finalMandate.status.active !== undefined;
 
       if (isActive) {
@@ -244,7 +250,9 @@ export function registerSimulate(parent: Command): void {
           .rpc();
         console.log("  Subscription cancelled.\n");
       } else {
-        console.log("  All pulls exhausted -- mandate already complete (skipping cancel).\n");
+        console.log(
+          "  All pulls exhausted -- mandate already complete (skipping cancel).\n",
+        );
       }
 
       console.log("--- Simulation Complete ---\n");
@@ -266,9 +274,22 @@ export function registerSimulate(parent: Command): void {
 function findProgramBinary(): string {
   const candidates = [
     // From vela-sdk directory
-    join(process.cwd(), "..", "vela-protocol", "target", "deploy", "vela_protocol.so"),
+    join(
+      process.cwd(),
+      "..",
+      "vela-protocol",
+      "target",
+      "deploy",
+      "vela_protocol.so",
+    ),
     // From workspace root
-    join(process.cwd(), "vela-protocol", "target", "deploy", "vela_protocol.so"),
+    join(
+      process.cwd(),
+      "vela-protocol",
+      "target",
+      "deploy",
+      "vela_protocol.so",
+    ),
     // Absolute fallback for common locations
     join(process.cwd(), "target", "deploy", "vela_protocol.so"),
   ];

@@ -1,5 +1,5 @@
 export {
+  validateCancel,
   validatePullPayment,
   validateSubscribe,
-  validateCancel,
 } from "./preflight";

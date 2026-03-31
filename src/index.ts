@@ -1,83 +1,77 @@
 // Core types
-export type {
-  VelaClientConfig,
-  VelaWallet,
-  VelaMandate,
-  VelaPlan,
-  MerchantState,
-  MandateStatus,
-  PlanStatus,
-  VelaCreatePlanParams,
-  VelaSubscribeParams,
-  VelaPullParams,
-  VelaCancelParams,
-  VelaMethodResult,
-  ValidationResult,
-  SubscribeValidationResult,
-  CancelValidationResult,
-} from "./types";
-
-// Client factory
-export { createVelaClient } from "./client";
-export type { VelaClient } from "./client";
-
-// Errors
-export {
-  VelaError,
-  PullTooEarlyError,
-  MandateNotActiveError,
-  MaxPullsExceededError,
-  InsufficientFundsError,
-  UnauthorizedCancelError,
-  FrequencyTooLowError,
-  OverflowError,
-  PlanNotActiveError,
-  MandateExpiredError,
-  AmountExceedsPlanAmountError,
-  translateError,
-} from "./errors";
-
-// Instruction builders
-export {
-  buildCreatePlanInstruction,
-  buildSubscribeInstruction,
-  buildExecutePullInstruction,
-  buildCancelInstruction,
-} from "./instructions";
-export type {
-  BuildCreatePlanResult,
-  BuildSubscribeResult,
-  BuildExecutePullResult,
-  BuildCancelResult,
-} from "./instructions";
 
 // Account helpers
 export {
-  derivePlanAddress,
+  deriveCredentialMintAddress,
   deriveMandateAddress,
   deriveMerchantStateAddress,
-  deriveCredentialMintAddress,
+  derivePlanAddress,
   deserializeMandate,
-  deserializePlan,
   deserializeMerchantState,
+  deserializePlan,
   getActiveSubscriptions,
-  getPlanDetails,
   getMerchantPlans,
   getMerchantState,
+  getPlanDetails,
 } from "./accounts";
-
-// Validators
-export {
-  validatePullPayment,
-  validateSubscribe,
-  validateCancel,
-} from "./validators";
-
 // ALT manager
 export { ALTManager } from "./alt/lookup-table";
-
-// Helius provider (opt-in)
-export { createHeliusConnection, sendWithPriorityFee } from "./helius/provider";
-
+export type { VelaClient } from "./client";
+// Client factory
+export { createVelaClient } from "./client";
 // Constants
 export { PROGRAM_ID, SEED_PREFIXES } from "./constants";
+// Errors
+export {
+  AmountExceedsPlanAmountError,
+  FrequencyTooLowError,
+  InsufficientFundsError,
+  MandateExpiredError,
+  MandateNotActiveError,
+  MaxPullsExceededError,
+  MaxPullsTooLowError,
+  OverflowError,
+  PlanNotActiveError,
+  PullTooEarlyError,
+  VelaError,
+  translateError,
+  UnauthorizedCancelError,
+} from "./errors";
+// Helius provider (opt-in)
+export { createHeliusConnection, sendWithPriorityFee } from "./helius/provider";
+export type {
+  BuildCancelResult,
+  BuildCreatePlanResult,
+  BuildExecutePullResult,
+  BuildSubscribeResult,
+} from "./instructions";
+// Instruction builders
+export {
+  buildCancelInstruction,
+  buildCreatePlanInstruction,
+  buildExecutePullInstruction,
+  buildSubscribeInstruction,
+} from "./instructions";
+export type {
+  CancelValidationResult,
+  MandateStatus,
+  MerchantState,
+  PlanStatus,
+  VelaCancelParams,
+  VelaClientConfig,
+  VelaCreatePlanParams,
+  VelaMandate,
+  VelaMethodResult,
+  VelaPlan,
+  VelaPullParams,
+  VelaSubscribeParams,
+  VelaWallet,
+  SubscribeValidationResult,
+  ValidationResult,
+} from "./types";
+// Validators
+export {
+  validateCancel,
+  validatePullPayment,
+  validateSubscribe,
+} from "./validators";

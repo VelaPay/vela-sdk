@@ -1,4 +1,4 @@
-import { test, expect, describe, mock } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 
@@ -8,14 +8,16 @@ import BN from "bn.js";
 /**
  * Helper to create a mock mandate in Anchor's deserialized format (BN fields, enum objects).
  */
-function createMockMandate(overrides: {
-  status?: { active?: {} } | { cancelled?: {} } | { expired?: {} };
-  nextPaymentDue?: number;
-  pullsExecuted?: number;
-  maxPulls?: number;
-  expiry?: number;
-  subscriber?: PublicKey;
-} = {}) {
+function createMockMandate(
+  overrides: {
+    status?: { active?: {} } | { cancelled?: {} } | { expired?: {} };
+    nextPaymentDue?: number;
+    pullsExecuted?: number;
+    maxPulls?: number;
+    expiry?: number;
+    subscriber?: PublicKey;
+  } = {},
+) {
   const subscriber = overrides.subscriber ?? Keypair.generate().publicKey;
   return {
     subscriber,
@@ -38,9 +40,9 @@ function createMockMandate(overrides: {
 /**
  * Helper to create a mock plan in Anchor's deserialized format.
  */
-function createMockPlan(overrides: {
-  status?: { active?: {} } | { inactive?: {} };
-} = {}) {
+function createMockPlan(
+  overrides: { status?: { active?: {} } | { inactive?: {} } } = {},
+) {
   return {
     merchant: Keypair.generate().publicKey,
     planId: new BN(0),
@@ -57,10 +59,12 @@ function createMockPlan(overrides: {
 /**
  * Creates a mock Anchor Program with controllable account fetches.
  */
-function createMockProgram(opts: {
-  mandate?: ReturnType<typeof createMockMandate> | Error;
-  plan?: ReturnType<typeof createMockPlan> | Error;
-} = {}) {
+function createMockProgram(
+  opts: {
+    mandate?: ReturnType<typeof createMockMandate> | Error;
+    plan?: ReturnType<typeof createMockPlan> | Error;
+  } = {},
+) {
   return {
     programId: new PublicKey("BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"),
     account: {
@@ -93,7 +97,11 @@ describe("validatePullPayment", () => {
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validatePullPayment(program, mockConnection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      mockConnection,
+      mandateAddress,
+    );
 
     expect(result.canPull).toBe(true);
     expect(result.reasons).toEqual([]);
@@ -106,7 +114,11 @@ describe("validatePullPayment", () => {
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validatePullPayment(program, mockConnection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      mockConnection,
+      mandateAddress,
+    );
 
     expect(result.canPull).toBe(false);
     expect(result.reasons).toContain("Mandate is cancelled");
@@ -118,7 +130,11 @@ describe("validatePullPayment", () => {
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validatePullPayment(program, mockConnection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      mockConnection,
+      mandateAddress,
+    );
 
     expect(result.canPull).toBe(false);
     expect(result.reasons.length).toBeGreaterThan(0);
@@ -130,7 +146,11 @@ describe("validatePullPayment", () => {
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validatePullPayment(program, mockConnection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      mockConnection,
+      mandateAddress,
+    );
 
     expect(result.canPull).toBe(false);
     expect(result.reasons).toContain("All 12 pulls exhausted");
@@ -142,7 +162,11 @@ describe("validatePullPayment", () => {
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validatePullPayment(program, mockConnection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      mockConnection,
+      mandateAddress,
+    );
 
     expect(result.canPull).toBe(false);
     expect(result.reasons).toContain("Mandate has expired");
@@ -161,22 +185,30 @@ describe("validatePullPayment", () => {
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validatePullPayment(program, mockConnection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      mockConnection,
+      mandateAddress,
+    );
 
     expect(result.canPull).toBe(false);
     // Should have at least 4 reasons: cancelled + timing + pulls + expiry
     expect(result.reasons.length).toBeGreaterThanOrEqual(4);
   });
 
-  test("mandate with maxPulls=0 (unlimited) and many pulls does not fail on pulls", async () => {
+  test("mandate with maxPulls=0 fails pull validation", async () => {
     const mandate = createMockMandate({ pullsExecuted: 100, maxPulls: 0 });
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validatePullPayment(program, mockConnection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      mockConnection,
+      mandateAddress,
+    );
 
-    expect(result.canPull).toBe(true);
-    expect(result.reasons).toEqual([]);
+    expect(result.canPull).toBe(false);
+    expect(result.reasons).toContain("All 0 pulls exhausted");
   });
 
   test("deserialized mandate has bigint fields", async () => {
@@ -184,7 +216,11 @@ describe("validatePullPayment", () => {
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validatePullPayment(program, mockConnection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      mockConnection,
+      mandateAddress,
+    );
 
     expect(typeof result.mandate.amount).toBe("bigint");
     expect(typeof result.mandate.frequency).toBe("bigint");
@@ -261,7 +297,11 @@ describe("validateCancel", () => {
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 
-    const result = await validateCancel(program, mandateAddress, wrongAuthority);
+    const result = await validateCancel(
+      program,
+      mandateAddress,
+      wrongAuthority,
+    );
 
     expect(result.canCancel).toBe(false);
     expect(result.reasons).toContain(
@@ -271,7 +311,10 @@ describe("validateCancel", () => {
 
   test("cancelled mandate returns canCancel: false", async () => {
     const subscriber = Keypair.generate().publicKey;
-    const mandate = createMockMandate({ subscriber, status: { cancelled: {} } });
+    const mandate = createMockMandate({
+      subscriber,
+      status: { cancelled: {} },
+    });
     const program = createMockProgram({ mandate });
     const mandateAddress = Keypair.generate().publicKey;
 

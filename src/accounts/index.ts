@@ -1,19 +1,17 @@
 export {
-  derivePlanAddress,
-  deriveMandateAddress,
-  deriveMerchantStateAddress,
-  deriveCredentialMintAddress,
-} from "./pda";
-
-export {
   deserializeMandate,
-  deserializePlan,
   deserializeMerchantState,
+  deserializePlan,
 } from "./deserialize";
-
 export {
   getActiveSubscriptions,
-  getPlanDetails,
   getMerchantPlans,
   getMerchantState,
+  getPlanDetails,
 } from "./fetchers";
+export {
+  deriveCredentialMintAddress,
+  deriveMandateAddress,
+  deriveMerchantStateAddress,
+  derivePlanAddress,
+} from "./pda";

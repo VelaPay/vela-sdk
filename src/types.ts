@@ -1,4 +1,4 @@
-import type { PublicKey, Connection, Commitment } from "@solana/web3.js";
+import type { Commitment, Connection, PublicKey } from "@solana/web3.js";
 
 export interface VelaClientConfig {
   connection: Connection;
@@ -11,7 +11,9 @@ export interface VelaClientConfig {
 export interface VelaWallet {
   publicKey: PublicKey;
   signTransaction: <T extends { serialize(): Buffer }>(tx: T) => Promise<T>;
-  signAllTransactions?: <T extends { serialize(): Buffer }>(txs: T[]) => Promise<T[]>;
+  signAllTransactions?: <T extends { serialize(): Buffer }>(
+    txs: T[],
+  ) => Promise<T[]>;
 }
 
 export type MandateStatus = "active" | "cancelled" | "expired";

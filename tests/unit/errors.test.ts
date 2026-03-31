@@ -1,17 +1,18 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
-  VelaError,
-  PullTooEarlyError,
+  AmountExceedsPlanAmountError,
+  FrequencyTooLowError,
+  InsufficientFundsError,
+  MandateExpiredError,
   MandateNotActiveError,
   MaxPullsExceededError,
-  InsufficientFundsError,
-  UnauthorizedCancelError,
-  FrequencyTooLowError,
+  MaxPullsTooLowError,
   OverflowError,
   PlanNotActiveError,
-  MandateExpiredError,
-  AmountExceedsPlanAmountError,
+  PullTooEarlyError,
+  VelaError,
   translateError,
+  UnauthorizedCancelError,
 } from "../../src/errors";
 
 describe("VelaError base class", () => {
@@ -28,16 +29,72 @@ describe("VelaError base class", () => {
 
 describe("Program error classes", () => {
   const errorCases = [
-    { Class: PullTooEarlyError, code: 6000, name: "PullTooEarlyError", msg: "Pull attempted before next_payment_due" },
-    { Class: MandateNotActiveError, code: 6001, name: "MandateNotActiveError", msg: "Mandate has expired or been cancelled" },
-    { Class: MaxPullsExceededError, code: 6002, name: "MaxPullsExceededError", msg: "Maximum pulls exhausted for this mandate" },
-    { Class: InsufficientFundsError, code: 6003, name: "InsufficientFundsError", msg: "Subscriber has insufficient token balance" },
-    { Class: UnauthorizedCancelError, code: 6004, name: "UnauthorizedCancelError", msg: "Only the subscriber can cancel their mandate" },
-    { Class: FrequencyTooLowError, code: 6005, name: "FrequencyTooLowError", msg: "Plan frequency below minimum (3600 seconds)" },
-    { Class: OverflowError, code: 6006, name: "OverflowError", msg: "Arithmetic overflow" },
-    { Class: PlanNotActiveError, code: 6007, name: "PlanNotActiveError", msg: "Plan is not active" },
-    { Class: MandateExpiredError, code: 6008, name: "MandateExpiredError", msg: "Mandate has expired" },
-    { Class: AmountExceedsPlanAmountError, code: 6009, name: "AmountExceedsPlanAmountError", msg: "Pull amount exceeds plan amount" },
+    {
+      Class: PullTooEarlyError,
+      code: 6000,
+      name: "PullTooEarlyError",
+      msg: "Pull attempted before next_payment_due",
+    },
+    {
+      Class: MandateNotActiveError,
+      code: 6001,
+      name: "MandateNotActiveError",
+      msg: "Mandate has expired or been cancelled",
+    },
+    {
+      Class: MaxPullsExceededError,
+      code: 6002,
+      name: "MaxPullsExceededError",
+      msg: "Maximum pulls exhausted for this mandate",
+    },
+    {
+      Class: InsufficientFundsError,
+      code: 6003,
+      name: "InsufficientFundsError",
+      msg: "Subscriber has insufficient token balance",
+    },
+    {
+      Class: UnauthorizedCancelError,
+      code: 6004,
+      name: "UnauthorizedCancelError",
+      msg: "Only the subscriber can cancel their mandate",
+    },
+    {
+      Class: FrequencyTooLowError,
+      code: 6005,
+      name: "FrequencyTooLowError",
+      msg: "Plan frequency below minimum (3600 seconds)",
+    },
+    {
+      Class: OverflowError,
+      code: 6006,
+      name: "OverflowError",
+      msg: "Arithmetic overflow",
+    },
+    {
+      Class: PlanNotActiveError,
+      code: 6007,
+      name: "PlanNotActiveError",
+      msg: "Plan is not active",
+    },
+    {
+      Class: MandateExpiredError,
+      code: 6008,
+      name: "MandateExpiredError",
+      msg: "Mandate has expired",
+    },
+    {
+      Class: AmountExceedsPlanAmountError,
+      code: 6009,
+      name: "AmountExceedsPlanAmountError",
+      msg: "Pull amount exceeds plan amount",
+    },
+    {
+      Class: MaxPullsTooLowError,
+      code: 6010,
+      name: "MaxPullsTooLowError",
+      msg: "Plan max_pulls must be at least 1",
+    },
   ];
 
   for (const { Class, code, name, msg } of errorCases) {
@@ -141,6 +198,12 @@ describe("translateError", () => {
     const anchorError = { error: { errorCode: { number: 6009 } } };
     const result = translateError(anchorError);
     expect(result).toBeInstanceOf(AmountExceedsPlanAmountError);
+  });
+
+  test("maps AnchorError code 6010 to MaxPullsTooLowError", () => {
+    const anchorError = { error: { errorCode: { number: 6010 } } };
+    const result = translateError(anchorError);
+    expect(result).toBeInstanceOf(MaxPullsTooLowError);
   });
 
   test("returns generic VelaError with code -1 for unknown error code", () => {

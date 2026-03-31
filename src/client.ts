@@ -1,41 +1,45 @@
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
-import type { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
-import { PROGRAM_ID } from "./constants";
 import type {
-  VelaClientConfig,
-  VelaCreatePlanParams,
-  VelaSubscribeParams,
-  VelaPullParams,
-  VelaCancelParams,
-  VelaMethodResult,
-  VelaMandate,
-  VelaPlan,
-  ValidationResult,
-  SubscribeValidationResult,
-  CancelValidationResult,
-} from "./types";
+  Connection,
+  PublicKey,
+  VersionedTransaction,
+} from "@solana/web3.js";
+import idl from "../idl/vela_protocol.json";
 import {
-  buildCreatePlanInstruction,
-  buildSubscribeInstruction,
-  buildExecutePullInstruction,
-  buildCancelInstruction,
-} from "./instructions";
-import {
-  getActiveSubscriptions,
-  getPlanDetails,
-  getMerchantState,
   deserializeMandate,
   deserializePlan,
+  getActiveSubscriptions,
+  getMerchantState,
+  getPlanDetails,
 } from "./accounts";
-import { translateError } from "./errors";
 import { ALTManager } from "./alt/lookup-table";
+import { PROGRAM_ID } from "./constants";
+import { translateError } from "./errors";
+import { createHeliusConnection } from "./helius/provider";
 import {
+  buildCancelInstruction,
+  buildCreatePlanInstruction,
+  buildExecutePullInstruction,
+  buildSubscribeInstruction,
+} from "./instructions";
+import type {
+  CancelValidationResult,
+  VelaCancelParams,
+  VelaClientConfig,
+  VelaCreatePlanParams,
+  VelaMandate,
+  VelaMethodResult,
+  VelaPlan,
+  VelaPullParams,
+  VelaSubscribeParams,
+  SubscribeValidationResult,
+  ValidationResult,
+} from "./types";
+import {
+  validateCancel,
   validatePullPayment,
   validateSubscribe,
-  validateCancel,
 } from "./validators";
-import { createHeliusConnection } from "./helius/provider";
-import idl from "../idl/vela_protocol.json";
 
 /**
  * The VelaClient interface returned by createVelaClient.
@@ -47,19 +51,41 @@ import idl from "../idl/vela_protocol.json";
  */
 export interface VelaClient {
   // Convenience layer -- signs, sends, confirms, returns enriched result
-  createPlan: (params: VelaCreatePlanParams) => Promise<VelaMethodResult<VelaPlan>>;
-  createSubscription: (params: VelaSubscribeParams) => Promise<VelaMethodResult<VelaMandate>>;
-  pullPayment: (params: VelaPullParams) => Promise<VelaMethodResult<VelaMandate>>;
-  cancelSubscription: (params: VelaCancelParams & { usdcMintAddress: PublicKey }) => Promise<VelaMethodResult<VelaMandate>>;
-  getActiveSubscriptions: (filter: { subscriber?: PublicKey; merchant?: PublicKey }) => Promise<VelaMandate[]>;
+  createPlan: (
+    params: VelaCreatePlanParams,
+  ) => Promise<VelaMethodResult<VelaPlan>>;
+  createSubscription: (
+    params: VelaSubscribeParams,
+  ) => Promise<VelaMethodResult<VelaMandate>>;
+  pullPayment: (
+    params: VelaPullParams,
+  ) => Promise<VelaMethodResult<VelaMandate>>;
+  cancelSubscription: (
+    params: VelaCancelParams & { usdcMintAddress: PublicKey },
+  ) => Promise<VelaMethodResult<VelaMandate>>;
+  getActiveSubscriptions: (filter: {
+    subscriber?: PublicKey;
+    merchant?: PublicKey;
+  }) => Promise<VelaMandate[]>;
   getPlanDetails: (planAddress: PublicKey) => Promise<VelaPlan>;
 
   // Raw instruction layer
   instructions: {
-    createPlan: (params: VelaCreatePlanParams & { planId: bigint }) => ReturnType<typeof buildCreatePlanInstruction>;
-    subscribe: (params: VelaSubscribeParams & { credentialMintAddress?: PublicKey }) => ReturnType<typeof buildSubscribeInstruction>;
-    executePull: (params: VelaPullParams) => ReturnType<typeof buildExecutePullInstruction>;
-    cancel: (params: VelaCancelParams & { usdcMintAddress: PublicKey; credentialMintAddress?: PublicKey }) => ReturnType<typeof buildCancelInstruction>;
+    createPlan: (
+      params: VelaCreatePlanParams & { planId: bigint },
+    ) => ReturnType<typeof buildCreatePlanInstruction>;
+    subscribe: (
+      params: VelaSubscribeParams & { credentialMintAddress?: PublicKey },
+    ) => ReturnType<typeof buildSubscribeInstruction>;
+    executePull: (
+      params: VelaPullParams,
+    ) => ReturnType<typeof buildExecutePullInstruction>;
+    cancel: (
+      params: VelaCancelParams & {
+        usdcMintAddress: PublicKey;
+        credentialMintAddress?: PublicKey;
+      },
+    ) => ReturnType<typeof buildCancelInstruction>;
   };
 
   // Validation layer
@@ -96,11 +122,7 @@ export interface VelaClient {
  * ```
  */
 export function createVelaClient(config: VelaClientConfig): VelaClient {
-  const {
-    wallet,
-    commitment = "confirmed",
-    programId = PROGRAM_ID,
-  } = config;
+  const { wallet, commitment = "confirmed", programId = PROGRAM_ID } = config;
 
   let { connection } = config;
 
@@ -116,11 +138,21 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
   }
 
   // Create Anchor provider and program
-  const provider = new AnchorProvider(connection, wallet as any, { commitment });
+  const provider = new AnchorProvider(connection, wallet as any, {
+    commitment,
+  });
   const program = new Program(idl as any, provider);
 
   // ALT manager for Versioned Transactions
   const altManager = new ALTManager();
+
+  function isMissingMerchantStateError(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return (
+      message.includes("Account does not exist") ||
+      message.includes("has no data")
+    );
+  }
 
   /**
    * Signs and sends a V0 transaction with ALT, returning the signature.
@@ -140,7 +172,11 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       return sig;
     };
 
-    const alt = await altManager.getOrCreateALT(connection, wallet.publicKey, signAndSend);
+    const alt = await altManager.getOrCreateALT(
+      connection,
+      wallet.publicKey,
+      signAndSend,
+    );
     const { blockhash } = await connection.getLatestBlockhash(commitment);
     const tx = altManager.buildV0Transaction(
       wallet.publicKey,
@@ -169,83 +205,106 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
   const client: VelaClient = {
     // ── Convenience Layer ──────────────────────────────────────────────
     createPlan: (params: VelaCreatePlanParams) =>
-      wrapWithErrorTranslation(async () => {
-        // Fetch merchant state to get current plan_count (= next planId)
-        let planId: bigint;
-        try {
-          const state = await getMerchantState(program, wallet.publicKey);
-          planId = state.planCount;
-        } catch {
-          // MerchantState doesn't exist yet -- this is the first plan (planId = 0)
-          planId = 0n;
-        }
+      wrapWithErrorTranslation(
+        async () => {
+          // Fetch merchant state to get current plan_count (= next planId)
+          let planId: bigint;
+          try {
+            const state = await getMerchantState(program, wallet.publicKey);
+            planId = state.planCount;
+          } catch (error) {
+            // MerchantState doesn't exist yet -- this is the first plan (planId = 0)
+            if (!isMissingMerchantStateError(error)) {
+              throw error;
+            }
+            planId = 0n;
+          }
 
-        const { instruction, planAddress } = await buildCreatePlanInstruction(
-          program,
-          { ...params, merchant: wallet.publicKey, planId },
-        );
+          const { instruction, planAddress } = await buildCreatePlanInstruction(
+            program,
+            { ...params, merchant: wallet.publicKey, planId },
+          );
 
-        const signature = await sendV0Transaction([instruction]);
+          const signature = await sendV0Transaction([instruction]);
 
-        // Fetch created plan for enriched result
-        const plan = await getPlanDetails(program, planAddress);
+          // Fetch created plan for enriched result
+          const plan = await getPlanDetails(program, planAddress);
 
-        return { signature, address: planAddress, data: plan };
-      }, { method: "createPlan" }),
+          return { signature, address: planAddress, data: plan };
+        },
+        { method: "createPlan" },
+      ),
 
     createSubscription: (params: VelaSubscribeParams) =>
-      wrapWithErrorTranslation(async () => {
-        const { instruction, mandateAddress } = await buildSubscribeInstruction(
-          program,
-          { ...params, subscriber: wallet.publicKey },
-        );
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, mandateAddress } =
+            await buildSubscribeInstruction(program, {
+              ...params,
+              subscriber: wallet.publicKey,
+            });
 
-        const signature = await sendV0Transaction([instruction]);
+          const signature = await sendV0Transaction([instruction]);
 
-        // Fetch created mandate
-        const raw = await (program.account as any).velaMandate.fetch(mandateAddress);
-        const mandate = deserializeMandate(mandateAddress, raw);
+          // Fetch created mandate
+          const raw = await (program.account as any).velaMandate.fetch(
+            mandateAddress,
+          );
+          const mandate = deserializeMandate(mandateAddress, raw);
 
-        return { signature, address: mandateAddress, data: mandate };
-      }, { method: "createSubscription" }),
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "createSubscription" },
+      ),
 
     pullPayment: (params: VelaPullParams) =>
-      wrapWithErrorTranslation(async () => {
-        const { instruction, mandateAddress } = await buildExecutePullInstruction(
-          program,
-          { ...params, payer: wallet.publicKey },
-        );
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, mandateAddress } =
+            await buildExecutePullInstruction(program, {
+              ...params,
+              payer: wallet.publicKey,
+            });
 
-        const signature = await sendV0Transaction([instruction]);
+          const signature = await sendV0Transaction([instruction]);
 
-        // Fetch updated mandate
-        const raw = await (program.account as any).velaMandate.fetch(mandateAddress);
-        const mandate = deserializeMandate(mandateAddress, raw);
+          // Fetch updated mandate
+          const raw = await (program.account as any).velaMandate.fetch(
+            mandateAddress,
+          );
+          const mandate = deserializeMandate(mandateAddress, raw);
 
-        return { signature, address: mandateAddress, data: mandate };
-      }, { method: "pullPayment" }),
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "pullPayment" },
+      ),
 
-    cancelSubscription: (params: VelaCancelParams & { usdcMintAddress: PublicKey }) =>
-      wrapWithErrorTranslation(async () => {
-        const { instruction, mandateAddress } = await buildCancelInstruction(
-          program,
-          { ...params, authority: wallet.publicKey },
-        );
+    cancelSubscription: (
+      params: VelaCancelParams & { usdcMintAddress: PublicKey },
+    ) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, mandateAddress } = await buildCancelInstruction(
+            program,
+            { ...params, authority: wallet.publicKey },
+          );
 
-        const signature = await sendV0Transaction([instruction]);
+          const signature = await sendV0Transaction([instruction]);
 
-        // Fetch updated mandate
-        const raw = await (program.account as any).velaMandate.fetch(mandateAddress);
-        const mandate = deserializeMandate(mandateAddress, raw);
+          // Fetch updated mandate
+          const raw = await (program.account as any).velaMandate.fetch(
+            mandateAddress,
+          );
+          const mandate = deserializeMandate(mandateAddress, raw);
 
-        return { signature, address: mandateAddress, data: mandate };
-      }, { method: "cancelSubscription" }),
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "cancelSubscription" },
+      ),
 
-    getActiveSubscriptions: (filter) =>
-      getActiveSubscriptions(program, filter),
+    getActiveSubscriptions: (filter) => getActiveSubscriptions(program, filter),
 
-    getPlanDetails: (planAddress) =>
-      getPlanDetails(program, planAddress),
+    getPlanDetails: (planAddress) => getPlanDetails(program, planAddress),
 
     // ── Raw Instruction Layer ──────────────────────────────────────────
     instructions: {

@@ -1,16 +1,16 @@
 import type { Program } from "@coral-xyz/anchor";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import {
   type PublicKey,
-  type TransactionInstruction,
-  SystemProgram,
   SYSVAR_RENT_PUBKEY,
+  SystemProgram,
+  type TransactionInstruction,
 } from "@solana/web3.js";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { deriveMandateAddress } from "../accounts/pda";
 import {
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
 } from "../constants";
 import type { VelaSubscribeParams } from "../types";
 
@@ -36,14 +36,20 @@ export async function buildSubscribeInstruction(
   const { subscriber, planAddress, merchantAddress, usdcMintAddress } = params;
 
   // Derive mandate PDA
-  const [mandateAddress] = deriveMandateAddress(subscriber, planAddress, program.programId);
+  const [mandateAddress] = deriveMandateAddress(
+    subscriber,
+    planAddress,
+    program.programId,
+  );
 
   // Resolve credential mint -- either from param or by fetching the plan
   let credentialMint: PublicKey;
   if (params.credentialMintAddress) {
     credentialMint = params.credentialMintAddress;
   } else {
-    const planAccount = await (program.account as any).velaPlan.fetch(planAddress);
+    const planAccount = await (program.account as any).velaPlan.fetch(
+      planAddress,
+    );
     credentialMint = planAccount.credentialMint;
   }
 
@@ -81,5 +87,9 @@ export async function buildSubscribeInstruction(
     })
     .instruction();
 
-  return { instruction, mandateAddress, credentialAccountAddress: subscriberCredentialAccount };
+  return {
+    instruction,
+    mandateAddress,
+    credentialAccountAddress: subscriberCredentialAccount,
+  };
 }

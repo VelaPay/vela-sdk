@@ -1,11 +1,11 @@
-import type { Command } from "commander";
 import { Wallet } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { loadKeypair } from "../utils/keypair";
-import { createConnection } from "../utils/connection";
-import { formatMandateStatus } from "../utils/formatting";
+import type { Command } from "commander";
 import { createVelaClient } from "../../src/client";
 import { VelaError } from "../../src/errors/base";
+import { createConnection } from "../utils/connection";
+import { formatMandateStatus } from "../utils/formatting";
+import { loadKeypair } from "../utils/keypair";
 
 /**
  * Registers the `vela subscribe` command (CLI-02).
@@ -17,10 +17,7 @@ export function registerSubscribe(parent: Command): void {
   parent
     .command("subscribe <plan-address>")
     .description("Subscribe to a plan")
-    .requiredOption(
-      "--merchant <address>",
-      "Merchant public key",
-    )
+    .requiredOption("--merchant <address>", "Merchant public key")
     .requiredOption(
       "--usdc-mint <address>",
       "USDC mint address on the target cluster",
@@ -62,7 +59,9 @@ export function registerSubscribe(parent: Command): void {
         } else if (err instanceof Error) {
           console.error(`\nError: ${err.message}`);
         } else {
-          console.error("\nAn unexpected error occurred. Use --verbose for details.");
+          console.error(
+            "\nAn unexpected error occurred. Use --verbose for details.",
+          );
         }
         process.exit(1);
       }

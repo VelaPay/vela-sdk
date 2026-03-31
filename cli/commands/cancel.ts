@@ -1,10 +1,10 @@
-import type { Command } from "commander";
 import { Wallet } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { loadKeypair } from "../utils/keypair";
-import { createConnection } from "../utils/connection";
+import type { Command } from "commander";
 import { createVelaClient } from "../../src/client";
 import { VelaError } from "../../src/errors/base";
+import { createConnection } from "../utils/connection";
+import { loadKeypair } from "../utils/keypair";
 
 /**
  * Registers the `vela cancel` command (CLI-04).
@@ -16,14 +16,8 @@ export function registerCancel(parent: Command): void {
   parent
     .command("cancel <mandate-address>")
     .description("Cancel a subscription")
-    .requiredOption(
-      "--subscriber <address>",
-      "Subscriber public key",
-    )
-    .requiredOption(
-      "--plan <address>",
-      "Plan public key",
-    )
+    .requiredOption("--subscriber <address>", "Subscriber public key")
+    .requiredOption("--plan <address>", "Plan public key")
     .requiredOption(
       "--usdc-mint <address>",
       "USDC mint address (needed for delegate revoke)",
@@ -64,7 +58,9 @@ export function registerCancel(parent: Command): void {
         } else if (err instanceof Error) {
           console.error(`\nError: ${err.message}`);
         } else {
-          console.error("\nAn unexpected error occurred. Use --verbose for details.");
+          console.error(
+            "\nAn unexpected error occurred. Use --verbose for details.",
+          );
         }
         process.exit(1);
       }

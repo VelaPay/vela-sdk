@@ -1,10 +1,10 @@
 import type { PublicKey } from "@solana/web3.js";
 import type {
+  MandateStatus,
+  MerchantState,
+  PlanStatus,
   VelaMandate,
   VelaPlan,
-  MerchantState,
-  MandateStatus,
-  PlanStatus,
 } from "../types";
 
 /**
@@ -69,7 +69,10 @@ export function deserializePlan(address: PublicKey, raw: any): VelaPlan {
 /**
  * Converts an Anchor-deserialized MerchantState account (BN fields) to SDK type (bigint fields).
  */
-export function deserializeMerchantState(address: PublicKey, raw: any): MerchantState {
+export function deserializeMerchantState(
+  address: PublicKey,
+  raw: any,
+): MerchantState {
   return {
     address,
     merchant: raw.merchant,

@@ -1,51 +1,48 @@
-import { describe, test, expect, beforeAll } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { BN, Program, Wallet } from "@coral-xyz/anchor";
-import { LiteSVMProvider } from "anchor-litesvm";
-import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createInitializeMint2Instruction,
+  createMintToInstruction,
+  getAccount,
+  getAssociatedTokenAddressSync,
+  MINT_SIZE,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import {
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
+  type PublicKey,
   SYSVAR_RENT_PUBKEY,
+  SystemProgram,
   Transaction,
 } from "@solana/web3.js";
+import { LiteSVMProvider } from "anchor-litesvm";
+import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import idl from "../../idl/vela_protocol.json";
 import {
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  MINT_SIZE,
-  createInitializeMint2Instruction,
-  createAssociatedTokenAccountIdempotentInstruction,
-  createMintToInstruction,
-  getAssociatedTokenAddressSync,
-  getAccount,
-} from "@solana/spl-token";
-import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
-
-import {
-  buildCreatePlanInstruction,
-  buildSubscribeInstruction,
-  buildExecutePullInstruction,
   buildCancelInstruction,
-  deserializeMandate,
-  deserializePlan,
-  derivePlanAddress,
+  buildCreatePlanInstruction,
+  buildExecutePullInstruction,
+  buildSubscribeInstruction,
+  deriveCredentialMintAddress,
   deriveMandateAddress,
   deriveMerchantStateAddress,
-  deriveCredentialMintAddress,
-  translateError,
-  PullTooEarlyError,
+  derivePlanAddress,
+  deserializeMandate,
+  deserializePlan,
   MandateNotActiveError,
-  validatePullPayment,
-  validateCancel,
   PROGRAM_ID,
+  PullTooEarlyError,
+  translateError,
+  validateCancel,
+  validatePullPayment,
 } from "../../src/index";
-
 import type { VelaMandate, VelaPlan } from "../../src/types";
-
-import idl from "../../idl/vela_protocol.json";
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
 
@@ -54,7 +51,10 @@ const DECIMALS = 6;
 // Locate the program .so file (try relative path from project root, then absolute)
 function findProgramSo(): string {
   const candidates = [
-    resolve(__dirname, "../../../../vela-protocol/target/deploy/vela_protocol.so"),
+    resolve(
+      __dirname,
+      "../../../../vela-protocol/target/deploy/vela_protocol.so",
+    ),
     "/Users/laitsky/Developments/vela-labs/vela-protocol/target/deploy/vela_protocol.so",
   ];
   for (const path of candidates) {
@@ -65,7 +65,11 @@ function findProgramSo(): string {
   );
 }
 
-function airdropSol(svm: LiteSVM, pubkey: PublicKey, lamports = BigInt(LAMPORTS_PER_SOL)): void {
+function airdropSol(
+  svm: LiteSVM,
+  pubkey: PublicKey,
+  lamports = BigInt(LAMPORTS_PER_SOL),
+): void {
   svm.airdrop(pubkey, lamports);
 }
 
@@ -90,7 +94,8 @@ async function createUsdcMint(
   mintAuthority = provider.wallet.publicKey,
 ): Promise<PublicKey> {
   const mint = Keypair.generate();
-  const lamports = await provider.connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+  const lamports =
+    await provider.connection.getMinimumBalanceForRentExemption(MINT_SIZE);
 
   await sendInstructions(
     provider,
@@ -121,7 +126,12 @@ async function createSplTokenAccount(
   owner: PublicKey,
   mint: PublicKey,
 ): Promise<PublicKey> {
-  const ata = getAssociatedTokenAddressSync(mint, owner, false, TOKEN_PROGRAM_ID);
+  const ata = getAssociatedTokenAddressSync(
+    mint,
+    owner,
+    false,
+    TOKEN_PROGRAM_ID,
+  );
   await sendInstructions(provider, [
     createAssociatedTokenAccountIdempotentInstruction(
       provider.wallet.publicKey,
@@ -194,8 +204,16 @@ describe("SDK Client Integration", () => {
 
     // Create USDC mint and token accounts
     usdcMint = await createUsdcMint(provider);
-    subscriberTokenAccount = await createSplTokenAccount(provider, subscriber.publicKey, usdcMint);
-    merchantTokenAccount = await createSplTokenAccount(provider, merchant.publicKey, usdcMint);
+    subscriberTokenAccount = await createSplTokenAccount(
+      provider,
+      subscriber.publicKey,
+      usdcMint,
+    );
+    merchantTokenAccount = await createSplTokenAccount(
+      provider,
+      merchant.publicKey,
+      usdcMint,
+    );
 
     // Mint USDC to subscriber (enough for all pulls + extra)
     await mintUsdc(
@@ -267,7 +285,9 @@ describe("SDK Client Integration", () => {
     await subscriberProvider.sendAndConfirm!(tx, []);
 
     // Fetch and deserialize mandate
-    const rawMandate = await (program.account as any).velaMandate.fetch(mandateAddress);
+    const rawMandate = await (program.account as any).velaMandate.fetch(
+      mandateAddress,
+    );
     const mandate = deserializeMandate(mandateAddress, rawMandate);
 
     // Verify correct fields
@@ -284,14 +304,19 @@ describe("SDK Client Integration", () => {
 
   test("pullPayment succeeds when timing is valid and transfers USDC", async () => {
     // Read mandate to get nextPaymentDue
-    const rawBefore = await (program.account as any).velaMandate.fetch(mandateAddress);
+    const rawBefore = await (program.account as any).velaMandate.fetch(
+      mandateAddress,
+    );
     const mandateBefore = deserializeMandate(mandateAddress, rawBefore);
 
     // Advance clock past nextPaymentDue
     advanceClock(svm, mandateBefore.nextPaymentDue);
 
     // Get subscriber balance before
-    const subAccountBefore = await getAccount(provider.connection, subscriberTokenAccount);
+    const subAccountBefore = await getAccount(
+      provider.connection,
+      subscriberTokenAccount,
+    );
     const subBalanceBefore = subAccountBefore.amount;
 
     // Build and send execute_pull instruction
@@ -309,16 +334,24 @@ describe("SDK Client Integration", () => {
     await provider.sendAndConfirm!(tx, []);
 
     // Verify mandate.pullsExecuted incremented
-    const rawAfter = await (program.account as any).velaMandate.fetch(mandateAddress);
+    const rawAfter = await (program.account as any).velaMandate.fetch(
+      mandateAddress,
+    );
     const mandateAfter = deserializeMandate(mandateAddress, rawAfter);
     expect(mandateAfter.pullsExecuted).toBe(1n);
 
     // Verify subscriber balance decreased
-    const subAccountAfter = await getAccount(provider.connection, subscriberTokenAccount);
+    const subAccountAfter = await getAccount(
+      provider.connection,
+      subscriberTokenAccount,
+    );
     expect(subBalanceBefore - subAccountAfter.amount).toBe(PLAN_AMOUNT);
 
     // Verify merchant received funds
-    const merchantAccount = await getAccount(provider.connection, merchantTokenAccount);
+    const merchantAccount = await getAccount(
+      provider.connection,
+      merchantTokenAccount,
+    );
     expect(merchantAccount.amount).toBe(PLAN_AMOUNT);
   });
 
@@ -370,7 +403,9 @@ describe("SDK Client Integration", () => {
     await subscriberProvider.sendAndConfirm!(tx, []);
 
     // Fetch mandate and verify cancelled
-    const rawMandate = await (program.account as any).velaMandate.fetch(mandateAddress);
+    const rawMandate = await (program.account as any).velaMandate.fetch(
+      mandateAddress,
+    );
     const mandate = deserializeMandate(mandateAddress, rawMandate);
     expect(mandate.status).toBe("cancelled");
   });
@@ -413,10 +448,14 @@ describe("SDK Client Integration", () => {
     // (LiteSVM does not support getProgramAccounts, so we fetch by known PDA)
     const mandate2Address = subResult.mandateAddress;
 
-    const rawMandate1 = await (program.account as any).velaMandate.fetch(mandateAddress);
+    const rawMandate1 = await (program.account as any).velaMandate.fetch(
+      mandateAddress,
+    );
     const mandate1 = deserializeMandate(mandateAddress, rawMandate1);
 
-    const rawMandate2 = await (program.account as any).velaMandate.fetch(mandate2Address);
+    const rawMandate2 = await (program.account as any).velaMandate.fetch(
+      mandate2Address,
+    );
     const mandate2 = deserializeMandate(mandate2Address, rawMandate2);
 
     // Both belong to the same subscriber
@@ -430,7 +469,11 @@ describe("SDK Client Integration", () => {
 
   test("validate.pullPayment returns canPull:false for cancelled mandate", async () => {
     // Use the mandate from earlier tests that was cancelled
-    const result = await validatePullPayment(program, provider.connection, mandateAddress);
+    const result = await validatePullPayment(
+      program,
+      provider.connection,
+      mandateAddress,
+    );
 
     expect(result.canPull).toBe(false);
     expect(result.reasons.length).toBeGreaterThan(0);
@@ -438,7 +481,11 @@ describe("SDK Client Integration", () => {
   });
 
   test("validate.cancel returns canCancel:false for cancelled mandate", async () => {
-    const result = await validateCancel(program, mandateAddress, subscriber.publicKey);
+    const result = await validateCancel(
+      program,
+      mandateAddress,
+      subscriber.publicKey,
+    );
 
     expect(result.canCancel).toBe(false);
     expect(result.reasons.some((r) => r.includes("cancelled"))).toBe(true);
@@ -451,7 +498,9 @@ describe("SDK Client Integration", () => {
       derivePlanAddress(merchant.publicKey, 1n, program.programId)[0],
       program.programId,
     );
-    const rawMandate = await (program.account as any).velaMandate.fetch(mandate2Address);
+    const rawMandate = await (program.account as any).velaMandate.fetch(
+      mandate2Address,
+    );
     const mandate = deserializeMandate(mandate2Address, rawMandate);
 
     // Check every numeric field is bigint
@@ -464,8 +513,14 @@ describe("SDK Client Integration", () => {
     expect(typeof mandate.nextPaymentDue).toBe("bigint");
 
     // Fetch plan and check
-    const plan2Address = derivePlanAddress(merchant.publicKey, 1n, program.programId)[0];
-    const rawPlan = await (program.account as any).velaPlan.fetch(plan2Address);
+    const plan2Address = derivePlanAddress(
+      merchant.publicKey,
+      1n,
+      program.programId,
+    )[0];
+    const rawPlan = await (program.account as any).velaPlan.fetch(
+      plan2Address,
+    );
     const plan = deserializePlan(plan2Address, rawPlan);
 
     expect(typeof plan.amount).toBe("bigint");

@@ -3,9 +3,9 @@ import type { Connection, PublicKey } from "@solana/web3.js";
 import { deserializeMandate, deserializePlan } from "../accounts/deserialize";
 import { deriveMandateAddress } from "../accounts/pda";
 import type {
-  ValidationResult,
-  SubscribeValidationResult,
   CancelValidationResult,
+  SubscribeValidationResult,
+  ValidationResult,
 } from "../types";
 
 /**
@@ -36,15 +36,15 @@ export async function validatePullPayment(
   // Check timing -- nextPaymentDue is in seconds (unix timestamp)
   const nowSeconds = BigInt(Math.floor(Date.now() / 1000));
   if (nowSeconds < mandate.nextPaymentDue) {
-    const dueDate = new Date(Number(mandate.nextPaymentDue) * 1000).toISOString();
+    const dueDate = new Date(
+      Number(mandate.nextPaymentDue) * 1000,
+    ).toISOString();
     reasons.push(`Next payment not due until ${dueDate}`);
   }
 
   // Check pulls remaining
-  if (mandate.maxPulls > 0n && mandate.pullsExecuted >= mandate.maxPulls) {
-    reasons.push(
-      `All ${mandate.maxPulls.toString()} pulls exhausted`,
-    );
+  if (mandate.pullsExecuted >= mandate.maxPulls) {
+    reasons.push(`All ${mandate.maxPulls.toString()} pulls exhausted`);
   }
 
   // Check expiry
@@ -81,12 +81,20 @@ export async function validateSubscribe(
   }
 
   // Check if mandate already exists (PDA collision)
-  const [mandateAddress] = deriveMandateAddress(subscriber, planAddress, program.programId);
+  const [mandateAddress] = deriveMandateAddress(
+    subscriber,
+    planAddress,
+    program.programId,
+  );
   try {
     await (program.account as any).velaMandate.fetch(mandateAddress);
     // If fetch succeeds, mandate already exists
     reasons.push("Subscription already exists for this subscriber and plan");
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes("Account does not exist")) {
+      throw error;
+    }
     // Mandate does not exist -- this is the expected case for a new subscription
   }
 

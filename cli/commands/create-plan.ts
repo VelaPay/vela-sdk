@@ -1,10 +1,10 @@
-import type { Command } from "commander";
 import { Wallet } from "@coral-xyz/anchor";
-import { loadKeypair } from "../utils/keypair";
-import { createConnection } from "../utils/connection";
-import { formatPlanDetails } from "../utils/formatting";
+import type { Command } from "commander";
 import { createVelaClient } from "../../src/client";
 import { VelaError } from "../../src/errors/base";
+import { createConnection } from "../utils/connection";
+import { formatPlanDetails } from "../utils/formatting";
+import { loadKeypair } from "../utils/keypair";
 
 /**
  * Registers the `vela create-plan` command (CLI-01).
@@ -24,15 +24,8 @@ export function registerCreatePlan(parent: Command): void {
       "-f, --frequency <seconds>",
       "Billing frequency in seconds (e.g., 2592000 for monthly)",
     )
-    .requiredOption(
-      "-m, --max-pulls <count>",
-      "Maximum number of pulls",
-    )
-    .option(
-      "-t, --trial-period <seconds>",
-      "Trial period in seconds",
-      "0",
-    )
+    .requiredOption("-m, --max-pulls <count>", "Maximum number of pulls")
+    .option("-t, --trial-period <seconds>", "Trial period in seconds", "0")
     .action(async (opts) => {
       try {
         const parentOpts = parent.opts();
@@ -43,12 +36,14 @@ export function registerCreatePlan(parent: Command): void {
         const vela = createVelaClient({ connection, wallet: wallet as any });
 
         // Convert USDC amount to raw (6 decimals)
-        const amount = BigInt(
-          Math.round(parseFloat(opts.amount) * 1_000_000),
-        );
+        const amount = BigInt(Math.round(parseFloat(opts.amount) * 1_000_000));
         const frequency = BigInt(opts.frequency);
         const trialPeriod = BigInt(opts.trialPeriod);
         const maxPulls = BigInt(opts.maxPulls);
+
+        if (maxPulls < 1n) {
+          throw new Error("Max pulls must be at least 1.");
+        }
 
         console.log("\nCreating subscription plan...\n");
 
@@ -75,7 +70,9 @@ export function registerCreatePlan(parent: Command): void {
         } else if (err instanceof Error) {
           console.error(`\nError: ${err.message}`);
         } else {
-          console.error("\nAn unexpected error occurred. Use --verbose for details.");
+          console.error(
+            "\nAn unexpected error occurred. Use --verbose for details.",
+          );
         }
         process.exit(1);
       }

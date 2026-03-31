@@ -69,3 +69,10 @@ export class AmountExceedsPlanAmountError extends VelaError {
     this.name = "AmountExceedsPlanAmountError";
   }
 }
+
+export class MaxPullsTooLowError extends VelaError {
+  constructor(context?: Record<string, unknown>) {
+    super("Plan max_pulls must be at least 1", 6010, context);
+    this.name = "MaxPullsTooLowError";
+  }
+}

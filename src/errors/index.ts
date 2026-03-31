@@ -1,14 +1,15 @@
 export { VelaError } from "./base";
 export {
-  PullTooEarlyError,
+  AmountExceedsPlanAmountError,
+  FrequencyTooLowError,
+  InsufficientFundsError,
+  MandateExpiredError,
   MandateNotActiveError,
   MaxPullsExceededError,
-  InsufficientFundsError,
-  UnauthorizedCancelError,
-  FrequencyTooLowError,
+  MaxPullsTooLowError,
   OverflowError,
   PlanNotActiveError,
-  MandateExpiredError,
-  AmountExceedsPlanAmountError,
+  PullTooEarlyError,
+  UnauthorizedCancelError,
 } from "./program-errors";
 export { translateError } from "./translate";

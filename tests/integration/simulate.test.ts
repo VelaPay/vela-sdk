@@ -1,39 +1,37 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { BN, Program, Wallet } from "@coral-xyz/anchor";
-import { LiteSVMProvider } from "anchor-litesvm";
-import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createInitializeMint2Instruction,
+  createMintToInstruction,
+  getAccount,
+  getAssociatedTokenAddressSync,
+  MINT_SIZE,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import {
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
+  type PublicKey,
   SYSVAR_RENT_PUBKEY,
+  SystemProgram,
   Transaction,
 } from "@solana/web3.js";
+import { LiteSVMProvider } from "anchor-litesvm";
+import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import idl from "../../idl/vela_protocol.json";
 import {
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  MINT_SIZE,
-  createInitializeMint2Instruction,
-  createAssociatedTokenAccountIdempotentInstruction,
-  createMintToInstruction,
-  getAssociatedTokenAddressSync,
-  getAccount,
-} from "@solana/spl-token";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
-
-import {
-  buildCreatePlanInstruction,
-  buildSubscribeInstruction,
-  buildExecutePullInstruction,
   buildCancelInstruction,
+  buildCreatePlanInstruction,
+  buildExecutePullInstruction,
+  buildSubscribeInstruction,
   deserializeMandate,
   PROGRAM_ID,
 } from "../../src/index";
-
-import idl from "../../idl/vela_protocol.json";
 
 // ── Test helpers (same as client.test.ts) ─────────────────────────────────────
 
@@ -41,7 +39,10 @@ const DECIMALS = 6;
 
 function findProgramSo(): string {
   const candidates = [
-    resolve(__dirname, "../../../../vela-protocol/target/deploy/vela_protocol.so"),
+    resolve(
+      __dirname,
+      "../../../../vela-protocol/target/deploy/vela_protocol.so",
+    ),
     "/Users/laitsky/Developments/vela-labs/vela-protocol/target/deploy/vela_protocol.so",
   ];
   for (const path of candidates) {
@@ -52,7 +53,11 @@ function findProgramSo(): string {
   );
 }
 
-function airdropSol(svm: LiteSVM, pubkey: PublicKey, lamports = BigInt(LAMPORTS_PER_SOL)): void {
+function airdropSol(
+  svm: LiteSVM,
+  pubkey: PublicKey,
+  lamports = BigInt(LAMPORTS_PER_SOL),
+): void {
   svm.airdrop(pubkey, lamports);
 }
 
@@ -77,7 +82,8 @@ async function createUsdcMint(
   mintAuthority = provider.wallet.publicKey,
 ): Promise<PublicKey> {
   const mint = Keypair.generate();
-  const lamports = await provider.connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+  const lamports =
+    await provider.connection.getMinimumBalanceForRentExemption(MINT_SIZE);
 
   await sendInstructions(
     provider,
@@ -108,7 +114,12 @@ async function createSplTokenAccount(
   owner: PublicKey,
   mint: PublicKey,
 ): Promise<PublicKey> {
-  const ata = getAssociatedTokenAddressSync(mint, owner, false, TOKEN_PROGRAM_ID);
+  const ata = getAssociatedTokenAddressSync(
+    mint,
+    owner,
+    false,
+    TOKEN_PROGRAM_ID,
+  );
   await sendInstructions(provider, [
     createAssociatedTokenAccountIdempotentInstruction(
       provider.wallet.publicKey,
@@ -218,7 +229,9 @@ describe("Full Billing Cycle Simulation", () => {
     const mandateAddress = subResult.mandateAddress;
 
     // Verify mandate created correctly
-    let rawMandate = await (merchantProgram.account as any).velaMandate.fetch(mandateAddress);
+    let rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
+      mandateAddress,
+    );
     let mandate = deserializeMandate(mandateAddress, rawMandate);
     expect(mandate.status).toBe("active");
     expect(mandate.pullsExecuted).toBe(0n);
@@ -226,7 +239,9 @@ describe("Full Billing Cycle Simulation", () => {
     // ── 3. Pull x 3 ──
     for (let i = 0; i < 3; i++) {
       // Read nextPaymentDue and advance clock
-      rawMandate = await (merchantProgram.account as any).velaMandate.fetch(mandateAddress);
+      rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
+        mandateAddress,
+      );
       mandate = deserializeMandate(mandateAddress, rawMandate);
       advanceClock(svm, mandate.nextPaymentDue);
 
@@ -245,12 +260,17 @@ describe("Full Billing Cycle Simulation", () => {
     }
 
     // Verify pulls executed
-    rawMandate = await (merchantProgram.account as any).velaMandate.fetch(mandateAddress);
+    rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
+      mandateAddress,
+    );
     mandate = deserializeMandate(mandateAddress, rawMandate);
     expect(mandate.pullsExecuted).toBe(3n);
 
     // Verify USDC transfers
-    const merchantAccount = await getAccount(merchantProvider.connection, merchantTokenAccount);
+    const merchantAccount = await getAccount(
+      merchantProvider.connection,
+      merchantTokenAccount,
+    );
     expect(merchantAccount.amount).toBe(planAmount * 3n);
 
     const subscriberAccount = await getAccount(
@@ -258,7 +278,9 @@ describe("Full Billing Cycle Simulation", () => {
       subscriberTokenAccount,
     );
     // Minted planAmount * (maxPulls + 1n), pulled 3 times
-    expect(subscriberAccount.amount).toBe(planAmount * (maxPulls + 1n) - planAmount * 3n);
+    expect(subscriberAccount.amount).toBe(
+      planAmount * (maxPulls + 1n) - planAmount * 3n,
+    );
 
     // ── 4. Cancel ──
     const cancelResult = await buildCancelInstruction(subscriberProgram, {
@@ -275,7 +297,9 @@ describe("Full Billing Cycle Simulation", () => {
     await subscriberProvider.sendAndConfirm!(cancelTx, []);
 
     // ── Final Verification ──
-    rawMandate = await (merchantProgram.account as any).velaMandate.fetch(mandateAddress);
+    rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
+      mandateAddress,
+    );
     mandate = deserializeMandate(mandateAddress, rawMandate);
     expect(mandate.pullsExecuted).toBe(3n);
     expect(mandate.status).toBe("cancelled");

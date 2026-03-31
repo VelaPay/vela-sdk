@@ -1,19 +1,19 @@
 import {
+  type AddressLookupTableAccount,
+  AddressLookupTableProgram,
   type Connection,
   type PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  SystemProgram,
   type TransactionInstruction,
-  AddressLookupTableProgram,
   TransactionMessage,
   VersionedTransaction,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  type AddressLookupTableAccount,
 } from "@solana/web3.js";
 import {
-  PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
 } from "../constants";
 
 /**

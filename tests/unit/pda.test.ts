@@ -1,11 +1,11 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import {
-  derivePlanAddress,
+  deriveCredentialMintAddress,
   deriveMandateAddress,
   deriveMerchantStateAddress,
-  deriveCredentialMintAddress,
+  derivePlanAddress,
 } from "../../src/accounts";
 import { PROGRAM_ID, SEED_PREFIXES } from "../../src/constants";
 
@@ -32,7 +32,10 @@ describe("deriveMerchantStateAddress", () => {
       [Buffer.from("merchant"), merchant.publicKey.toBuffer()],
       customProgram,
     );
-    const [address] = deriveMerchantStateAddress(merchant.publicKey, customProgram);
+    const [address] = deriveMerchantStateAddress(
+      merchant.publicKey,
+      customProgram,
+    );
     expect(address.equals(expected)).toBe(true);
   });
 });
@@ -81,10 +84,17 @@ describe("deriveMandateAddress", () => {
     );
 
     const [expected, expectedBump] = PublicKey.findProgramAddressSync(
-      [Buffer.from("mandate"), subscriber.publicKey.toBuffer(), planAddress.toBuffer()],
+      [
+        Buffer.from("mandate"),
+        subscriber.publicKey.toBuffer(),
+        planAddress.toBuffer(),
+      ],
       PROGRAM_ID,
     );
-    const [address, bump] = deriveMandateAddress(subscriber.publicKey, planAddress);
+    const [address, bump] = deriveMandateAddress(
+      subscriber.publicKey,
+      planAddress,
+    );
     expect(address.equals(expected)).toBe(true);
     expect(bump).toBe(expectedBump);
   });
@@ -120,7 +130,10 @@ describe("deriveCredentialMintAddress", () => {
       [Buffer.from("credential"), merchant.publicKey.toBuffer(), planIdBuffer],
       PROGRAM_ID,
     );
-    const [address, bump] = deriveCredentialMintAddress(merchant.publicKey, 100n);
+    const [address, bump] = deriveCredentialMintAddress(
+      merchant.publicKey,
+      100n,
+    );
     expect(address.equals(expected)).toBe(true);
     expect(bump).toBe(expectedBump);
   });
@@ -128,11 +141,19 @@ describe("deriveCredentialMintAddress", () => {
   test("uses SEED_PREFIXES.CREDENTIAL prefix", () => {
     // Verify that SEED_PREFIXES.CREDENTIAL matches the literal "credential" string
     const [withPrefix] = PublicKey.findProgramAddressSync(
-      [SEED_PREFIXES.CREDENTIAL, merchant.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 8)],
+      [
+        SEED_PREFIXES.CREDENTIAL,
+        merchant.publicKey.toBuffer(),
+        new BN(0).toArrayLike(Buffer, "le", 8),
+      ],
       PROGRAM_ID,
     );
     const [withLiteral] = PublicKey.findProgramAddressSync(
-      [Buffer.from("credential"), merchant.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 8)],
+      [
+        Buffer.from("credential"),
+        merchant.publicKey.toBuffer(),
+        new BN(0).toArrayLike(Buffer, "le", 8),
+      ],
       PROGRAM_ID,
     );
     expect(withPrefix.equals(withLiteral)).toBe(true);

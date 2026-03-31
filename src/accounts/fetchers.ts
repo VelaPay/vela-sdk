@@ -1,8 +1,12 @@
 import type { Program } from "@coral-xyz/anchor";
 import type { PublicKey } from "@solana/web3.js";
-import { deserializeMandate, deserializePlan, deserializeMerchantState } from "./deserialize";
+import type { MerchantState, VelaMandate, VelaPlan } from "../types";
+import {
+  deserializeMandate,
+  deserializeMerchantState,
+  deserializePlan,
+} from "./deserialize";
 import { deriveMerchantStateAddress } from "./pda";
-import type { VelaMandate, VelaPlan, MerchantState } from "../types";
 
 /**
  * Fetches active subscriptions (mandates) filtered by subscriber or merchant.
@@ -72,7 +76,12 @@ export async function getMerchantState(
   program: Program,
   merchant: PublicKey,
 ): Promise<MerchantState> {
-  const [merchantStateAddress] = deriveMerchantStateAddress(merchant, program.programId);
-  const raw = await (program.account as any).merchantState.fetch(merchantStateAddress);
+  const [merchantStateAddress] = deriveMerchantStateAddress(
+    merchant,
+    program.programId,
+  );
+  const raw = await (program.account as any).merchantState.fetch(
+    merchantStateAddress,
+  );
   return deserializeMerchantState(merchantStateAddress, raw);
 }
