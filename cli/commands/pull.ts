@@ -20,7 +20,7 @@ export function registerPull(parent: Command): void {
     .requiredOption("--subscriber <address>", "Subscriber public key")
     .requiredOption("--merchant <address>", "Merchant public key")
     .requiredOption("--plan <address>", "Plan public key")
-    .requiredOption("--usdc-mint <address>", "USDC mint address")
+    .requiredOption("--usdc-mint <address>", "Wrapped USDC mint address")
     .action(async (mandateAddressStr: string, opts) => {
       try {
         const parentOpts = parent.opts();
@@ -34,7 +34,7 @@ export function registerPull(parent: Command): void {
         const subscriberAddress = new PublicKey(opts.subscriber);
         const merchantAddress = new PublicKey(opts.merchant);
         const planAddress = new PublicKey(opts.plan);
-        const usdcMintAddress = new PublicKey(opts.usdcMint);
+        const wrappedUsdcMint = new PublicKey(opts.usdcMint);
 
         console.log("\nExecuting pull payment...\n");
 
@@ -43,7 +43,7 @@ export function registerPull(parent: Command): void {
           subscriberAddress,
           merchantAddress,
           planAddress,
-          usdcMintAddress,
+          wrappedUsdcMint,
         });
 
         console.log("Pull payment executed successfully!\n");

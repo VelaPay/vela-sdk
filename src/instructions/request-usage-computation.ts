@@ -133,11 +133,16 @@ export interface BuildRequestUsageComputationResult {
   computationOffset: bigint;
 }
 
+const USAGE_CHARGE_CIRCUIT = "usage_charge";
+const TIERED_PRICING_CIRCUIT = "tiered_pricing";
+
 /**
  * Builds the `request_usage_computation` TransactionInstruction.
  *
  * The keeper uses this to submit encrypted usage data to the Arcium MXE for computation.
- * The circuit is selected on-chain based on usage_plan.tier_count (1 = usage_charge, >1 = tiered_pricing).
+ * The circuit is inferred from the ciphertext shape:
+ * - 3 fields => usage_charge
+ * - 13 fields => tiered_pricing
  * After submission, Arcium writes the computed charge back to the PullApproval PDA.
  *
  * Callers must provide:
@@ -168,6 +173,18 @@ export async function buildRequestUsageComputationInstruction(
     throw new Error(`pubKey must be exactly 32 bytes, got ${pubKey.length}`);
   }
 
+  const circuitName =
+    ciphertext.length === 3
+      ? USAGE_CHARGE_CIRCUIT
+      : ciphertext.length === 13
+        ? TIERED_PRICING_CIRCUIT
+        : null;
+  if (!circuitName) {
+    throw new Error(
+      `ciphertext must contain 3 fields for usage_charge or 13 fields for tiered_pricing, got ${ciphertext.length}`,
+    );
+  }
+
   const programId = program.programId ?? PROGRAM_ID;
 
   // Fetch ProtocolConfig for cluster info
@@ -189,11 +206,7 @@ export async function buildRequestUsageComputationInstruction(
   const executingPool = deriveExecpoolPda(clusterId);
   const clusterAccount = deriveClusterPda(clusterId);
   const computationAccount = deriveComputationPda(clusterId, computationOffset);
-  // Circuit name is resolved on-chain; we pass a placeholder comp_def for the dominant circuit.
-  // The on-chain program selects usage_charge vs tiered_pricing based on tier_count.
-  // We use "usage_charge" as the default circuit for comp_def derivation — the program
-  // can override via its own QueueCompAccs implementation.
-  const compDefAccount = deriveCompDefPda(programId, "usage_charge");
+  const compDefAccount = deriveCompDefPda(programId, circuitName);
   const signPdaAccount = deriveSignPda();
 
   // Derive PullApproval PDA: seeds = [b"approval", mandate.key()]

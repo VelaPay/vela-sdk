@@ -192,11 +192,11 @@ export async function installPhase7AdminState(args: {
   );
 
   svm.setAccount(config, {
-    lamports: svm.minimumBalanceForRentExemption(BigInt(PROTOCOL_CONFIG_SIZE)),
+    lamports: Number(svm.minimumBalanceForRentExemption(BigInt(PROTOCOL_CONFIG_SIZE))),
     data: serializeProtocolConfig(admin.publicKey, configBump),
     owner: PROGRAM_ID,
     executable: false,
-    rentEpoch: 0n,
+    rentEpoch: 0,
   });
 
   const wrappedUsdcMint = Keypair.generate();
@@ -248,7 +248,7 @@ export function insertPullApproval(args: {
   const createdAt = args.createdAt ?? validUntil;
   const [approval, bump] = derivePullApprovalAddress(mandate);
   svm.setAccount(approval, {
-    lamports: svm.minimumBalanceForRentExemption(BigInt(PULL_APPROVAL_SIZE)),
+    lamports: Number(svm.minimumBalanceForRentExemption(BigInt(PULL_APPROVAL_SIZE))),
     data: serializePullApproval({
       mandate,
       validUntil,
@@ -259,7 +259,7 @@ export function insertPullApproval(args: {
     }),
     owner: PROGRAM_ID,
     executable: false,
-    rentEpoch: 0n,
+    rentEpoch: 0,
   });
   return approval;
 }

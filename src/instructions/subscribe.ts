@@ -12,6 +12,10 @@ import {
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "../constants";
+import {
+  getSubscribablePlan,
+  resolvePlanContext,
+} from "../accounts/subscribable-plan";
 import type { VelaSubscribeParams } from "../types";
 
 export interface BuildSubscribeResult {
@@ -48,13 +52,17 @@ export async function buildSubscribeInstruction(
 
   // Resolve credential mint -- either from param or by fetching the plan
   let credentialMint: PublicKey;
+  let resolvedMerchant = merchantAddress;
   if (params.credentialMintAddress) {
     credentialMint = params.credentialMintAddress;
   } else {
-    const planAccount = await (program.account as any).velaPlan.fetch(
+    const planAccount = await getSubscribablePlan(
+      program,
       planAddress,
     );
-    credentialMint = planAccount.credentialMint;
+    const resolvedPlan = resolvePlanContext(planAccount);
+    credentialMint = resolvedPlan.credentialMint;
+    resolvedMerchant = resolvedPlan.merchant;
   }
 
   // Derive subscriber's credential ATA (Token-2022, for the non-transferable credential NFT)
@@ -71,7 +79,7 @@ export async function buildSubscribeInstruction(
     .subscribe()
     .accounts({
       subscriber,
-      merchant: merchantAddress,
+      merchant: resolvedMerchant,
       plan: planAddress,
       mandate: mandateAddress,
       credentialMint,

@@ -1,10 +1,12 @@
 import type { PublicKey } from "@solana/web3.js";
 import type {
+  BillingType,
   MandateStatus,
   MerchantState,
   PlanStatus,
   VelaMandate,
   VelaPlan,
+  VelaUsagePlan,
 } from "../types";
 
 /**
@@ -27,6 +29,19 @@ function mapPlanStatus(raw: any): PlanStatus {
   throw new Error(`Unknown PlanStatus variant: ${JSON.stringify(raw)}`);
 }
 
+function mapBillingType(raw: any): BillingType {
+  if (!raw || raw.flat !== undefined) return "flat";
+  if (raw.usage !== undefined) return "usage";
+  throw new Error(`Unknown BillingType variant: ${JSON.stringify(raw)}`);
+}
+
+function decodeUnitName(raw: number[] | Uint8Array): string {
+  const bytes = Uint8Array.from(raw);
+  const terminator = bytes.indexOf(0);
+  const slice = terminator >= 0 ? bytes.subarray(0, terminator) : bytes;
+  return Buffer.from(slice).toString("utf-8");
+}
+
 /**
  * Converts an Anchor-deserialized VelaMandate account (BN fields) to SDK type (bigint fields).
  */
@@ -45,6 +60,7 @@ export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
     nextPaymentDue: BigInt(raw.nextPaymentDue.toString()),
     status: mapMandateStatus(raw.status),
     bump: raw.bump,
+    billingType: mapBillingType(raw.billingType),
   };
 }
 
@@ -53,6 +69,7 @@ export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
  */
 export function deserializePlan(address: PublicKey, raw: any): VelaPlan {
   return {
+    billingType: "flat",
     address,
     merchant: raw.merchant,
     planId: BigInt(raw.planId.toString()),
@@ -60,6 +77,37 @@ export function deserializePlan(address: PublicKey, raw: any): VelaPlan {
     frequency: BigInt(raw.frequency.toString()),
     trialPeriod: BigInt(raw.trialPeriod.toString()),
     maxPulls: BigInt(raw.maxPulls.toString()),
+    status: mapPlanStatus(raw.status),
+    credentialMint: raw.credentialMint,
+    bump: raw.bump,
+  };
+}
+
+/**
+ * Converts an Anchor-deserialized UsagePlan account (BN fields) to SDK type (bigint fields).
+ */
+export function deserializeUsagePlan(
+  address: PublicKey,
+  raw: any,
+): VelaUsagePlan {
+  const tierCount = Number(raw.tierCount ?? 0);
+  const tiers = (raw.tiers ?? [])
+    .slice(0, tierCount)
+    .map((tier: any) => ({
+      upTo: BigInt(tier.upTo.toString()),
+      ratePerUnit: BigInt(tier.ratePerUnit.toString()),
+    }));
+
+  return {
+    billingType: "usage",
+    address,
+    merchant: raw.merchant,
+    planId: BigInt(raw.planId.toString()),
+    unitName: decodeUnitName(raw.unitName),
+    tiers,
+    tierCount,
+    maxChargePerPeriod: BigInt(raw.maxChargePerPeriod.toString()),
+    settlementFrequency: BigInt(raw.settlementFrequency.toString()),
     status: mapPlanStatus(raw.status),
     credentialMint: raw.credentialMint,
     bump: raw.bump,

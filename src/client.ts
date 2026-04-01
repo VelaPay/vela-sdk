@@ -47,6 +47,7 @@ import type {
   VelaPullParams,
   VelaSubmitUsageReportParams,
   VelaSubscribeParams,
+  SubscribablePlan,
   VelaUnwrapParams,
   VelaUsagePlanParams,
   VelaWrapAndSubscribeParams,
@@ -339,6 +340,10 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         merchantAddress: mandate.merchant,
         frequency: mandate.frequency,
         nextPaymentDue: mandate.nextPaymentDue,
+        billingType: mandate.billingType,
+        ...(mandate.billingType === "usage"
+          ? { usagePlanAddress: mandate.plan }
+          : {}),
       },
       options,
     );

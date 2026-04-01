@@ -2,6 +2,10 @@ import type { Program } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { deriveMandateAddress } from "../accounts/pda";
+import {
+  getSubscribablePlan,
+  resolvePlanContext,
+} from "../accounts/subscribable-plan";
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "../constants";
 import type { VelaCancelParams } from "../types";
 
@@ -38,10 +42,11 @@ export async function buildCancelInstruction(
   if (params.credentialMintAddress) {
     credentialMint = params.credentialMintAddress;
   } else {
-    const planAccount = await (program.account as any).velaPlan.fetch(
+    const planAccount = await getSubscribablePlan(
+      program,
       planAddress,
     );
-    credentialMint = planAccount.credentialMint;
+    credentialMint = resolvePlanContext(planAccount).credentialMint;
   }
 
   // Derive subscriber's credential ATA and USDC ATA

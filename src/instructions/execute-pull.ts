@@ -51,6 +51,7 @@ export async function buildExecutePullInstruction(
 ): Promise<BuildExecutePullResult> {
   const {
     payer,
+    mandateAddress: explicitMandateAddress,
     subscriberAddress,
     merchantAddress,
     planAddress,
@@ -60,11 +61,9 @@ export async function buildExecutePullInstruction(
   const programId = program.programId ?? PROGRAM_ID;
 
   // Derive mandate PDA
-  const [mandateAddress] = deriveMandateAddress(
-    subscriberAddress,
-    planAddress,
-    programId,
-  );
+  const mandateAddress =
+    explicitMandateAddress ??
+    deriveMandateAddress(subscriberAddress, planAddress, programId)[0];
 
   // Derive PullApproval PDA: seeds = [b"approval", mandate.key()]
   const [pullApproval] = PublicKey.findProgramAddressSync(

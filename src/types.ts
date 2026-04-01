@@ -36,9 +36,11 @@ export interface VelaMandate {
   nextPaymentDue: bigint;
   status: MandateStatus;
   bump: number;
+  billingType: BillingType;
 }
 
 export interface VelaPlan {
+  billingType: "flat";
   address: PublicKey;
   merchant: PublicKey;
   planId: bigint;
@@ -50,6 +52,23 @@ export interface VelaPlan {
   credentialMint: PublicKey;
   bump: number;
 }
+
+export interface VelaUsagePlan {
+  billingType: "usage";
+  address: PublicKey;
+  merchant: PublicKey;
+  planId: bigint;
+  unitName: string;
+  tiers: Array<{ upTo: bigint; ratePerUnit: bigint }>;
+  tierCount: number;
+  maxChargePerPeriod: bigint;
+  settlementFrequency: bigint;
+  status: PlanStatus;
+  credentialMint: PublicKey;
+  bump: number;
+}
+
+export type SubscribablePlan = VelaPlan | VelaUsagePlan;
 
 export interface MerchantState {
   address: PublicKey;
@@ -73,7 +92,8 @@ export interface VelaSubscribeParams {
 }
 
 export interface VelaPullParams {
-  mandateAddress: PublicKey;
+  /** Optional explicit mandate PDA. If omitted, it is derived from subscriberAddress + planAddress. */
+  mandateAddress?: PublicKey;
   subscriberAddress: PublicKey;
   merchantAddress: PublicKey;
   planAddress: PublicKey;
@@ -137,6 +157,8 @@ export interface BillingScheduleParams {
   merchantAddress: PublicKey;
   frequency: bigint;
   nextPaymentDue: bigint; // Unix timestamp (seconds)
+  billingType?: BillingType;
+  usagePlanAddress?: PublicKey;
 }
 
 export interface InitKeeperConfigParams {
@@ -165,7 +187,7 @@ export interface ValidationResult {
 
 export interface SubscribeValidationResult {
   canSubscribe: boolean;
-  plan: VelaPlan;
+  plan: SubscribablePlan;
   reasons: string[];
 }
 

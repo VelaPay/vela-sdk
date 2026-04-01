@@ -1,7 +1,8 @@
 import type { Program } from "@coral-xyz/anchor";
 import type { Connection, PublicKey } from "@solana/web3.js";
-import { deserializeMandate, deserializePlan } from "../accounts/deserialize";
+import { deserializeMandate } from "../accounts/deserialize";
 import { deriveMandateAddress } from "../accounts/pda";
+import { getSubscribablePlan } from "../accounts/subscribable-plan";
 import type {
   CancelValidationResult,
   SubscribeValidationResult,
@@ -71,8 +72,7 @@ export async function validateSubscribe(
   planAddress: PublicKey,
   subscriber: PublicKey,
 ): Promise<SubscribeValidationResult> {
-  const raw = await (program.account as any).velaPlan.fetch(planAddress);
-  const plan = deserializePlan(planAddress, raw);
+  const plan = await getSubscribablePlan(program, planAddress);
   const reasons: string[] = [];
 
   // Check plan is active

@@ -89,6 +89,10 @@ export async function registerBillingSchedule(
         nextPaymentDue: new Date(
           Number(params.nextPaymentDue) * 1000,
         ).toISOString(),
+        ...(params.billingType ? { billingType: params.billingType } : {}),
+        ...(params.usagePlanAddress
+          ? { usagePlanAddress: params.usagePlanAddress.toBase58() }
+          : {}),
       }),
     });
   } catch (err) {
