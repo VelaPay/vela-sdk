@@ -9,16 +9,47 @@
   "instructions": [
     {
       "name": "cancel",
-      "discriminator": [232, 219, 223, 41, 219, 236, 220, 190],
+      "discriminator": [
+        232,
+        219,
+        223,
+        41,
+        219,
+        236,
+        220,
+        190
+      ],
       "accounts": [
-        { "name": "authority", "writable": true, "signer": true },
-        { "name": "subscriber" },
-        { "name": "plan" },
-        { "name": "mandate", "writable": true },
-        { "name": "subscriber_credential_account", "writable": true },
-        { "name": "credential_mint", "writable": true },
-        { "name": "token_2022_program" },
-        { "name": "subscriber_token_account", "writable": true },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "subscriber"
+        },
+        {
+          "name": "plan"
+        },
+        {
+          "name": "mandate",
+          "writable": true
+        },
+        {
+          "name": "subscriber_credential_account",
+          "writable": true
+        },
+        {
+          "name": "credential_mint",
+          "writable": true
+        },
+        {
+          "name": "token_2022_program"
+        },
+        {
+          "name": "subscriber_token_account",
+          "writable": true
+        },
         {
           "name": "token_program",
           "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
@@ -28,16 +59,44 @@
     },
     {
       "name": "create_plan",
-      "discriminator": [77, 43, 141, 254, 212, 118, 41, 186],
+      "discriminator": [
+        77,
+        43,
+        141,
+        254,
+        212,
+        118,
+        41,
+        186
+      ],
       "accounts": [
-        { "name": "merchant", "writable": true, "signer": true },
+        {
+          "name": "merchant",
+          "writable": true,
+          "signer": true
+        },
         {
           "name": "merchant_state",
           "writable": true,
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [109, 101, 114, 99, 104, 97, 110, 116] },
-              { "kind": "account", "path": "merchant" }
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  114,
+                  99,
+                  104,
+                  97,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              }
             ]
           }
         },
@@ -46,9 +105,24 @@
           "writable": true,
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [112, 108, 97, 110] },
-              { "kind": "account", "path": "merchant" },
-              { "kind": "account", "path": "merchant_state.plan_count", "account": "MerchantState" }
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              },
+              {
+                "kind": "account",
+                "path": "merchant_state.plan_count",
+                "account": "MerchantState"
+              }
             ]
           }
         },
@@ -57,37 +131,110 @@
           "writable": true,
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [99, 114, 101, 100, 101, 110, 116, 105, 97, 108] },
-              { "kind": "account", "path": "merchant" },
-              { "kind": "account", "path": "merchant_state.plan_count", "account": "MerchantState" }
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  114,
+                  101,
+                  100,
+                  101,
+                  110,
+                  116,
+                  105,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              },
+              {
+                "kind": "account",
+                "path": "merchant_state.plan_count",
+                "account": "MerchantState"
+              }
             ]
           }
         },
-        { "name": "system_program", "address": "11111111111111111111111111111111" },
-        { "name": "token_2022_program" },
-        { "name": "rent", "address": "SysvarRent111111111111111111111111111111111" }
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_2022_program"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
       ],
       "args": [
-        { "name": "amount", "type": "u64" },
-        { "name": "frequency", "type": "u64" },
-        { "name": "trial_period", "type": "u64" },
-        { "name": "max_pulls", "type": "u64" }
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "frequency",
+          "type": "u64"
+        },
+        {
+          "name": "trial_period",
+          "type": "u64"
+        },
+        {
+          "name": "max_pulls",
+          "type": "u64"
+        }
       ]
     },
     {
       "name": "execute_pull",
-      "discriminator": [182, 53, 53, 245, 142, 155, 240, 154],
+      "discriminator": [
+        182,
+        53,
+        53,
+        245,
+        142,
+        155,
+        240,
+        154
+      ],
       "accounts": [
-        { "name": "payer", "writable": true, "signer": true },
-        { "name": "subscriber" },
-        { "name": "merchant" },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "subscriber"
+        },
+        {
+          "name": "merchant"
+        },
         {
           "name": "plan",
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [112, 108, 97, 110] },
-              { "kind": "account", "path": "merchant" },
-              { "kind": "account", "path": "plan.plan_id", "account": "VelaPlan" }
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              },
+              {
+                "kind": "account",
+                "path": "plan.plan_id",
+                "account": "VelaPlan"
+              }
             ]
           }
         },
@@ -96,134 +243,2170 @@
           "writable": true,
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [109, 97, 110, 100, 97, 116, 101] },
-              { "kind": "account", "path": "subscriber" },
-              { "kind": "account", "path": "plan" }
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "subscriber"
+              },
+              {
+                "kind": "account",
+                "path": "plan"
+              }
             ]
           }
         },
-        { "name": "subscriber_wrapped_account", "writable": true },
-        { "name": "merchant_wrapped_account", "writable": true },
-        { "name": "wrapped_usdc_mint" },
-        { "name": "pull_approval", "writable": true },
-        { "name": "token_2022_program" }
+        {
+          "name": "subscriber_wrapped_account",
+          "docs": [
+            "Subscriber's Token-2022 wrapped USDC account (source of the transfer)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "merchant_wrapped_account",
+          "docs": [
+            "Merchant's Token-2022 wrapped USDC account (destination of the transfer)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "wrapped_usdc_mint",
+          "docs": [
+            "The Token-2022 wrapped USDC mint charged by the billing transfer."
+          ],
+          "writable": true
+        },
+        {
+          "name": "pull_approval",
+          "writable": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "wrapping_vault",
+          "writable": true
+        },
+        {
+          "name": "hook_program",
+          "address": "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX"
+        },
+        {
+          "name": "extra_account_meta_list",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wrapped_usdc_mint"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "hook_program"
+            }
+          }
+        },
+        {
+          "name": "protocol_program",
+          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
       ],
       "args": []
     },
     {
-      "name": "subscribe",
-      "discriminator": [254, 28, 191, 138, 156, 179, 183, 53],
+      "name": "init_config",
+      "discriminator": [
+        23,
+        235,
+        115,
+        232,
+        168,
+        96,
+        1,
+        231
+      ],
       "accounts": [
-        { "name": "subscriber", "writable": true, "signer": true },
-        { "name": "merchant" },
         {
-          "name": "plan",
-          "pda": {
-            "seeds": [
-              { "kind": "const", "value": [112, 108, 97, 110] },
-              { "kind": "account", "path": "merchant" },
-              { "kind": "account", "path": "plan.plan_id", "account": "VelaPlan" }
-            ]
-          }
+          "name": "admin",
+          "writable": true,
+          "signer": true
         },
         {
-          "name": "mandate",
+          "name": "config",
           "writable": true,
           "pda": {
             "seeds": [
-              { "kind": "const", "value": [109, 97, 110, 100, 97, 116, 101] },
-              { "kind": "account", "path": "subscriber" },
-              { "kind": "account", "path": "plan" }
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
             ]
           }
         },
-        { "name": "credential_mint", "writable": true },
-        { "name": "subscriber_credential_account", "writable": true },
-        { "name": "token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-        { "name": "token_2022_program" },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "ix",
+          "type": {
+            "defined": {
+              "name": "InitConfigIx"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "init_keeper_config",
+      "discriminator": [
+        36,
+        203,
+        29,
+        158,
+        95,
+        76,
+        228,
+        97
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "keeper_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  101,
+                  101,
+                  112,
+                  101,
+                  114,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "mode",
+          "type": {
+            "defined": {
+              "name": "KeeperMode"
+            }
+          }
+        },
+        {
+          "name": "keeper_endpoint",
+          "type": "bytes"
+        },
+        {
+          "name": "keeper_authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "init_record_billing_comp_def",
+      "discriminator": [
+        120,
+        250,
+        131,
+        143,
+        58,
+        168,
+        233,
+        103
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_validate_mandate_comp_def",
+      "discriminator": [
+        121,
+        127,
+        132,
+        6,
+        132,
+        253,
+        11,
+        108
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_wrapped_mint",
+      "discriminator": [
+        130,
+        249,
+        176,
+        48,
+        101,
+        223,
+        71,
+        226
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint_authority",
+          "docs": [
+            "permanent delegate, and vault owner. Seeds: [b\"mint-authority\"]"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "wrapped_usdc_mint",
+          "docs": [
+            "The Token-2022 wrapped USDC mint account to create."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "spl_usdc_mint",
+          "docs": [
+            "The SPL USDC mint (not Token-2022) used for the backing vault."
+          ]
+        },
+        {
+          "name": "wrapping_vault",
+          "docs": [
+            "The SPL USDC vault ATA for holding subscriber deposits.",
+            "Owned by mint_authority PDA, associated with spl_usdc_mint."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mint_authority"
+              },
+              {
+                "kind": "account",
+                "path": "spl_token_program"
+              },
+              {
+                "kind": "account",
+                "path": "spl_usdc_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "spl_token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
         {
           "name": "associated_token_program",
           "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
-        { "name": "system_program", "address": "11111111111111111111111111111111" },
-        { "name": "rent", "address": "SysvarRent111111111111111111111111111111111" }
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
       ],
       "args": []
     },
     {
-      "name": "wrap",
-      "discriminator": [178, 40, 10, 189, 228, 129, 186, 140],
+      "name": "record_billing_event_callback",
+      "discriminator": [
+        123,
+        164,
+        16,
+        122,
+        130,
+        206,
+        223,
+        55
+      ],
       "accounts": [
-        { "name": "subscriber", "signer": true },
-        { "name": "config" },
-        { "name": "spl_usdc_mint" },
-        { "name": "wrapped_usdc_mint", "writable": true },
-        { "name": "subscriber_usdc_account", "writable": true },
-        { "name": "subscriber_wrapped_account", "writable": true },
-        { "name": "wrapping_vault", "writable": true },
-        { "name": "mint_authority" },
-        { "name": "spl_token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-        { "name": "token_2022_program" }
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "billing_event",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  105,
+                  108,
+                  108,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "account",
+                "path": "mandate.pulls_executed",
+                "account": "VelaMandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate",
+          "writable": true
+        },
+        {
+          "name": "plan"
+        }
       ],
       "args": [
-        { "name": "amount", "type": "u64" }
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "RecordBillingEventOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
       ]
     },
     {
-      "name": "unwrap_tokens",
-      "discriminator": [17, 121, 3, 250, 67, 105, 232, 113],
+      "name": "request_billing_record",
+      "discriminator": [
+        215,
+        54,
+        132,
+        206,
+        233,
+        54,
+        78,
+        167
+      ],
       "accounts": [
-        { "name": "user", "signer": true },
-        { "name": "config" },
-        { "name": "spl_usdc_mint" },
-        { "name": "wrapped_usdc_mint", "writable": true },
-        { "name": "user_wrapped_account", "writable": true },
-        { "name": "user_usdc_account", "writable": true },
-        { "name": "wrapping_vault", "writable": true },
-        { "name": "mint_authority" },
-        { "name": "spl_token_program", "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-        { "name": "token_2022_program" }
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true
+        },
+        {
+          "name": "clock_account",
+          "writable": true
+        },
+        {
+          "name": "plan",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "plan.merchant",
+                "account": "VelaPlan"
+              },
+              {
+                "kind": "account",
+                "path": "plan.plan_id",
+                "account": "VelaPlan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate.subscriber",
+                "account": "VelaMandate"
+              },
+              {
+                "kind": "account",
+                "path": "plan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "billing_event",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  105,
+                  108,
+                  108,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "account",
+                "path": "mandate.pulls_executed",
+                "account": "VelaMandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
       ],
       "args": [
-        { "name": "amount", "type": "u64" }
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "request_validation",
+      "discriminator": [
+        72,
+        26,
+        53,
+        67,
+        228,
+        30,
+        144,
+        53
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true
+        },
+        {
+          "name": "clock_account",
+          "writable": true
+        },
+        {
+          "name": "plan",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "plan.merchant",
+                "account": "VelaPlan"
+              },
+              {
+                "kind": "account",
+                "path": "plan.plan_id",
+                "account": "VelaPlan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate.subscriber",
+                "account": "VelaMandate"
+              },
+              {
+                "kind": "account",
+                "path": "plan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pull_approval",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  112,
+                  112,
+                  114,
+                  111,
+                  118,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "ciphertext",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        },
+        {
+          "name": "pub_key",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "subscribe",
+      "discriminator": [
+        254,
+        28,
+        191,
+        138,
+        156,
+        179,
+        183,
+        53
+      ],
+      "accounts": [
+        {
+          "name": "subscriber",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "merchant"
+        },
+        {
+          "name": "plan",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              },
+              {
+                "kind": "account",
+                "path": "plan.plan_id",
+                "account": "VelaPlan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "subscriber"
+              },
+              {
+                "kind": "account",
+                "path": "plan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "credential_mint",
+          "writable": true
+        },
+        {
+          "name": "subscriber_credential_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "token_2022_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "unwrap_tokens",
+      "discriminator": [
+        17,
+        121,
+        3,
+        250,
+        67,
+        105,
+        232,
+        113
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_usdc_mint",
+          "docs": [
+            "The SPL USDC mint (Token program, not Token-2022)."
+          ]
+        },
+        {
+          "name": "wrapped_usdc_mint",
+          "docs": [
+            "The Token-2022 wrapped USDC mint (must match config.wrapped_usdc_mint)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "user_wrapped_account",
+          "docs": [
+            "User's Token-2022 wrapped USDC account (source to burn from)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "user_usdc_account",
+          "docs": [
+            "User's SPL USDC account (destination for released USDC)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "wrapping_vault",
+          "docs": [
+            "Protocol's SPL USDC vault (releases USDC to user, must match config.wrapping_vault)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_config",
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "ix",
+          "type": {
+            "defined": {
+              "name": "UpdateConfigIx"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_keeper_config",
+      "discriminator": [
+        7,
+        38,
+        156,
+        247,
+        29,
+        196,
+        148,
+        76
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "keeper_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  101,
+                  101,
+                  112,
+                  101,
+                  114,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "mode",
+          "type": {
+            "option": {
+              "defined": {
+                "name": "KeeperMode"
+              }
+            }
+          }
+        },
+        {
+          "name": "keeper_endpoint",
+          "type": {
+            "option": "bytes"
+          }
+        },
+        {
+          "name": "keeper_authority",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "validate_mandate_callback",
+      "discriminator": [
+        18,
+        21,
+        173,
+        122,
+        11,
+        126,
+        79,
+        200
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "pull_approval",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  112,
+                  112,
+                  114,
+                  111,
+                  118,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate"
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "ValidateMandateOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "wrap",
+      "discriminator": [
+        178,
+        40,
+        10,
+        189,
+        228,
+        129,
+        186,
+        140
+      ],
+      "accounts": [
+        {
+          "name": "subscriber",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_usdc_mint",
+          "docs": [
+            "The SPL USDC mint (Token program, not Token-2022)."
+          ]
+        },
+        {
+          "name": "wrapped_usdc_mint",
+          "docs": [
+            "The Token-2022 wrapped USDC mint (must match config.wrapped_usdc_mint)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "subscriber_usdc_account",
+          "docs": [
+            "Subscriber's SPL USDC token account (source of SPL USDC deposit)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "destination_wrapped_account",
+          "docs": [
+            "Subscriber's Token-2022 wrapped USDC account (destination for minted wrapped USDC)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "destination_authority"
+        },
+        {
+          "name": "wrapping_vault",
+          "docs": [
+            "Protocol's SPL USDC vault (receives subscriber deposit, must match config.wrapping_vault)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
       ]
     }
   ],
   "accounts": [
     {
+      "name": "ArciumSignerAccount",
+      "discriminator": [
+        214,
+        157,
+        122,
+        114,
+        117,
+        44,
+        214,
+        74
+      ]
+    },
+    {
+      "name": "BillingEvent",
+      "discriminator": [
+        250,
+        107,
+        147,
+        56,
+        61,
+        68,
+        173,
+        91
+      ]
+    },
+    {
+      "name": "KeeperConfig",
+      "discriminator": [
+        77,
+        240,
+        250,
+        22,
+        132,
+        135,
+        162,
+        101
+      ]
+    },
+    {
       "name": "MerchantState",
-      "discriminator": [122, 123, 114, 132, 232, 201, 233, 199]
+      "discriminator": [
+        122,
+        123,
+        114,
+        132,
+        232,
+        201,
+        233,
+        199
+      ]
+    },
+    {
+      "name": "ProtocolConfig",
+      "discriminator": [
+        207,
+        91,
+        250,
+        28,
+        152,
+        179,
+        215,
+        209
+      ]
+    },
+    {
+      "name": "PullApproval",
+      "discriminator": [
+        34,
+        113,
+        33,
+        28,
+        209,
+        134,
+        64,
+        93
+      ]
     },
     {
       "name": "VelaMandate",
-      "discriminator": [30, 59, 97, 45, 156, 44, 1, 253]
+      "discriminator": [
+        30,
+        59,
+        97,
+        45,
+        156,
+        44,
+        1,
+        253
+      ]
     },
     {
       "name": "VelaPlan",
-      "discriminator": [73, 112, 69, 121, 5, 183, 0, 4]
+      "discriminator": [
+        73,
+        112,
+        69,
+        121,
+        5,
+        183,
+        0,
+        4
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ArciumUnavailableEvent",
+      "discriminator": [
+        95,
+        48,
+        170,
+        86,
+        232,
+        183,
+        168,
+        143
+      ]
+    },
+    {
+      "name": "BillingEventCreatedEvent",
+      "discriminator": [
+        254,
+        187,
+        238,
+        203,
+        158,
+        67,
+        237,
+        251
+      ]
+    },
+    {
+      "name": "ValidationCompleteEvent",
+      "discriminator": [
+        145,
+        238,
+        184,
+        133,
+        204,
+        131,
+        38,
+        180
+      ]
     }
   ],
   "errors": [
-    { "code": 6000, "name": "PullTooEarly", "msg": "Pull attempted before next_payment_due" },
-    { "code": 6001, "name": "MandateNotActive", "msg": "Mandate has expired or been cancelled" },
-    { "code": 6002, "name": "MaxPullsExceeded", "msg": "Maximum pulls exhausted for this mandate" },
-    { "code": 6003, "name": "InsufficientBalance", "msg": "Subscriber has insufficient token balance" },
-    { "code": 6004, "name": "UnauthorizedCancel", "msg": "Only the subscriber can cancel their mandate" },
-    { "code": 6005, "name": "FrequencyTooLow", "msg": "Plan frequency below minimum (3600 seconds)" },
-    { "code": 6006, "name": "Overflow", "msg": "Arithmetic overflow" },
-    { "code": 6007, "name": "PlanNotActive", "msg": "Plan is not active" },
-    { "code": 6008, "name": "MandateExpired", "msg": "Mandate has expired" },
-    { "code": 6009, "name": "AmountExceedsPlanAmount", "msg": "Pull amount exceeds plan amount" }
+    {
+      "code": 6000,
+      "name": "PullTooEarly",
+      "msg": "Pull attempted before next_payment_due"
+    },
+    {
+      "code": 6001,
+      "name": "MandateNotActive",
+      "msg": "Mandate has expired or been cancelled"
+    },
+    {
+      "code": 6002,
+      "name": "MaxPullsExceeded",
+      "msg": "Maximum pulls exhausted for this mandate"
+    },
+    {
+      "code": 6003,
+      "name": "InsufficientBalance",
+      "msg": "Subscriber has insufficient token balance"
+    },
+    {
+      "code": 6004,
+      "name": "UnauthorizedCancel",
+      "msg": "Only the subscriber can cancel their mandate"
+    },
+    {
+      "code": 6005,
+      "name": "FrequencyTooLow",
+      "msg": "Plan frequency below minimum (3600 seconds)"
+    },
+    {
+      "code": 6006,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6007,
+      "name": "PlanNotActive",
+      "msg": "Plan is not active"
+    },
+    {
+      "code": 6008,
+      "name": "MandateExpired",
+      "msg": "Mandate has expired"
+    },
+    {
+      "code": 6009,
+      "name": "AmountExceedsPlanAmount",
+      "msg": "Pull amount exceeds plan amount"
+    },
+    {
+      "code": 6010,
+      "name": "MaxPullsTooLow",
+      "msg": "Plan max_pulls must be at least 1"
+    },
+    {
+      "code": 6011,
+      "name": "ApprovalNotGranted",
+      "msg": "No valid PullApproval PDA exists -- Arcium validation required"
+    },
+    {
+      "code": 6012,
+      "name": "ApprovalExpired",
+      "msg": "PullApproval has expired (past valid_until timestamp)"
+    },
+    {
+      "code": 6013,
+      "name": "AbortedComputation",
+      "msg": "Arcium computation was aborted or produced invalid output"
+    },
+    {
+      "code": 6014,
+      "name": "ClusterNotSet",
+      "msg": "Arcium cluster not configured in ProtocolConfig"
+    },
+    {
+      "code": 6015,
+      "name": "UnauthorizedAdmin",
+      "msg": "Only the protocol admin can perform this action"
+    },
+    {
+      "code": 6016,
+      "name": "ApprovalAlreadyExists",
+      "msg": "PullApproval already exists for this billing period"
+    },
+    {
+      "code": 6017,
+      "name": "ArciumUnavailable",
+      "msg": "Arcium is unavailable -- pull blocked (fail-closed per D-01)"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidCiphertextInput",
+      "msg": "Encrypted input payload length does not match the circuit interface"
+    },
+    {
+      "code": 6019,
+      "name": "PendingBillingRecord",
+      "msg": "The previous pull is missing its billing record; finalize billing before executing again"
+    },
+    {
+      "code": 6020,
+      "name": "BillingEventAlreadyExists",
+      "msg": "BillingEvent already exists for this pull execution"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidArciumAccount",
+      "msg": "Arcium account set does not match the configured canonical PDAs"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidProtocolConfig",
+      "msg": "ProtocolConfig contains an invalid or inconsistent Arcium cluster configuration"
+    },
+    {
+      "code": 6023,
+      "name": "InvalidCallbackBinding",
+      "msg": "The supplied Arcium callback does not match the queued Vela request"
+    },
+    {
+      "code": 6024,
+      "name": "InvalidComputationOffset",
+      "msg": "Computation offset must match the protocol-derived request identity"
+    },
+    {
+      "code": 6025,
+      "name": "WrappedMintAlreadyInitialized",
+      "msg": "Wrapped USDC mint has already been initialized"
+    },
+    {
+      "code": 6026,
+      "name": "TransferNotAuthorized",
+      "msg": "Transfer not authorized -- no valid PullApproval and not a wrap/unwrap operation"
+    },
+    {
+      "code": 6027,
+      "name": "VaultMismatch",
+      "msg": "Wrapping vault mismatch -- vault address does not match ProtocolConfig"
+    },
+    {
+      "code": 6028,
+      "name": "UsdcMintMismatch",
+      "msg": "SPL USDC mint mismatch -- provided mint is not the expected USDC mint"
+    },
+    {
+      "code": 6029,
+      "name": "WrappedMintNotInitialized",
+      "msg": "Wrapped USDC mint not yet initialized in ProtocolConfig"
+    },
+    {
+      "code": 6030,
+      "name": "EndpointTooLong",
+      "msg": "Keeper endpoint exceeds maximum length (128 bytes)"
+    }
   ],
   "types": [
+    {
+      "name": "ArciumSignerAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArciumUnavailableEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BillingEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "subscriber",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan_id",
+            "type": "u64"
+          },
+          {
+            "name": "encrypted_blob",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                8
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u128"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BillingEventCreatedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "subscriber",
+            "type": "pubkey"
+          },
+          {
+            "name": "pulls_executed",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClusterType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Cerberus"
+          },
+          {
+            "name": "Manticore"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitConfigIx",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "cluster_pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "cluster_type",
+            "type": {
+              "defined": {
+                "name": "ClusterType"
+              }
+            }
+          },
+          {
+            "name": "cluster_offset",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KeeperConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "mode",
+            "type": {
+              "defined": {
+                "name": "KeeperMode"
+              }
+            }
+          },
+          {
+            "name": "keeper_endpoint",
+            "type": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          },
+          {
+            "name": "endpoint_len",
+            "type": "u8"
+          },
+          {
+            "name": "keeper_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KeeperMode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Centralized"
+          },
+          {
+            "name": "TukTuk"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MXEEncryptedStruct",
+      "generics": [
+        {
+          "kind": "const",
+          "name": "LEN",
+          "type": "usize"
+        }
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nonce",
+            "type": "u128"
+          },
+          {
+            "name": "ciphertexts",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                {
+                  "generic": "LEN"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
     {
       "name": "MandateStatus",
       "type": {
         "kind": "enum",
         "variants": [
-          { "name": "Active" },
-          { "name": "Cancelled" },
-          { "name": "Expired" }
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Expired"
+          }
         ]
       }
     },
@@ -232,9 +2415,18 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "merchant", "type": "pubkey" },
-          { "name": "plan_count", "type": "u64" },
-          { "name": "bump", "type": "u8" }
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan_count",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
         ]
       }
     },
@@ -243,8 +2435,145 @@
       "type": {
         "kind": "enum",
         "variants": [
-          { "name": "Active" },
-          { "name": "Inactive" }
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Inactive"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProtocolConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "cluster_pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "cluster_type",
+            "type": {
+              "defined": {
+                "name": "ClusterType"
+              }
+            }
+          },
+          {
+            "name": "cluster_offset",
+            "type": "u64"
+          },
+          {
+            "name": "wrapped_usdc_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "wrapping_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PullApproval",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "valid_until",
+            "type": "i64"
+          },
+          {
+            "name": "approved",
+            "type": "bool"
+          },
+          {
+            "name": "approved_amount",
+            "type": "u64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RecordBillingEventOutput",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "MXEEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "8"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SignedComputationOutputs",
+      "generics": [
+        {
+          "kind": "type",
+          "name": "O"
+        }
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Success",
+            "fields": [
+              {
+                "generic": "O"
+              },
+              {
+                "array": [
+                  "u8",
+                  64
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Failure"
+          },
+          {
+            "name": "MarkerForIdlBuildDoNotUseThis",
+            "fields": [
+              {
+                "generic": "O"
+              }
+            ]
+          }
         ]
       }
     },
@@ -253,25 +2582,74 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "subscriber", "type": "pubkey" },
-          { "name": "plan", "type": "pubkey" },
-          { "name": "merchant", "type": "pubkey" },
-          { "name": "amount", "type": "u64" },
-          { "name": "frequency", "type": "u64" },
-          { "name": "start_date", "type": "i64" },
-          { "name": "expiry", "type": "i64" },
-          { "name": "max_pulls", "type": "u64" },
-          { "name": "pulls_executed", "type": "u64" },
-          { "name": "next_payment_due", "type": "i64" },
-          { "name": "last_pull_at", "type": "i64" },
-          { "name": "last_billing_recorded_pull", "type": "u64" },
-          { "name": "validation_request_nonce", "type": "u64" },
-          { "name": "billing_request_nonce", "type": "u64" },
+          {
+            "name": "subscriber",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "frequency",
+            "type": "u64"
+          },
+          {
+            "name": "start_date",
+            "type": "i64"
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "max_pulls",
+            "type": "u64"
+          },
+          {
+            "name": "pulls_executed",
+            "type": "u64"
+          },
+          {
+            "name": "next_payment_due",
+            "type": "i64"
+          },
+          {
+            "name": "last_pull_at",
+            "type": "i64"
+          },
+          {
+            "name": "last_billing_recorded_pull",
+            "type": "u64"
+          },
+          {
+            "name": "validation_request_nonce",
+            "type": "u64"
+          },
+          {
+            "name": "billing_request_nonce",
+            "type": "u64"
+          },
           {
             "name": "status",
-            "type": { "defined": { "name": "MandateStatus" } }
+            "type": {
+              "defined": {
+                "name": "MandateStatus"
+              }
+            }
           },
-          { "name": "bump", "type": "u8" }
+          {
+            "name": "bump",
+            "type": "u8"
+          }
         ]
       }
     },
@@ -280,18 +2658,102 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "merchant", "type": "pubkey" },
-          { "name": "plan_id", "type": "u64" },
-          { "name": "amount", "type": "u64" },
-          { "name": "frequency", "type": "u64" },
-          { "name": "trial_period", "type": "u64" },
-          { "name": "max_pulls", "type": "u64" },
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan_id",
+            "type": "u64"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "frequency",
+            "type": "u64"
+          },
+          {
+            "name": "trial_period",
+            "type": "u64"
+          },
+          {
+            "name": "max_pulls",
+            "type": "u64"
+          },
           {
             "name": "status",
-            "type": { "defined": { "name": "PlanStatus" } }
+            "type": {
+              "defined": {
+                "name": "PlanStatus"
+              }
+            }
           },
-          { "name": "credential_mint", "type": "pubkey" },
-          { "name": "bump", "type": "u8" }
+          {
+            "name": "credential_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateConfigIx",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "cluster_pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "cluster_type",
+            "type": {
+              "defined": {
+                "name": "ClusterType"
+              }
+            }
+          },
+          {
+            "name": "cluster_offset",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValidateMandateOutput",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValidationCompleteEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "approved",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
         ]
       }
     }
