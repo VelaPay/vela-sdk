@@ -24,6 +24,7 @@ export const MINT_AUTHORITY_SEED = Buffer.from("mint-authority");
 export const EXTRA_ACCOUNT_METAS_SEED = Buffer.from("extra-account-metas");
 export const CONFIG_SEED = Buffer.from("config");
 export const APPROVAL_SEED = Buffer.from("approval");
+export const BILLING_SEED = Buffer.from("billing");
 export const KEEPER_CONFIG_SEED = Buffer.from("keeper-config");
 
 // Token constants
