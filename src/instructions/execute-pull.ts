@@ -1,12 +1,18 @@
 import type { Program } from "@coral-xyz/anchor";
 import {
   TOKEN_2022_PROGRAM_ID,
-  addExtraAccountMetasForExecute,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { type Connection, PublicKey, type TransactionInstruction } from "@solana/web3.js";
 import { deriveMandateAddress } from "../accounts/pda";
-import { APPROVAL_SEED, PROGRAM_ID } from "../constants";
+import {
+  APPROVAL_SEED,
+  CONFIG_SEED,
+  EXTRA_ACCOUNT_METAS_SEED,
+  KEEPER_CONFIG_SEED,
+  PROGRAM_ID,
+  TRANSFER_HOOK_PROGRAM_ID,
+} from "../constants";
 import type { VelaPullParams } from "../types";
 
 export interface BuildExecutePullResult {
@@ -14,20 +20,33 @@ export interface BuildExecutePullResult {
   mandateAddress: PublicKey;
 }
 
+async function fetchWrappingVault(
+  connection: Connection,
+  protocolConfig: PublicKey,
+): Promise<PublicKey> {
+  const accountInfo = await connection.getAccountInfo(protocolConfig);
+  if (!accountInfo || accountInfo.data.length < 145) {
+    throw new Error("ProtocolConfig account not found or invalid");
+  }
+
+  const wrappingVaultOffset = 113;
+  return new PublicKey(
+    accountInfo.data.subarray(wrappingVaultOffset, wrappingVaultOffset + 32),
+  );
+}
+
 /**
  * Builds a raw `execute_pull` TransactionInstruction without signing or sending.
  *
- * Uses Token-2022 transfer_checked which triggers the transfer hook CPI.
- * The mandate PDA signs the transfer as authority over the subscriber's wrapped USDC account.
- * Extra accounts for the transfer hook (ExtraAccountMetaList, vault, config) are resolved
- * automatically via addExtraAccountMetasForExecute. The PullApproval PDA is appended manually.
+ * Settles a pull through Token-2022 `transfer_checked`, which fires the
+ * dedicated Vela transfer-hook validator against the mandate-owned source ATA.
  *
- * Pull execution is permissionless -- any payer can submit the transaction
- * as long as the mandate conditions are met on-chain and a valid PullApproval PDA exists.
+ * Pull execution requires the payer to be the authorized keeper (keeper_authority in KeeperConfig).
+ * The on-chain program validates that payer.key() == keeper_config.keeper_authority.
  */
 export async function buildExecutePullInstruction(
   program: Program,
-  connection: Connection,
+  _connection: Connection,
   params: VelaPullParams & { payer: PublicKey },
 ): Promise<BuildExecutePullResult> {
   const {
@@ -52,62 +71,59 @@ export async function buildExecutePullInstruction(
     [APPROVAL_SEED, mandateAddress.toBuffer()],
     programId,
   );
+  const [protocolConfig] = PublicKey.findProgramAddressSync(
+    [CONFIG_SEED],
+    programId,
+  );
+  const [extraAccountMetaList] = PublicKey.findProgramAddressSync(
+    [EXTRA_ACCOUNT_METAS_SEED, wrappedUsdcMint.toBuffer()],
+    TRANSFER_HOOK_PROGRAM_ID,
+  );
+  const [keeperConfig] = PublicKey.findProgramAddressSync(
+    [KEEPER_CONFIG_SEED],
+    programId,
+  );
 
   // Derive Token-2022 ATAs for wrapped USDC
   const subscriberWrappedAccount = getAssociatedTokenAddressSync(
     wrappedUsdcMint,
-    subscriberAddress,
-    false,
+    mandateAddress,
+    true,
     TOKEN_2022_PROGRAM_ID,
   );
 
   const merchantWrappedAccount = getAssociatedTokenAddressSync(
     wrappedUsdcMint,
     merchantAddress,
-    false,
+    true,
     TOKEN_2022_PROGRAM_ID,
   );
 
-  // Build the base execute_pull instruction from Anchor
-  // The mandate PDA is the authority (token::authority = mandate in the program)
+  const wrappingVault =
+    params.wrappingVault ??
+    (await fetchWrappingVault(_connection, protocolConfig));
+
   const baseInstruction = await (program.methods as any)
     .executePull()
     .accounts({
       payer,
       subscriber: subscriberAddress,
       merchant: merchantAddress,
+      keeperConfig,
       plan: planAddress,
       mandate: mandateAddress,
       subscriberWrappedAccount,
       merchantWrappedAccount,
       wrappedUsdcMint,
       pullApproval,
+      protocolConfig,
+      wrappingVault,
+      hookProgram: TRANSFER_HOOK_PROGRAM_ID,
+      extraAccountMetaList,
+      protocolProgram: programId,
       token2022Program: TOKEN_2022_PROGRAM_ID,
     })
     .instruction();
-
-  // Resolve extra account metas for the transfer hook from the ExtraAccountMetaList PDA.
-  // This adds the ExtraAccountMetaList PDA and any static extra accounts (vault, config)
-  // that were registered in init_extra_account_meta_list.
-  // The PullApproval PDA is already in the Anchor accounts struct and does NOT need
-  // to be added via addExtraAccountMetasForExecute (it is passed as a named account).
-  try {
-    await addExtraAccountMetasForExecute(
-      connection,
-      baseInstruction,
-      programId, // transfer hook program ID = this program
-      subscriberWrappedAccount,
-      wrappedUsdcMint,
-      merchantWrappedAccount,
-      mandateAddress, // owner/authority for the transfer hook Execute
-      BigInt(0), // amount placeholder (hook reads it from the instruction)
-      "confirmed",
-    );
-  } catch {
-    // If ExtraAccountMetaList is not yet initialized (e.g., in tests or before protocol setup),
-    // proceed without extra accounts. The on-chain hook will fail if called, but this allows
-    // building the instruction offline.
-  }
 
   return { instruction: baseInstruction, mandateAddress };
 }

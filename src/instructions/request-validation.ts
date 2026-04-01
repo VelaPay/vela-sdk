@@ -168,6 +168,26 @@ export async function buildRequestValidationInstruction(
   _connection: Connection,
   params: RequestValidationParams,
 ): Promise<BuildRequestValidationResult> {
+  // Validate ciphertext: must be exactly 8 elements, each 32 bytes
+  if (params.ciphertext.length !== 8) {
+    throw new Error(
+      `ciphertext must have exactly 8 elements, got ${params.ciphertext.length}`,
+    );
+  }
+  for (let i = 0; i < params.ciphertext.length; i++) {
+    if (params.ciphertext[i].length !== 32) {
+      throw new Error(
+        `ciphertext[${i}] must be exactly 32 bytes, got ${params.ciphertext[i].length}`,
+      );
+    }
+  }
+  // Validate pubKey: must be exactly 32 bytes (x25519 public key)
+  if (params.pubKey.length !== 32) {
+    throw new Error(
+      `pubKey must be exactly 32 bytes, got ${params.pubKey.length}`,
+    );
+  }
+
   const programId = program.programId ?? PROGRAM_ID;
 
   // Fetch ProtocolConfig for cluster info

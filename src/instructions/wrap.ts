@@ -28,7 +28,15 @@ export async function buildWrapInstruction(
   program: Program,
   params: VelaWrapParams,
 ): Promise<BuildWrapResult> {
-  const { subscriber, amount, splUsdcMint, wrappedUsdcMint, wrappingVault } =
+  const {
+    subscriber,
+    amount,
+    splUsdcMint,
+    wrappedUsdcMint,
+    wrappingVault,
+    destinationOwner = subscriber,
+    destinationWrappedAccount,
+  } =
     params;
 
   const programId = program.programId ?? PROGRAM_ID;
@@ -53,13 +61,14 @@ export async function buildWrapInstruction(
     TOKEN_PROGRAM_ID,
   );
 
-  // Subscriber's Token-2022 wrapped USDC ATA
-  const subscriberWrappedAccount = getAssociatedTokenAddressSync(
-    wrappedUsdcMint,
-    subscriber,
-    false,
-    TOKEN_2022_PROGRAM_ID,
-  );
+  const resolvedDestinationWrappedAccount =
+    destinationWrappedAccount ??
+    getAssociatedTokenAddressSync(
+      wrappedUsdcMint,
+      destinationOwner,
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
 
   const amountBN = new BN(amount.toString());
 
@@ -71,7 +80,8 @@ export async function buildWrapInstruction(
       splUsdcMint,
       wrappedUsdcMint,
       subscriberUsdcAccount,
-      subscriberWrappedAccount,
+      destinationWrappedAccount: resolvedDestinationWrappedAccount,
+      destinationAuthority: destinationOwner,
       wrappingVault,
       mintAuthority,
       splTokenProgram: TOKEN_PROGRAM_ID,

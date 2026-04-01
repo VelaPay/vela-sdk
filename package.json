@@ -25,7 +25,8 @@
         "types": "./dist/cjs/index.d.cts",
         "default": "./dist/cjs/index.cjs"
       }
-    }
+    },
+    "./idl/vela_protocol.json": "./idl/vela_protocol.json"
   },
   "bin": {
     "vela": "./bin/vela"

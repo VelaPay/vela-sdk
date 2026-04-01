@@ -73,6 +73,7 @@ export {
   fetchKeeperConfig,
   registerBillingSchedule,
 } from "./schedule";
+export type { KeeperScheduleOptions } from "./schedule";
 export type {
   BillingScheduleParams,
   CancelValidationResult,

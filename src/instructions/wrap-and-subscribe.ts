@@ -22,9 +22,9 @@ export interface BuildWrapAndSubscribeResult {
  * if any fails, all revert. The caller submits all 3 instructions in one transaction.
  *
  * Instructions:
- * 1. createAssociatedTokenAccountIdempotentInstruction for subscriber's wrapped USDC ATA (Token-2022)
- * 2. buildWrapInstruction -- wraps SPL USDC -> wrapped USDC
- * 3. buildSubscribeInstruction -- creates mandate + mints credential NFT
+ * 1. buildSubscribeInstruction -- creates the mandate + mints the credential NFT
+ * 2. createAssociatedTokenAccountIdempotentInstruction for the mandate-owned wrapped USDC ATA
+ * 3. buildWrapInstruction -- wraps SPL USDC directly into the mandate-owned billing account
  */
 export async function buildWrapAndSubscribeInstructions(
   program: Program,
@@ -43,34 +43,7 @@ export async function buildWrapAndSubscribeInstructions(
 
   const instructions: TransactionInstruction[] = [];
 
-  // 1. Create subscriber's wrapped USDC ATA (idempotent -- safe to include even if already exists)
-  const wrappedAta = getAssociatedTokenAddressSync(
-    wrappedUsdcMint,
-    subscriber,
-    false,
-    TOKEN_2022_PROGRAM_ID,
-  );
-  instructions.push(
-    createAssociatedTokenAccountIdempotentInstruction(
-      subscriber, // payer
-      wrappedAta, // ata address
-      subscriber, // owner
-      wrappedUsdcMint, // mint
-      TOKEN_2022_PROGRAM_ID,
-    ),
-  );
-
-  // 2. Wrap SPL USDC into wrapped USDC
-  const { instruction: wrapIx } = await buildWrapInstruction(program, {
-    subscriber,
-    amount,
-    splUsdcMint,
-    wrappedUsdcMint,
-    wrappingVault,
-  });
-  instructions.push(wrapIx);
-
-  // 3. Subscribe (creates mandate PDA + mints credential NFT)
+  // 1. Subscribe first so we have the mandate PDA that will own the billing balance.
   const { instruction: subscribeIx, mandateAddress, credentialAccountAddress } =
     await buildSubscribeInstruction(program, {
       subscriber,
@@ -80,6 +53,35 @@ export async function buildWrapAndSubscribeInstructions(
       credentialMintAddress,
     });
   instructions.push(subscribeIx);
+
+  // 2. Create the mandate-owned wrapped USDC ATA.
+  const wrappedAta = getAssociatedTokenAddressSync(
+    wrappedUsdcMint,
+    mandateAddress,
+    true,
+    TOKEN_2022_PROGRAM_ID,
+  );
+  instructions.push(
+    createAssociatedTokenAccountIdempotentInstruction(
+      subscriber,
+      wrappedAta,
+      mandateAddress,
+      wrappedUsdcMint,
+      TOKEN_2022_PROGRAM_ID,
+    ),
+  );
+
+  // 3. Wrap SPL USDC directly into the mandate-owned billing account.
+  const { instruction: wrapIx } = await buildWrapInstruction(program, {
+    subscriber,
+    amount,
+    splUsdcMint,
+    wrappedUsdcMint,
+    wrappingVault,
+    destinationOwner: mandateAddress,
+    destinationWrappedAccount: wrappedAta,
+  });
+  instructions.push(wrapIx);
 
   return { instructions, mandateAddress, credentialAccountAddress };
 }

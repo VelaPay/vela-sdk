@@ -33,8 +33,16 @@ export async function buildInitKeeperConfigInstruction(
   const modeEnum =
     mode === "centralized" ? { centralized: {} } : { tukTuk: {} };
 
-  // Convert endpoint string to Vec<u8> bytes
+  // Convert endpoint string to Vec<u8> bytes with validation
   const endpointBytes = Buffer.from(keeperEndpoint);
+  if (endpointBytes.length === 0) {
+    throw new Error("keeperEndpoint must not be empty");
+  }
+  if (endpointBytes.length > 128) {
+    throw new Error(
+      `keeperEndpoint exceeds maximum length: ${endpointBytes.length} bytes (max 128)`,
+    );
+  }
 
   const instruction = await (program.methods as any)
     .initKeeperConfig(modeEnum, endpointBytes, keeperAuthority)

@@ -28,10 +28,17 @@ import {
   buildCancelInstruction,
   buildCreatePlanInstruction,
   buildExecutePullInstruction,
-  buildSubscribeInstruction,
+  buildWrapAndSubscribeInstructions,
   deserializeMandate,
   PROGRAM_ID,
+  TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
+import {
+  createToken2022Ata,
+  findHookSo,
+  installPhase7AdminState,
+  insertPullApproval,
+} from "./phase7-helpers";
 
 // ── Test helpers (same as client.test.ts) ─────────────────────────────────────
 
@@ -65,6 +72,34 @@ function advanceClock(svm: LiteSVM, unixTimestamp: bigint): void {
   const clock = svm.getClock();
   clock.unixTimestamp = unixTimestamp;
   svm.setClock(clock);
+}
+
+async function finalizeBillingRecord(
+  svm: LiteSVM,
+  program: Program,
+  mandateAddress: PublicKey,
+  pullsExecuted: bigint,
+): Promise<void> {
+  const mandateAccount = svm.getAccount(mandateAddress);
+  if (!mandateAccount) {
+    throw new Error("mandate account missing during simulation finalization");
+  }
+
+  const rawMandate = await (program.account as any).velaMandate.fetch(
+    mandateAddress,
+  );
+  const updatedMandate = {
+    ...rawMandate,
+    lastBillingRecordedPull: new BN(pullsExecuted.toString()),
+  };
+  const data = await (program.coder.accounts as any).encode(
+    "velaMandate",
+    updatedMandate,
+  );
+  svm.setAccount(mandateAddress, {
+    ...mandateAccount,
+    data: new Uint8Array(data),
+  });
 }
 
 async function sendInstructions(
@@ -153,15 +188,13 @@ async function mintUsdc(
 // ── Full Billing Cycle Simulation ─────────────────────────────────────────────
 
 describe("Full Billing Cycle Simulation", () => {
-  // NOTE: The full billing cycle now requires Token-2022 wrapped USDC infrastructure:
-  // init_wrapped_mint, init_extra_account_meta_list, wrap, and PullApproval PDA via Arcium.
-  // This test was for the v1.0 SPL Token delegate model (D-12: removed in phase 07-02).
-  // Full e2e billing is tested in vela-protocol Rust LiteSVM tests (test_execute_pull.rs).
-  test.skip("full billing cycle completes on LiteSVM: create -> subscribe -> pull x 3 -> cancel", async () => {
+  test("full billing cycle completes on LiteSVM: create -> wrapAndSubscribe -> pull x 3 -> cancel", async () => {
     // ── Setup ──
     const soPath = findProgramSo();
+    const hookSoPath = findHookSo();
     const svm = new LiteSVM().withDefaultPrograms().withTransactionHistory(0n);
     svm.addProgramFromFile(PROGRAM_ID, soPath);
+    svm.addProgramFromFile(TRANSFER_HOOK_PROGRAM_ID, hookSoPath);
 
     const merchant = Keypair.generate();
     const subscriber = Keypair.generate();
@@ -180,11 +213,6 @@ describe("Full Billing Cycle Simulation", () => {
     const subscriberTokenAccount = await createSplTokenAccount(
       merchantProvider,
       subscriber.publicKey,
-      usdcMint,
-    );
-    const merchantTokenAccount = await createSplTokenAccount(
-      merchantProvider,
-      merchant.publicKey,
       usdcMint,
     );
 
@@ -217,18 +245,31 @@ describe("Full Billing Cycle Simulation", () => {
     const planAddress = createResult.planAddress;
     const credentialMintAddress = createResult.credentialMintAddress;
 
-    // ── 2. Subscribe ──
-    const subResult = await buildSubscribeInstruction(subscriberProgram, {
+    const { wrappedUsdcMint, wrappingVault } = await installPhase7AdminState({
+      provider: merchantProvider,
+      svm,
+      admin: merchant,
+      splUsdcMint: usdcMint,
+    });
+    const merchantWrappedAccount = await createToken2022Ata(
+      merchantProvider,
+      merchant.publicKey,
+      wrappedUsdcMint,
+    );
+
+    // ── 2. Wrap + Subscribe ──
+    const subResult = await buildWrapAndSubscribeInstructions(subscriberProgram, {
       subscriber: subscriber.publicKey,
       planAddress,
       merchantAddress: merchant.publicKey,
-      usdcMintAddress: usdcMint,
+      splUsdcMint: usdcMint,
+      wrappedUsdcMint,
+      wrappingVault,
+      amount: planAmount * (maxPulls + 1n),
       credentialMintAddress,
     });
 
-    svm.expireBlockhash();
-    const subTx = new Transaction().add(subResult.instruction);
-    await subscriberProvider.sendAndConfirm!(subTx, []);
+    await sendInstructions(subscriberProvider, subResult.instructions);
 
     const mandateAddress = subResult.mandateAddress;
 
@@ -247,20 +288,35 @@ describe("Full Billing Cycle Simulation", () => {
         mandateAddress,
       );
       mandate = deserializeMandate(mandateAddress, rawMandate);
-      advanceClock(svm, mandate.nextPaymentDue);
-
-      const pullResult = await buildExecutePullInstruction(merchantProgram, {
-        payer: merchant.publicKey,
-        subscriberAddress: subscriber.publicKey,
-        merchantAddress: merchant.publicKey,
-        planAddress,
-        usdcMintAddress: usdcMint,
-        mandateAddress,
+      advanceClock(svm, BigInt(mandate.nextPaymentDue));
+      insertPullApproval({
+        svm,
+        mandate: mandateAddress,
+        validUntil: BigInt(mandate.nextPaymentDue),
+        approvedAmount: planAmount,
       });
 
-      svm.expireBlockhash();
-      const pullTx = new Transaction().add(pullResult.instruction);
-      await merchantProvider.sendAndConfirm!(pullTx, []);
+      const pullResult = await buildExecutePullInstruction(
+        merchantProgram,
+        merchantProvider.connection,
+        {
+          payer: merchant.publicKey,
+          subscriberAddress: subscriber.publicKey,
+          merchantAddress: merchant.publicKey,
+          planAddress,
+          wrappedUsdcMint,
+          wrappingVault,
+          mandateAddress,
+        },
+      );
+
+      await sendInstructions(merchantProvider, [pullResult.instruction]);
+      await finalizeBillingRecord(
+        svm,
+        merchantProgram,
+        mandateAddress,
+        BigInt(i + 1),
+      );
     }
 
     // Verify pulls executed
@@ -270,21 +326,14 @@ describe("Full Billing Cycle Simulation", () => {
     mandate = deserializeMandate(mandateAddress, rawMandate);
     expect(mandate.pullsExecuted).toBe(3n);
 
-    // Verify USDC transfers
+    // Verify wrapped USDC transfers
     const merchantAccount = await getAccount(
       merchantProvider.connection,
-      merchantTokenAccount,
+      merchantWrappedAccount,
+      undefined,
+      TOKEN_2022_PROGRAM_ID,
     );
     expect(merchantAccount.amount).toBe(planAmount * 3n);
-
-    const subscriberAccount = await getAccount(
-      merchantProvider.connection,
-      subscriberTokenAccount,
-    );
-    // Minted planAmount * (maxPulls + 1n), pulled 3 times
-    expect(subscriberAccount.amount).toBe(
-      planAmount * (maxPulls + 1n) - planAmount * 3n,
-    );
 
     // ── 4. Cancel ──
     const cancelResult = await buildCancelInstruction(subscriberProgram, {
@@ -296,9 +345,7 @@ describe("Full Billing Cycle Simulation", () => {
       credentialMintAddress,
     });
 
-    svm.expireBlockhash();
-    const cancelTx = new Transaction().add(cancelResult.instruction);
-    await subscriberProvider.sendAndConfirm!(cancelTx, []);
+    await sendInstructions(subscriberProvider, [cancelResult.instruction]);
 
     // ── Final Verification ──
     rawMandate = await (merchantProgram.account as any).velaMandate.fetch(

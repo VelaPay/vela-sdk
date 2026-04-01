@@ -39,8 +39,18 @@ export async function buildUpdateKeeperConfigInstruction(
       : null;
 
   // Convert optional endpoint string to bytes (null if not provided)
-  const endpointBytes =
-    keeperEndpoint !== undefined ? Buffer.from(keeperEndpoint) : null;
+  let endpointBytes: Buffer | null = null;
+  if (keeperEndpoint !== undefined) {
+    endpointBytes = Buffer.from(keeperEndpoint);
+    if (endpointBytes.length === 0) {
+      throw new Error("keeperEndpoint must not be empty");
+    }
+    if (endpointBytes.length > 128) {
+      throw new Error(
+        `keeperEndpoint exceeds maximum length: ${endpointBytes.length} bytes (max 128)`,
+      );
+    }
+  }
 
   // Keeper authority (null if not provided)
   const keeperAuthorityArg = keeperAuthority ?? null;
