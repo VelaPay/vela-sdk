@@ -32,6 +32,7 @@ import {
   fetchKeeperConfig,
   registerBillingSchedule,
 } from "./schedule";
+import type { KeeperScheduleOptions } from "./schedule";
 import type {
   BillingScheduleParams,
   CancelValidationResult,
@@ -44,14 +45,22 @@ import type {
   VelaMethodResult,
   VelaPlan,
   VelaPullParams,
+  VelaSubmitUsageReportParams,
   VelaSubscribeParams,
   VelaUnwrapParams,
+  VelaUsagePlanParams,
   VelaWrapAndSubscribeParams,
   VelaWrapParams,
   SubscribeValidationResult,
   UpdateKeeperConfigParams,
+  UsagePlanAccount,
+  UsageReportAccount,
   ValidationResult,
 } from "./types";
+import {
+  createUsagePlan as usageCreateUsagePlan,
+  submitUsageReport as usageSubmitUsageReport,
+} from "./usage";
 import {
   validateCancel,
   validatePullPayment,
@@ -92,18 +101,28 @@ export interface VelaClient {
   getPlanDetails: (planAddress: PublicKey) => Promise<VelaPlan>;
   registerBillingSchedule: (
     params: BillingScheduleParams,
-    keeperEndpoint?: string,
-  ) => Promise<{ success: boolean; scheduleId?: string }>;
+    options?: KeeperScheduleOptions | string,
+  ) => Promise<{ success: boolean; scheduleId?: string; error?: string }>;
   cancelBillingSchedule: (
     mandateAddress: PublicKey,
-    keeperEndpoint?: string,
-  ) => Promise<{ success: boolean }>;
+    options?: KeeperScheduleOptions | string,
+  ) => Promise<{ success: boolean; error?: string }>;
   initKeeperConfig: (
     params: InitKeeperConfigParams,
   ) => Promise<VelaMethodResult<KeeperConfig>>;
   updateKeeperConfig: (
     params: UpdateKeeperConfigParams,
   ) => Promise<VelaMethodResult<KeeperConfig>>;
+
+  // Usage-based billing
+  createUsagePlan: (
+    params: VelaUsagePlanParams,
+  ) => Promise<{ usagePlanAddress: PublicKey; txSignature: string }>;
+  submitUsageReport: (
+    params: VelaSubmitUsageReportParams,
+  ) => Promise<{ usageReportAddress: PublicKey; txSignature: string }>;
+  getUsagePlan: (usagePlanAddress: PublicKey) => Promise<UsagePlanAccount>;
+  getUsageReport: (usageReportAddress: PublicKey) => Promise<UsageReportAccount>;
 
   // Raw instruction layer
   instructions: {
@@ -261,6 +280,90 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     }
   }
 
+  function mergeKeeperOptions(
+    options?: KeeperScheduleOptions | string,
+  ): KeeperScheduleOptions | undefined {
+    if (typeof options === "string") {
+      return {
+        keeperEndpoint: options,
+        authToken: config.keeperAuthToken,
+      };
+    }
+
+    const merged: KeeperScheduleOptions = {};
+    if (config.keeperEndpoint) {
+      merged.keeperEndpoint = config.keeperEndpoint;
+    }
+    if (config.keeperAuthToken) {
+      merged.authToken = config.keeperAuthToken;
+    }
+    if (options?.keeperEndpoint) {
+      merged.keeperEndpoint = options.keeperEndpoint;
+    }
+    if (options?.authToken) {
+      merged.authToken = options.authToken;
+    }
+
+    return Object.keys(merged).length > 0 ? merged : undefined;
+  }
+
+  async function resolveKeeperOptionsForLifecycleSync(): Promise<KeeperScheduleOptions | undefined> {
+    const merged = mergeKeeperOptions();
+    if (merged?.keeperEndpoint) {
+      return merged;
+    }
+
+    try {
+      const keeperConfig = await fetchKeeperConfig(program);
+      return {
+        ...merged,
+        keeperEndpoint: keeperConfig.keeperEndpoint,
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
+  async function registerScheduleForMandate(mandate: VelaMandate): Promise<void> {
+    const options = await resolveKeeperOptionsForLifecycleSync();
+    if (!options?.keeperEndpoint) {
+      return;
+    }
+
+    const result = await registerBillingSchedule(
+      program,
+      {
+        mandateAddress: mandate.address,
+        planAddress: mandate.plan,
+        subscriberAddress: mandate.subscriber,
+        merchantAddress: mandate.merchant,
+        frequency: mandate.frequency,
+        nextPaymentDue: mandate.nextPaymentDue,
+      },
+      options,
+    );
+
+    if (!result.success) {
+      throw new Error(
+        `Subscription created on-chain, but keeper schedule registration failed for mandate ${mandate.address.toBase58()}: ${result.error ?? "unknown error"}`,
+      );
+    }
+  }
+
+  async function cancelScheduleForMandate(mandateAddress: PublicKey): Promise<void> {
+    const options = await resolveKeeperOptionsForLifecycleSync();
+    if (!options?.keeperEndpoint) {
+      return;
+    }
+
+    const result = await cancelBillingSchedule(program, mandateAddress, options);
+    if (!result.success) {
+      throw new Error(
+        `Subscription cancelled on-chain, but keeper schedule cancellation failed for mandate ${mandateAddress.toBase58()}: ${result.error ?? "unknown error"}`,
+      );
+    }
+  }
+
   const client: VelaClient = {
     // ── Convenience Layer ──────────────────────────────────────────────
     createPlan: (params: VelaCreatePlanParams) =>
@@ -311,6 +414,8 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           );
           const mandate = deserializeMandate(mandateAddress, raw);
 
+          await registerScheduleForMandate(mandate);
+
           return { signature, address: mandateAddress, data: mandate };
         },
         { method: "createSubscription" },
@@ -357,6 +462,8 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           );
           const mandate = deserializeMandate(mandateAddress, raw);
 
+          await cancelScheduleForMandate(mandateAddress);
+
           return { signature, address: mandateAddress, data: mandate };
         },
         { method: "cancelSubscription" },
@@ -400,6 +507,8 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           );
           const mandate = deserializeMandate(mandateAddress, raw);
 
+          await registerScheduleForMandate(mandate);
+
           return { signature, address: mandateAddress, data: mandate };
         },
         { method: "wrapAndSubscribe" },
@@ -409,11 +518,11 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
     getPlanDetails: (planAddress) => getPlanDetails(program, planAddress),
 
-    registerBillingSchedule: (params, keeperEndpointOverride) =>
-      registerBillingSchedule(program, params, keeperEndpointOverride),
+    registerBillingSchedule: (params, options) =>
+      registerBillingSchedule(program, params, mergeKeeperOptions(options)),
 
-    cancelBillingSchedule: (mandateAddress, keeperEndpointOverride) =>
-      cancelBillingSchedule(program, mandateAddress, keeperEndpointOverride),
+    cancelBillingSchedule: (mandateAddress, options) =>
+      cancelBillingSchedule(program, mandateAddress, mergeKeeperOptions(options)),
 
     initKeeperConfig: (params: InitKeeperConfigParams) =>
       wrapWithErrorTranslation(
@@ -450,6 +559,30 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         },
         { method: "updateKeeperConfig" },
       ),
+
+    // Usage-based billing methods
+    createUsagePlan: (params: VelaUsagePlanParams) =>
+      usageCreateUsagePlan(program, {
+        ...params,
+        merchant: wallet.publicKey,
+      }),
+
+    submitUsageReport: (params: VelaSubmitUsageReportParams) =>
+      usageSubmitUsageReport(
+        program,
+        { ...params, merchantPublicKey: wallet.publicKey },
+        connection,
+      ),
+
+    getUsagePlan: async (usagePlanAddress: PublicKey): Promise<UsagePlanAccount> => {
+      const raw = await (program.account as any).usagePlan.fetch(usagePlanAddress);
+      return raw as UsagePlanAccount;
+    },
+
+    getUsageReport: async (usageReportAddress: PublicKey): Promise<UsageReportAccount> => {
+      const raw = await (program.account as any).usageReport.fetch(usageReportAddress);
+      return raw as UsageReportAccount;
+    },
 
     // ── Raw Instruction Layer ──────────────────────────────────────────
     instructions: {

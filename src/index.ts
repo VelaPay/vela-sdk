@@ -20,6 +20,8 @@ export { ALTManager } from "./alt/lookup-table";
 export type { VelaClient } from "./client";
 // Client factory
 export { createVelaClient } from "./client";
+// Usage-based billing
+export { createUsagePlan, submitUsageReport } from "./usage";
 // Constants
 export { KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES, TRANSFER_HOOK_PROGRAM_ID } from "./constants";
 // Errors
@@ -57,14 +59,20 @@ export type {
 export {
   buildCancelInstruction,
   buildCreatePlanInstruction,
+  buildCreateUsagePlanInstruction,
   buildExecutePullInstruction,
   buildInitKeeperConfigInstruction,
+  buildRequestUsageComputationInstruction,
   buildRequestValidationInstruction,
+  buildSubmitUsageReportInstruction,
   buildSubscribeInstruction,
   buildUnwrapInstruction,
   buildUpdateKeeperConfigInstruction,
   buildWrapAndSubscribeInstructions,
   buildWrapInstruction,
+  deriveUsageComputationOffset,
+  deriveUsagePlanAddress,
+  deriveUsageReportAddress,
   deriveValidationComputationOffset,
 } from "./instructions";
 // Schedule management
@@ -76,6 +84,7 @@ export {
 export type { KeeperScheduleOptions } from "./schedule";
 export type {
   BillingScheduleParams,
+  BillingType,
   CancelValidationResult,
   InitKeeperConfigParams,
   KeeperConfig,
@@ -83,6 +92,7 @@ export type {
   MandateStatus,
   MerchantState,
   PlanStatus,
+  PricingTier,
   VelaCancelParams,
   VelaClientConfig,
   VelaCreatePlanParams,
@@ -90,15 +100,22 @@ export type {
   VelaMethodResult,
   VelaPlan,
   VelaPullParams,
+  VelaRequestUsageComputationParams,
+  VelaSubmitUsageReportParams,
   VelaSubscribeParams,
   VelaUnwrapParams,
+  VelaUsagePlanParams,
   VelaWallet,
   VelaWrapAndSubscribeParams,
   VelaWrapParams,
   SubscribeValidationResult,
   UpdateKeeperConfigParams,
+  UsagePlanAccount,
+  UsageReportAccount,
   ValidationResult,
 } from "./types";
+// Usage seed constants
+export { USAGE_CREDENTIAL_SEED, USAGE_PLAN_SEED, USAGE_REPORT_SEED } from "./types";
 // Validators
 export {
   validateCancel,

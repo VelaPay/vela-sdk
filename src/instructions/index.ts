@@ -7,6 +7,22 @@ export {
 } from "./request-validation";
 export type { BuildCreatePlanResult } from "./create-plan";
 export { buildCreatePlanInstruction } from "./create-plan";
+export type { BuildCreateUsagePlanResult } from "./create-usage-plan";
+export {
+  buildCreateUsagePlanInstruction,
+  deriveUsagePlanAddress,
+  deriveUsageCredentialMintAddress,
+} from "./create-usage-plan";
+export type { BuildSubmitUsageReportResult, SubmitUsageReportParams } from "./submit-usage-report";
+export {
+  buildSubmitUsageReportInstruction,
+  deriveUsageReportAddress,
+} from "./submit-usage-report";
+export type { BuildRequestUsageComputationResult } from "./request-usage-computation";
+export {
+  buildRequestUsageComputationInstruction,
+  deriveUsageComputationOffset,
+} from "./request-usage-computation";
 export type { BuildExecutePullResult } from "./execute-pull";
 export { buildExecutePullInstruction } from "./execute-pull";
 export type { BuildInitKeeperConfigResult } from "./init-keeper-config";

@@ -1,0 +1,143 @@
+/**
+ * SDK usage-based billing convenience functions.
+ *
+ * These high-level functions wrap the instruction builders and handle
+ * encryption of usage data via Arcium's RescueCipher before submission.
+ *
+ * Usage flow:
+ * 1. Merchant calls createUsagePlan() to register pricing tiers on-chain
+ * 2. At end of billing period, merchant calls submitUsageReport() with plaintext units
+ *    (SDK encrypts them using Arcium RescueCipher before submitting)
+ * 3. Keeper detects the UsageReport, calls request_usage_computation via usage-pipeline.ts
+ * 4. Arcium computes the charge, writes back to PullApproval PDA
+ * 5. Keeper executes pull via execute_pull (same as flat billing)
+ */
+import { Transaction } from "@solana/web3.js";
+import type { Connection, PublicKey } from "@solana/web3.js";
+import type { Program } from "@coral-xyz/anchor";
+import BN from "bn.js";
+import { RescueCipher, x25519, getMXEPublicKey, getArciumProgramId } from "@arcium-hq/client";
+import type { VelaUsagePlanParams, VelaSubmitUsageReportParams } from "./types";
+import { buildCreateUsagePlanInstruction } from "./instructions/create-usage-plan";
+import { buildSubmitUsageReportInstruction } from "./instructions/submit-usage-report";
+
+/** 16-byte random nonce for RescueCipher CTR mode */
+function generateNonce(): Uint8Array {
+  return crypto.getRandomValues(new Uint8Array(16));
+}
+
+/** Convert a 16-byte nonce to u128 bigint (little-endian) */
+function nonceToU128(nonce: Uint8Array): bigint {
+  let value = 0n;
+  for (let i = 0; i < 16; i++) {
+    value |= BigInt(nonce[i]) << BigInt(i * 8);
+  }
+  return value;
+}
+
+/**
+ * Creates a usage-based pricing plan on-chain.
+ *
+ * Builds and submits the create_usage_plan transaction.
+ * The merchant wallet in `params` signs the transaction.
+ *
+ * @param program - Anchor program instance with merchant as signer
+ * @param params  - Plan parameters including planId, tiers, and limits
+ * @returns usagePlanAddress and txSignature
+ */
+export async function createUsagePlan(
+  program: Program,
+  params: VelaUsagePlanParams & { merchant: PublicKey },
+): Promise<{ usagePlanAddress: PublicKey; txSignature: string }> {
+  const { instruction, usagePlanAddress } = await buildCreateUsagePlanInstruction(
+    program,
+    params,
+  );
+
+  const tx = new Transaction().add(instruction);
+  const txSignature = await (program.provider as any).sendAndConfirm(tx);
+  return { usagePlanAddress, txSignature };
+}
+
+/**
+ * Encrypts usage data using Arcium RescueCipher and submits the usage report on-chain.
+ *
+ * Encryption flow (mirrors the keeper's flat-pipeline Phase A):
+ * 1. Fetch MXE public key from on-chain Arcium program
+ * 2. Generate ephemeral x25519 keypair
+ * 3. Derive shared secret via ECDH
+ * 4. Pack usage_units as a single plaintext u64 and encrypt with RescueCipher
+ * 5. Submit ciphertext + pubkey + nonce to submit_usage_report instruction
+ *
+ * The on-chain program validates:
+ * - merchant == mandate.merchant (signature authority)
+ * - mandate.billing_type == Usage
+ * - period_start == mandate.next_payment_due (strict period alignment)
+ *
+ * @param program    - Anchor program instance with merchant as signer
+ * @param params     - Usage report parameters including plaintext usageUnits
+ * @param connection - Solana connection for ATA and balance queries
+ * @param merchant   - Merchant keypair (needed to sign and derive ATA; provider signer is also valid)
+ * @returns usageReportAddress and txSignature
+ */
+export async function submitUsageReport(
+  program: Program,
+  params: VelaSubmitUsageReportParams & { merchantPublicKey: PublicKey },
+  connection: Connection,
+): Promise<{ usageReportAddress: PublicKey; txSignature: string }> {
+  const arciumProgramId = getArciumProgramId();
+
+  // Fetch MXE public key from on-chain Arcium program
+  const mxePublicKeyBytes = await getMXEPublicKey(program.provider as any, arciumProgramId);
+  if (!mxePublicKeyBytes) {
+    throw new Error("Arcium MXE public key not found on-chain — ensure Arcium is configured");
+  }
+
+  let clientPrivateKey: Uint8Array | undefined;
+  let sharedSecret: Uint8Array | undefined;
+
+  try {
+    // Generate ephemeral x25519 keypair and derive shared secret
+    clientPrivateKey = x25519.utils.randomPrivateKey();
+    const clientPublicKey = x25519.getPublicKey(clientPrivateKey);
+    sharedSecret = x25519.getSharedSecret(clientPrivateKey, mxePublicKeyBytes);
+
+    // Encrypt: pack usage_units as a single u64 field, encrypt with RescueCipher
+    const usageUnitsNum = BigInt(params.usageUnits.toString());
+    const cipher = new RescueCipher(sharedSecret);
+    const nonce = generateNonce();
+    const encryptedFields = cipher.encrypt([usageUnitsNum], nonce);
+
+    // Pad to [[u8;32];4] — the on-chain program expects exactly 4 ciphertext blocks
+    // Fill unused slots with zeros
+    const encryptedUsage: number[][] = [0, 1, 2, 3].map((i) =>
+      i < encryptedFields.length ? encryptedFields[i] : new Array(32).fill(0) as number[],
+    );
+
+    const nonceU128 = nonceToU128(nonce);
+    const nonceBN = new BN(nonceU128.toString());
+    const pubKeyArray = Array.from(clientPublicKey);
+
+    const { instruction, usageReportAddress } = await buildSubmitUsageReportInstruction(
+      program,
+      {
+        merchant: params.merchantPublicKey,
+        mandateAddress: params.mandateAddress,
+        periodStart: params.periodStart,
+        periodEnd: params.periodEnd,
+        encryptedUsage,
+        nonce: nonceBN,
+        pubKey: pubKeyArray,
+      },
+    );
+
+    const tx = new Transaction().add(instruction);
+    const txSignature = await (program.provider as any).sendAndConfirm(tx);
+
+    return { usageReportAddress, txSignature };
+  } finally {
+    // Zero ephemeral key material even on failure
+    clientPrivateKey?.fill(0);
+    sharedSecret?.fill(0);
+  }
+}

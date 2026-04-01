@@ -1,3 +1,4 @@
+import type BN from "bn.js";
 import type { Commitment, Connection, PublicKey } from "@solana/web3.js";
 
 export interface VelaClientConfig {
@@ -6,6 +7,8 @@ export interface VelaClientConfig {
   heliusApiKey?: string;
   commitment?: Commitment;
   programId?: PublicKey;
+  keeperEndpoint?: string;
+  keeperAuthToken?: string;
 }
 
 export interface VelaWallet {
@@ -170,4 +173,73 @@ export interface CancelValidationResult {
   canCancel: boolean;
   mandate: VelaMandate;
   reasons: string[];
+}
+
+// ── Usage-based billing types ─────────────────────────────────────────────────
+
+export interface PricingTier {
+  upTo: BN;         // usage units upper bound (0 = unlimited for last tier)
+  ratePerUnit: BN;  // micro-USDC per unit (6 decimals)
+  padding: BN;      // alignment/future use
+}
+
+export interface VelaUsagePlanParams {
+  planId: BN;
+  unitName: Uint8Array;       // 32 bytes, UTF-8 padded
+  tiers: PricingTier[];
+  maxChargePerPeriod: BN;
+  settlementFrequency: BN;
+}
+
+export interface VelaSubmitUsageReportParams {
+  mandateAddress: PublicKey;
+  periodStart: BN;  // i64 timestamp
+  periodEnd: BN;    // i64 timestamp
+  usageUnits: BN;   // plaintext units (SDK encrypts before submitting)
+}
+
+export interface VelaRequestUsageComputationParams {
+  payer: PublicKey;
+  mandateAddress: PublicKey;
+  usagePlanAddress: PublicKey;
+  usageReportAddress: PublicKey;
+  computationOffset: bigint;
+  ciphertext: Uint8Array[];   // encrypted fields for Arcium circuit
+  pubKey: Uint8Array;         // x25519 public key, 32 bytes
+  nonce: bigint;              // u128
+}
+
+export type BillingType = "flat" | "usage";
+
+// PDA seed buffers for usage billing
+export const USAGE_PLAN_SEED = Buffer.from("usage_plan");
+export const USAGE_REPORT_SEED = Buffer.from("usage_report");
+export const USAGE_CREDENTIAL_SEED = Buffer.from("usage_credential");
+
+// Account shape returned by program.account.usagePlan.fetch()
+export interface UsagePlanAccount {
+  merchant: PublicKey;
+  planId: BN;
+  unitName: number[];
+  tiers: Array<{ upTo: BN; ratePerUnit: BN; padding: BN }>;
+  tierCount: number;
+  maxChargePerPeriod: BN;
+  settlementFrequency: BN;
+  credentialMint: PublicKey;
+  status: Record<string, unknown>;
+  bump: number;
+}
+
+// Account shape returned by program.account.usageReport.fetch()
+export interface UsageReportAccount {
+  mandate: PublicKey;
+  merchant: PublicKey;
+  periodStart: BN;
+  periodEnd: BN;
+  encryptedUsage: number[][];
+  nonce: BN;
+  pubKey: number[];
+  settled: boolean;
+  createdAt: BN;
+  bump: number;
 }
