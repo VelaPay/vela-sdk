@@ -1,5 +1,10 @@
 export type { BuildCancelResult } from "./cancel";
 export { buildCancelInstruction } from "./cancel";
+export type { BuildRequestValidationResult, RequestValidationParams } from "./request-validation";
+export {
+  buildRequestValidationInstruction,
+  deriveValidationComputationOffset,
+} from "./request-validation";
 export type { BuildCreatePlanResult } from "./create-plan";
 export { buildCreatePlanInstruction } from "./create-plan";
 export type { BuildExecutePullResult } from "./execute-pull";

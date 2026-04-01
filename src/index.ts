@@ -45,11 +45,13 @@ export type {
   BuildCreatePlanResult,
   BuildExecutePullResult,
   BuildInitKeeperConfigResult,
+  BuildRequestValidationResult,
   BuildSubscribeResult,
   BuildUnwrapResult,
   BuildUpdateKeeperConfigResult,
   BuildWrapAndSubscribeResult,
   BuildWrapResult,
+  RequestValidationParams,
 } from "./instructions";
 // Instruction builders
 export {
@@ -57,11 +59,13 @@ export {
   buildCreatePlanInstruction,
   buildExecutePullInstruction,
   buildInitKeeperConfigInstruction,
+  buildRequestValidationInstruction,
   buildSubscribeInstruction,
   buildUnwrapInstruction,
   buildUpdateKeeperConfigInstruction,
   buildWrapAndSubscribeInstructions,
   buildWrapInstruction,
+  deriveValidationComputationOffset,
 } from "./instructions";
 // Schedule management
 export {
