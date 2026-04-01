@@ -18,6 +18,14 @@ import type { Program } from "@coral-xyz/anchor";
 import BN from "bn.js";
 import { RescueCipher, x25519, getMXEPublicKey, getArciumProgramId } from "@arcium-hq/client";
 import type { VelaUsagePlanParams, VelaSubmitUsageReportParams } from "./types";
+
+/** Options for the D1 bridge POST after on-chain submission */
+export interface UsageReportBridgeOptions {
+  /** Base URL of the keeper Worker (e.g. https://worker.example.com) */
+  keeperEndpoint?: string;
+  /** Bearer auth token for the keeper Worker */
+  authToken?: string;
+}
 import { buildCreateUsagePlanInstruction } from "./instructions/create-usage-plan";
 import { buildSubmitUsageReportInstruction } from "./instructions/submit-usage-report";
 
@@ -84,6 +92,7 @@ export async function submitUsageReport(
   program: Program,
   params: VelaSubmitUsageReportParams & { merchantPublicKey: PublicKey },
   connection: Connection,
+  bridgeOptions?: UsageReportBridgeOptions,
 ): Promise<{ usageReportAddress: PublicKey; txSignature: string }> {
   const arciumProgramId = getArciumProgramId();
 
@@ -133,6 +142,44 @@ export async function submitUsageReport(
 
     const tx = new Transaction().add(instruction);
     const txSignature = await (program.provider as any).sendAndConfirm(tx);
+
+    // D1 bridge: POST plaintext usage data to keeper Worker for usage-pipeline resolution
+    if (bridgeOptions?.keeperEndpoint) {
+      const bridgeEndpoint = bridgeOptions.keeperEndpoint.replace(/\/+$/, "");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (bridgeOptions.authToken) {
+        headers.Authorization = `Bearer ${bridgeOptions.authToken}`;
+      }
+
+      try {
+        const bridgeResponse = await fetch(`${bridgeEndpoint}/api/keeper/usage-report`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            mandateAddress: params.mandateAddress.toBase58(),
+            merchantAddress: params.merchantPublicKey.toBase58(),
+            periodStart: new Date(Number(params.periodStart.toString()) * 1000).toISOString(),
+            periodEnd: new Date(Number(params.periodEnd.toString()) * 1000).toISOString(),
+            usageUnits: Number(params.usageUnits.toString()),
+            txSignature,
+          }),
+        });
+
+        if (!bridgeResponse.ok) {
+          console.warn(
+            `[vela-sdk] Usage report D1 bridge failed (HTTP ${bridgeResponse.status}). ` +
+            `On-chain report submitted successfully. Keeper may need manual D1 row insertion.`,
+          );
+        }
+      } catch (err) {
+        // Non-fatal: on-chain report was already submitted successfully.
+        // The keeper will get a retryable error until the D1 row is manually created.
+        console.warn(
+          `[vela-sdk] Usage report D1 bridge network error: ${String(err)}. ` +
+          `On-chain report submitted successfully.`,
+        );
+      }
+    }
 
     return { usageReportAddress, txSignature };
   } finally {

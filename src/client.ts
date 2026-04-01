@@ -577,6 +577,10 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         program,
         { ...params, merchantPublicKey: wallet.publicKey },
         connection,
+        {
+          keeperEndpoint: config.keeperEndpoint,
+          authToken: config.keeperAuthToken,
+        },
       ),
 
     getUsagePlan: async (usagePlanAddress: PublicKey): Promise<UsagePlanAccount> => {
