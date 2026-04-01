@@ -27,7 +27,7 @@ export { createVelaClient } from "./client";
 // Usage-based billing
 export { createUsagePlan, submitUsageReport } from "./usage";
 // Constants
-export { KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES, TRANSFER_HOOK_PROGRAM_ID } from "./constants";
+export { BILLING_SEED, KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES, TRANSFER_HOOK_PROGRAM_ID } from "./constants";
 // Errors
 export {
   AmountExceedsPlanAmountError,
@@ -51,12 +51,14 @@ export type {
   BuildCreatePlanResult,
   BuildExecutePullResult,
   BuildInitKeeperConfigResult,
+  BuildRequestBillingRecordResult,
   BuildRequestValidationResult,
   BuildSubscribeResult,
   BuildUnwrapResult,
   BuildUpdateKeeperConfigResult,
   BuildWrapAndSubscribeResult,
   BuildWrapResult,
+  RequestBillingRecordParams,
   RequestValidationParams,
 } from "./instructions";
 // Instruction builders
@@ -66,6 +68,7 @@ export {
   buildCreateUsagePlanInstruction,
   buildExecutePullInstruction,
   buildInitKeeperConfigInstruction,
+  buildRequestBillingRecordInstruction,
   buildRequestUsageComputationInstruction,
   buildRequestValidationInstruction,
   buildSubmitUsageReportInstruction,
@@ -74,6 +77,7 @@ export {
   buildUpdateKeeperConfigInstruction,
   buildWrapAndSubscribeInstructions,
   buildWrapInstruction,
+  deriveBillingComputationOffset,
   deriveUsageComputationOffset,
   deriveUsagePlanAddress,
   deriveUsageReportAddress,

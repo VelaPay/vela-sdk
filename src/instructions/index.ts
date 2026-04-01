@@ -37,3 +37,8 @@ export type { BuildUnwrapResult } from "./unwrap";
 export { buildUnwrapInstruction } from "./unwrap";
 export type { BuildWrapAndSubscribeResult } from "./wrap-and-subscribe";
 export { buildWrapAndSubscribeInstructions } from "./wrap-and-subscribe";
+export type { BuildRequestBillingRecordResult, RequestBillingRecordParams } from "./request-billing-record";
+export {
+  buildRequestBillingRecordInstruction,
+  deriveBillingComputationOffset,
+} from "./request-billing-record";
