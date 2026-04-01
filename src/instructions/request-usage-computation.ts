@@ -103,7 +103,8 @@ function deriveSignPda(): PublicKey {
 
 /**
  * Mirrors arcium_accounts.rs derive_usage_computation_offset.
- * Domain = b"usage_computation", mandate pubkey, period_start le bytes, request_nonce le bytes.
+ * Domain = b"usage", mandate pubkey, period_start le bytes, request_nonce le bytes.
+ * Uses programId (Vela program) as the PDA program — same pattern as deriveValidationComputationOffset.
  */
 export function deriveUsageComputationOffset(
   mandate: PublicKey,
@@ -111,7 +112,7 @@ export function deriveUsageComputationOffset(
   requestNonce: bigint,
   programId: PublicKey = PROGRAM_ID,
 ): bigint {
-  const domain = Buffer.from("usage_computation");
+  const domain = Buffer.from("usage");
   const mandateBytes = mandate.toBuffer();
   const psBytes = Buffer.alloc(8);
   psBytes.writeBigInt64LE(periodStart);

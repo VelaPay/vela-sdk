@@ -158,8 +158,9 @@ export function deriveValidationComputationOffset(
  * - mandateAddress: the VelaMandate PDA (already known to keeper)
  * - planAddress: the VelaPlan PDA
  * - computationOffset: derived via deriveValidationComputationOffset
- * - ciphertext: 8 x25519-encrypted u64/i64 fields (balance, amount, frequency, next_payment_due,
- *   current_time, max_pulls, pulls_executed, status)
+ * - ciphertext: 8 x25519-encrypted u64/i64 fields in circuit order:
+ *   mandate_amount, plan_amount, subscriber_balance, current_timestamp,
+ *   next_payment_due, expiry, pulls_executed, max_pulls
  * - pubKey: caller's x25519 ephemeral public key (32 bytes)
  * - nonce: u128 encryption nonce (0 if nonce is embedded in ArgBuilder ciphertext)
  */
