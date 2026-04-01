@@ -8,6 +8,9 @@ import { PublicKey } from "@solana/web3.js";
 export const PROGRAM_ID = new PublicKey(
   "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC",
 );
+export const TRANSFER_HOOK_PROGRAM_ID = new PublicKey(
+  "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX",
+);
 
 export const SEED_PREFIXES = {
   MERCHANT: Buffer.from("merchant"),
@@ -21,6 +24,7 @@ export const MINT_AUTHORITY_SEED = Buffer.from("mint-authority");
 export const EXTRA_ACCOUNT_METAS_SEED = Buffer.from("extra-account-metas");
 export const CONFIG_SEED = Buffer.from("config");
 export const APPROVAL_SEED = Buffer.from("approval");
+export const KEEPER_CONFIG_SEED = Buffer.from("keeper-config");
 
 // Token constants
 export const USDC_DECIMALS = 6;

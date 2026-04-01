@@ -92,6 +92,10 @@ export interface VelaWrapParams {
   splUsdcMint: PublicKey;
   wrappedUsdcMint: PublicKey;
   wrappingVault: PublicKey;
+  /** Destination owner for wrapped USDC. Defaults to the subscriber. */
+  destinationOwner?: PublicKey;
+  /** Explicit destination token account. If omitted, the ATA for destinationOwner is derived. */
+  destinationWrappedAccount?: PublicKey;
 }
 
 export interface VelaUnwrapParams {
@@ -111,6 +115,37 @@ export interface VelaWrapAndSubscribeParams {
   wrappingVault: PublicKey;
   amount: bigint;
   credentialMintAddress?: PublicKey;
+}
+
+export type KeeperMode = "centralized" | "tuktuk";
+
+export interface KeeperConfig {
+  admin: PublicKey;
+  mode: KeeperMode;
+  keeperEndpoint: string;
+  keeperAuthority: PublicKey;
+  bump: number;
+}
+
+export interface BillingScheduleParams {
+  mandateAddress: PublicKey;
+  planAddress: PublicKey;
+  subscriberAddress: PublicKey;
+  merchantAddress: PublicKey;
+  frequency: bigint;
+  nextPaymentDue: bigint; // Unix timestamp (seconds)
+}
+
+export interface InitKeeperConfigParams {
+  mode: KeeperMode;
+  keeperEndpoint: string;
+  keeperAuthority: PublicKey;
+}
+
+export interface UpdateKeeperConfigParams {
+  mode?: KeeperMode;
+  keeperEndpoint?: string;
+  keeperAuthority?: PublicKey;
 }
 
 export interface VelaMethodResult<T = void> {

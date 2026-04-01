@@ -1,6 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
-import { PROGRAM_ID, SEED_PREFIXES } from "../constants";
+import { KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES } from "../constants";
 
 /**
  * Derives the MerchantState PDA address.
@@ -59,6 +59,20 @@ export function deriveCredentialMintAddress(
   const planIdBuffer = new BN(planId.toString()).toArrayLike(Buffer, "le", 8);
   return PublicKey.findProgramAddressSync(
     [SEED_PREFIXES.CREDENTIAL, merchant.toBuffer(), planIdBuffer],
+    programId,
+  );
+}
+
+/**
+ * Derives the KeeperConfig PDA address.
+ * Seeds: ["keeper-config"]
+ * Singleton PDA -- one per program deployment
+ */
+export function deriveKeeperConfigAddress(
+  programId: PublicKey = PROGRAM_ID,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [KEEPER_CONFIG_SEED],
     programId,
   );
 }

@@ -3,6 +3,7 @@
 // Account helpers
 export {
   deriveCredentialMintAddress,
+  deriveKeeperConfigAddress,
   deriveMandateAddress,
   deriveMerchantStateAddress,
   derivePlanAddress,
@@ -20,7 +21,7 @@ export type { VelaClient } from "./client";
 // Client factory
 export { createVelaClient } from "./client";
 // Constants
-export { PROGRAM_ID, SEED_PREFIXES } from "./constants";
+export { KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES, TRANSFER_HOOK_PROGRAM_ID } from "./constants";
 // Errors
 export {
   AmountExceedsPlanAmountError,
@@ -43,17 +44,37 @@ export type {
   BuildCancelResult,
   BuildCreatePlanResult,
   BuildExecutePullResult,
+  BuildInitKeeperConfigResult,
   BuildSubscribeResult,
+  BuildUnwrapResult,
+  BuildUpdateKeeperConfigResult,
+  BuildWrapAndSubscribeResult,
+  BuildWrapResult,
 } from "./instructions";
 // Instruction builders
 export {
   buildCancelInstruction,
   buildCreatePlanInstruction,
   buildExecutePullInstruction,
+  buildInitKeeperConfigInstruction,
   buildSubscribeInstruction,
+  buildUnwrapInstruction,
+  buildUpdateKeeperConfigInstruction,
+  buildWrapAndSubscribeInstructions,
+  buildWrapInstruction,
 } from "./instructions";
+// Schedule management
+export {
+  cancelBillingSchedule,
+  fetchKeeperConfig,
+  registerBillingSchedule,
+} from "./schedule";
 export type {
+  BillingScheduleParams,
   CancelValidationResult,
+  InitKeeperConfigParams,
+  KeeperConfig,
+  KeeperMode,
   MandateStatus,
   MerchantState,
   PlanStatus,
@@ -65,8 +86,12 @@ export type {
   VelaPlan,
   VelaPullParams,
   VelaSubscribeParams,
+  VelaUnwrapParams,
   VelaWallet,
+  VelaWrapAndSubscribeParams,
+  VelaWrapParams,
   SubscribeValidationResult,
+  UpdateKeeperConfigParams,
   ValidationResult,
 } from "./types";
 // Validators

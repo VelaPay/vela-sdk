@@ -20,13 +20,23 @@ import {
   buildCancelInstruction,
   buildCreatePlanInstruction,
   buildExecutePullInstruction,
+  buildInitKeeperConfigInstruction,
   buildSubscribeInstruction,
   buildUnwrapInstruction,
+  buildUpdateKeeperConfigInstruction,
   buildWrapAndSubscribeInstructions,
   buildWrapInstruction,
 } from "./instructions";
+import {
+  cancelBillingSchedule,
+  fetchKeeperConfig,
+  registerBillingSchedule,
+} from "./schedule";
 import type {
+  BillingScheduleParams,
   CancelValidationResult,
+  InitKeeperConfigParams,
+  KeeperConfig,
   VelaCancelParams,
   VelaClientConfig,
   VelaCreatePlanParams,
@@ -39,6 +49,7 @@ import type {
   VelaWrapAndSubscribeParams,
   VelaWrapParams,
   SubscribeValidationResult,
+  UpdateKeeperConfigParams,
   ValidationResult,
 } from "./types";
 import {
@@ -79,6 +90,20 @@ export interface VelaClient {
     merchant?: PublicKey;
   }) => Promise<VelaMandate[]>;
   getPlanDetails: (planAddress: PublicKey) => Promise<VelaPlan>;
+  registerBillingSchedule: (
+    params: BillingScheduleParams,
+    keeperEndpoint?: string,
+  ) => Promise<{ success: boolean; scheduleId?: string }>;
+  cancelBillingSchedule: (
+    mandateAddress: PublicKey,
+    keeperEndpoint?: string,
+  ) => Promise<{ success: boolean }>;
+  initKeeperConfig: (
+    params: InitKeeperConfigParams,
+  ) => Promise<VelaMethodResult<KeeperConfig>>;
+  updateKeeperConfig: (
+    params: UpdateKeeperConfigParams,
+  ) => Promise<VelaMethodResult<KeeperConfig>>;
 
   // Raw instruction layer
   instructions: {
@@ -104,6 +129,12 @@ export interface VelaClient {
     wrapAndSubscribe: (
       params: VelaWrapAndSubscribeParams,
     ) => ReturnType<typeof buildWrapAndSubscribeInstructions>;
+    initKeeperConfig: (
+      params: InitKeeperConfigParams,
+    ) => ReturnType<typeof buildInitKeeperConfigInstruction>;
+    updateKeeperConfig: (
+      params: UpdateKeeperConfigParams,
+    ) => ReturnType<typeof buildUpdateKeeperConfigInstruction>;
   };
 
   // Validation layer
@@ -139,7 +170,7 @@ export interface VelaClient {
  *   amount: 10_000_000n,
  * });
  *
- * // Pull payment (Token-2022 transfer_checked with transfer hook)
+ * // Pull payment (Token-2022 transfer_checked validated by the Vela hook program)
  * const { signature } = await vela.pullPayment({
  *   mandateAddress,
  *   subscriberAddress,
@@ -378,6 +409,48 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
     getPlanDetails: (planAddress) => getPlanDetails(program, planAddress),
 
+    registerBillingSchedule: (params, keeperEndpointOverride) =>
+      registerBillingSchedule(program, params, keeperEndpointOverride),
+
+    cancelBillingSchedule: (mandateAddress, keeperEndpointOverride) =>
+      cancelBillingSchedule(program, mandateAddress, keeperEndpointOverride),
+
+    initKeeperConfig: (params: InitKeeperConfigParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, keeperConfigAddress } =
+            await buildInitKeeperConfigInstruction(program, {
+              ...params,
+              admin: wallet.publicKey,
+            });
+
+          const signature = await sendV0Transaction([instruction]);
+
+          const config = await fetchKeeperConfig(program);
+
+          return { signature, address: keeperConfigAddress, data: config };
+        },
+        { method: "initKeeperConfig" },
+      ),
+
+    updateKeeperConfig: (params: UpdateKeeperConfigParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, keeperConfigAddress } =
+            await buildUpdateKeeperConfigInstruction(program, {
+              ...params,
+              admin: wallet.publicKey,
+            });
+
+          const signature = await sendV0Transaction([instruction]);
+
+          const config = await fetchKeeperConfig(program);
+
+          return { signature, address: keeperConfigAddress, data: config };
+        },
+        { method: "updateKeeperConfig" },
+      ),
+
     // ── Raw Instruction Layer ──────────────────────────────────────────
     instructions: {
       createPlan: (params) =>
@@ -406,6 +479,16 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         buildWrapAndSubscribeInstructions(program, {
           ...params,
           subscriber: wallet.publicKey,
+        }),
+      initKeeperConfig: (params) =>
+        buildInitKeeperConfigInstruction(program, {
+          ...params,
+          admin: wallet.publicKey,
+        }),
+      updateKeeperConfig: (params) =>
+        buildUpdateKeeperConfigInstruction(program, {
+          ...params,
+          admin: wallet.publicKey,
         }),
     },
 

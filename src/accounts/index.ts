@@ -11,6 +11,7 @@ export {
 } from "./fetchers";
 export {
   deriveCredentialMintAddress,
+  deriveKeeperConfigAddress,
   deriveMandateAddress,
   deriveMerchantStateAddress,
   derivePlanAddress,
