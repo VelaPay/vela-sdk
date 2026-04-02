@@ -1,5 +1,5 @@
-import { createHash } from "crypto";
 import type { Program } from "@coral-xyz/anchor";
+import { sha256 } from "@noble/hashes/sha256";
 import {
   PublicKey,
   SystemProgram,
@@ -80,8 +80,8 @@ function deriveComputationPda(clusterId: number, computationOffset: bigint): Pub
 
 /** sha256(circuitName)[0..4] as u32 LE — mirrors arcium_anchor::comp_def_offset */
 function compDefOffset(circuitName: string): number {
-  const hash = createHash("sha256").update(circuitName).digest();
-  return hash.readUInt32LE(0);
+  const hash = sha256(new TextEncoder().encode(circuitName));
+  return new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(0, true);
 }
 
 function deriveCompDefPda(velaProgramId: PublicKey, circuitName: string): PublicKey {

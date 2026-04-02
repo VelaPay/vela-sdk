@@ -1,5 +1,5 @@
-import { createHash } from "crypto";
 import type { Program } from "@coral-xyz/anchor";
+import { sha256 } from "@noble/hashes/sha256";
 import { type Connection, PublicKey, type TransactionInstruction } from "@solana/web3.js";
 import { APPROVAL_SEED, CONFIG_SEED, PROGRAM_ID } from "../constants";
 
@@ -81,8 +81,8 @@ function deriveComputationPda(clusterId: number, computationOffset: bigint): Pub
 // Note: arcium-anchor uses just the circuit name string (not prefixed with "global:")
 // The Rust implementation: sha256(conf_ix_name.as_bytes())[0..4] as u32 LE
 function compDefOffset(circuitName: string): number {
-  const hash = createHash("sha256").update(circuitName).digest();
-  return hash.readUInt32LE(0);
+  const hash = sha256(new TextEncoder().encode(circuitName));
+  return new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(0, true);
 }
 
 // comp_def PDA: seeds = ["ComputationDefinitionAccount", vela_program_id_bytes, offset_le_bytes]
