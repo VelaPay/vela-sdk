@@ -11,5 +11,7 @@ export {
   PlanNotActiveError,
   PullTooEarlyError,
   UnauthorizedCancelError,
+  UnauthorizedAdminError,
+  ProtocolPausedError,
 } from "./program-errors";
 export { translateError } from "./translate";

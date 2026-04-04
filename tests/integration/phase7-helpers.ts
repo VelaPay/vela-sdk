@@ -20,6 +20,7 @@ import {
   APPROVAL_SEED,
   CONFIG_SEED,
   EXTRA_ACCOUNT_METAS_SEED,
+  KEEPER_CONFIG_SEED,
   MINT_AUTHORITY_SEED,
   PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
@@ -27,7 +28,12 @@ import {
 } from "../../src/constants";
 
 const EMPTY_PUBKEY = new PublicKey(new Uint8Array(32));
-const PROTOCOL_CONFIG_SIZE = 146;
+// ProtocolConfig layout: discriminator(8) + admin(32) + cluster_pubkey(32) + cluster_type(1) +
+//   cluster_offset(8) + wrapped_usdc_mint(32) + wrapping_vault(32) + paused(1) + paused_at(8) + bump(1) = 155
+const PROTOCOL_CONFIG_SIZE = 155;
+// KeeperConfig layout: discriminator(8) + admin(32) + mode(1) + keeper_endpoint([u8;128]) +
+//   endpoint_len(1) + keeper_authority(32) + bump(1) = 203
+const KEEPER_CONFIG_SIZE = 203;
 const PULL_APPROVAL_SIZE = 66;
 
 function discriminator(namespace: "global" | "account", name: string): Buffer {
@@ -57,6 +63,10 @@ export function deriveConfigAddress(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync([CONFIG_SEED], PROGRAM_ID);
 }
 
+export function deriveKeeperConfigAddress(): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([KEEPER_CONFIG_SEED], PROGRAM_ID);
+}
+
 export function deriveMintAuthorityAddress(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync([MINT_AUTHORITY_SEED], PROGRAM_ID);
 }
@@ -81,14 +91,45 @@ export function derivePullApprovalAddress(
 
 function serializeProtocolConfig(admin: PublicKey, bump: number): Uint8Array {
   const data = Buffer.alloc(PROTOCOL_CONFIG_SIZE);
+  // offset 0: discriminator (8 bytes)
   discriminator("account", "ProtocolConfig").copy(data, 0);
+  // offset 8: admin (32 bytes)
   admin.toBuffer().copy(data, 8);
+  // offset 40: cluster_pubkey (32 bytes) -- zero pubkey
   EMPTY_PUBKEY.toBuffer().copy(data, 40);
+  // offset 72: cluster_type (1 byte) -- 0 = Mainnet
   data.writeUInt8(0, 72);
+  // offset 73: cluster_offset (8 bytes) -- 0
   data.writeBigUInt64LE(0n, 73);
+  // offset 81: wrapped_usdc_mint (32 bytes) -- zero pubkey
   EMPTY_PUBKEY.toBuffer().copy(data, 81);
+  // offset 113: wrapping_vault (32 bytes) -- zero pubkey
   EMPTY_PUBKEY.toBuffer().copy(data, 113);
-  data.writeUInt8(bump, 145);
+  // offset 145: paused (1 byte) -- false
+  data.writeUInt8(0, 145);
+  // offset 146: paused_at (8 bytes) -- 0
+  data.writeBigInt64LE(0n, 146);
+  // offset 154: bump (1 byte)
+  data.writeUInt8(bump, 154);
+  return data;
+}
+
+function serializeKeeperConfig(admin: PublicKey, keeperAuthority: PublicKey, bump: number): Uint8Array {
+  const data = Buffer.alloc(KEEPER_CONFIG_SIZE);
+  // offset 0: discriminator (8 bytes)
+  discriminator("account", "KeeperConfig").copy(data, 0);
+  // offset 8: admin (32 bytes)
+  admin.toBuffer().copy(data, 8);
+  // offset 40: mode (1 byte) -- 0 = Centralized
+  data.writeUInt8(0, 40);
+  // offset 41: keeper_endpoint ([u8; 128]) -- all zeros
+  // (already zeroed by Buffer.alloc)
+  // offset 169: endpoint_len (1 byte) -- 0
+  data.writeUInt8(0, 169);
+  // offset 170: keeper_authority (32 bytes)
+  keeperAuthority.toBuffer().copy(data, 170);
+  // offset 202: bump (1 byte)
+  data.writeUInt8(bump, 202);
   return data;
 }
 
@@ -183,6 +224,7 @@ export async function installPhase7AdminState(args: {
 }> {
   const { provider, svm, admin, splUsdcMint } = args;
   const [config, configBump] = deriveConfigAddress();
+  const [keeperConfig, keeperConfigBump] = deriveKeeperConfigAddress();
   const [mintAuthority] = deriveMintAuthorityAddress();
   const wrappingVault = getAssociatedTokenAddressSync(
     splUsdcMint,
@@ -194,6 +236,16 @@ export async function installPhase7AdminState(args: {
   svm.setAccount(config, {
     lamports: Number(svm.minimumBalanceForRentExemption(BigInt(PROTOCOL_CONFIG_SIZE))),
     data: serializeProtocolConfig(admin.publicKey, configBump),
+    owner: PROGRAM_ID,
+    executable: false,
+    rentEpoch: 0,
+  });
+
+  // Inject a minimal KeeperConfig so execute_pull can deserialize it.
+  // In tests, the admin wallet also acts as the keeper authority (payer of execute_pull).
+  svm.setAccount(keeperConfig, {
+    lamports: Number(svm.minimumBalanceForRentExemption(BigInt(KEEPER_CONFIG_SIZE))),
+    data: serializeKeeperConfig(admin.publicKey, admin.publicKey, keeperConfigBump),
     owner: PROGRAM_ID,
     executable: false,
     rentEpoch: 0,

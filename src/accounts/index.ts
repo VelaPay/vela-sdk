@@ -16,6 +16,7 @@ export {
   getPlanDetails,
 } from "./fetchers";
 export {
+  deriveConfigAddress,
   deriveCredentialMintAddress,
   deriveKeeperConfigAddress,
   deriveMandateAddress,

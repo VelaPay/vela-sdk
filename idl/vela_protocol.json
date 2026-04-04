@@ -8,6 +8,66 @@
   },
   "instructions": [
     {
+      "name": "admin_cancel",
+      "discriminator": [
+        34,
+        225,
+        37,
+        131,
+        38,
+        121,
+        43,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "subscriber"
+        },
+        {
+          "name": "plan"
+        },
+        {
+          "name": "mandate",
+          "writable": true
+        },
+        {
+          "name": "subscriber_credential_account",
+          "writable": true
+        },
+        {
+          "name": "credential_mint",
+          "writable": true
+        },
+        {
+          "name": "token_2022_program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "cancel",
       "discriminator": [
         232,
@@ -190,6 +250,138 @@
       ]
     },
     {
+      "name": "create_usage_plan",
+      "discriminator": [
+        108,
+        182,
+        134,
+        12,
+        3,
+        137,
+        243,
+        205
+      ],
+      "accounts": [
+        {
+          "name": "merchant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "usage_plan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  97,
+                  103,
+                  101,
+                  95,
+                  112,
+                  108,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              },
+              {
+                "kind": "arg",
+                "path": "plan_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "credential_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  97,
+                  103,
+                  101,
+                  95,
+                  99,
+                  114,
+                  101,
+                  100,
+                  101,
+                  110,
+                  116,
+                  105,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              },
+              {
+                "kind": "arg",
+                "path": "plan_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_2022_program"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "plan_id",
+          "type": "u64"
+        },
+        {
+          "name": "unit_name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "tiers",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "PricingTier"
+              }
+            }
+          }
+        },
+        {
+          "name": "max_charge_per_period",
+          "type": "u64"
+        },
+        {
+          "name": "settlement_frequency",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "execute_pull",
       "discriminator": [
         182,
@@ -214,29 +406,32 @@
           "name": "merchant"
         },
         {
-          "name": "plan",
+          "name": "keeper_config",
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  107,
+                  101,
+                  101,
                   112,
-                  108,
-                  97,
-                  110
+                  101,
+                  114,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
-              },
-              {
-                "kind": "account",
-                "path": "merchant"
-              },
-              {
-                "kind": "account",
-                "path": "plan.plan_id",
-                "account": "VelaPlan"
               }
             ]
           }
+        },
+        {
+          "name": "plan"
         },
         {
           "name": "mandate",
@@ -764,6 +959,45 @@
       "args": []
     },
     {
+      "name": "pause_protocol",
+      "discriminator": [
+        144,
+        95,
+        0,
+        107,
+        119,
+        39,
+        248,
+        141
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "record_billing_event_callback",
       "discriminator": [
         123,
@@ -1071,6 +1305,265 @@
       ]
     },
     {
+      "name": "request_usage_computation",
+      "discriminator": [
+        242,
+        181,
+        163,
+        40,
+        197,
+        61,
+        202,
+        32
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true
+        },
+        {
+          "name": "clock_account",
+          "writable": true
+        },
+        {
+          "name": "usage_plan",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  97,
+                  103,
+                  101,
+                  95,
+                  112,
+                  108,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "usage_plan.merchant",
+                "account": "UsagePlan"
+              },
+              {
+                "kind": "account",
+                "path": "usage_plan.plan_id",
+                "account": "UsagePlan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate.subscriber",
+                "account": "VelaMandate"
+              },
+              {
+                "kind": "account",
+                "path": "mandate.plan",
+                "account": "VelaMandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "usage_report",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  97,
+                  103,
+                  101,
+                  95,
+                  114,
+                  101,
+                  112,
+                  111,
+                  114,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "account",
+                "path": "usage_report.period_start",
+                "account": "UsageReport"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pull_approval",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  112,
+                  112,
+                  114,
+                  111,
+                  118,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "requested_computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "ciphertext",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        },
+        {
+          "name": "pub_key",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        }
+      ]
+    },
+    {
       "name": "request_validation",
       "discriminator": [
         72,
@@ -1289,6 +1782,129 @@
       ]
     },
     {
+      "name": "submit_usage_report",
+      "discriminator": [
+        133,
+        85,
+        63,
+        196,
+        114,
+        157,
+        244,
+        112
+      ],
+      "accounts": [
+        {
+          "name": "merchant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mandate",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate.subscriber",
+                "account": "VelaMandate"
+              },
+              {
+                "kind": "account",
+                "path": "mandate.plan",
+                "account": "VelaMandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "usage_report",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  97,
+                  103,
+                  101,
+                  95,
+                  114,
+                  101,
+                  112,
+                  111,
+                  114,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "arg",
+                "path": "period_start"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "period_start",
+          "type": "i64"
+        },
+        {
+          "name": "period_end",
+          "type": "i64"
+        },
+        {
+          "name": "encrypted_usage",
+          "type": {
+            "array": [
+              {
+                "array": [
+                  "u8",
+                  32
+                ]
+              },
+              4
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        },
+        {
+          "name": "pub_key",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "subscribe",
       "discriminator": [
         254,
@@ -1311,28 +1927,9 @@
         },
         {
           "name": "plan",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "merchant"
-              },
-              {
-                "kind": "account",
-                "path": "plan.plan_id",
-                "account": "VelaPlan"
-              }
-            ]
-          }
+          "docs": [
+            "either a flat `VelaPlan` PDA or a usage `UsagePlan` PDA."
+          ]
         },
         {
           "name": "mandate",
@@ -1388,6 +1985,45 @@
         {
           "name": "rent",
           "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "unpause_protocol",
+      "discriminator": [
+        183,
+        154,
+        5,
+        183,
+        105,
+        76,
+        87,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
         }
       ],
       "args": []
@@ -1634,6 +2270,111 @@
           "name": "keeper_authority",
           "type": {
             "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "usage_charge_callback",
+      "discriminator": [
+        201,
+        76,
+        6,
+        25,
+        189,
+        59,
+        96,
+        63
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "pull_approval",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  112,
+                  112,
+                  114,
+                  111,
+                  118,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate"
+        },
+        {
+          "name": "usage_report",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "UsageChargeOutput"
+                    }
+                  }
+                }
+              ]
+            }
           }
         }
       ]
@@ -1934,29 +2675,55 @@
       ]
     },
     {
+      "name": "UsagePlan",
+      "discriminator": [
+        207,
+        158,
+        202,
+        192,
+        217,
+        13,
+        235,
+        214
+      ]
+    },
+    {
+      "name": "UsageReport",
+      "discriminator": [
+        134,
+        41,
+        8,
+        129,
+        151,
+        233,
+        78,
+        124
+      ]
+    },
+    {
       "name": "VelaMandate",
       "discriminator": [
-        30,
-        59,
-        97,
-        45,
-        156,
-        44,
-        1,
-        253
+        254,
+        125,
+        146,
+        195,
+        217,
+        231,
+        108,
+        200
       ]
     },
     {
       "name": "VelaPlan",
       "discriminator": [
-        73,
+        141,
         112,
-        69,
-        121,
-        5,
-        183,
-        0,
-        4
+        118,
+        132,
+        18,
+        188,
+        112,
+        68
       ]
     }
   ],
@@ -1985,6 +2752,45 @@
         67,
         237,
         251
+      ]
+    },
+    {
+      "name": "KeeperConfigInitialized",
+      "discriminator": [
+        16,
+        210,
+        101,
+        114,
+        97,
+        54,
+        45,
+        69
+      ]
+    },
+    {
+      "name": "KeeperConfigUpdated",
+      "discriminator": [
+        2,
+        153,
+        180,
+        2,
+        42,
+        208,
+        128,
+        248
+      ]
+    },
+    {
+      "name": "UsageComputationCompleteEvent",
+      "discriminator": [
+        41,
+        144,
+        6,
+        232,
+        192,
+        175,
+        134,
+        9
       ]
     },
     {
@@ -2156,6 +2962,71 @@
       "code": 6030,
       "name": "EndpointTooLong",
       "msg": "Keeper endpoint exceeds maximum length (128 bytes)"
+    },
+    {
+      "code": 6031,
+      "name": "EndpointEmpty",
+      "msg": "Keeper endpoint must not be empty"
+    },
+    {
+      "code": 6032,
+      "name": "InvalidKeeperAuthority",
+      "msg": "Keeper authority must not be the default (zero) public key"
+    },
+    {
+      "code": 6033,
+      "name": "UnauthorizedKeeper",
+      "msg": "Caller is not the authorized keeper"
+    },
+    {
+      "code": 6034,
+      "name": "NoUpdateProvided",
+      "msg": "At least one field must be provided for update"
+    },
+    {
+      "code": 6035,
+      "name": "InvalidTierCount",
+      "msg": "Usage plan requires 1-5 pricing tiers"
+    },
+    {
+      "code": 6036,
+      "name": "BillingTypeMismatch",
+      "msg": "Operation requires a different billing type"
+    },
+    {
+      "code": 6037,
+      "name": "InvalidPeriod",
+      "msg": "Invalid period boundaries"
+    },
+    {
+      "code": 6038,
+      "name": "PeriodMismatch",
+      "msg": "Usage report period must align with mandate next_payment_due"
+    },
+    {
+      "code": 6039,
+      "name": "InvalidAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6040,
+      "name": "InvalidFrequency",
+      "msg": "Settlement frequency must be greater than zero"
+    },
+    {
+      "code": 6041,
+      "name": "InvalidTierBoundary",
+      "msg": "Tier boundaries must be monotonically increasing"
+    },
+    {
+      "code": 6042,
+      "name": "ProtocolPaused",
+      "msg": "Protocol is paused -- billing pulls are blocked"
+    },
+    {
+      "code": 6043,
+      "name": "UsageReportAlreadySettled",
+      "msg": "Usage report has already been settled"
     }
   ],
   "types": [
@@ -2218,7 +3089,7 @@
                     32
                   ]
                 },
-                8
+                10
               ]
             }
           },
@@ -2261,6 +3132,20 @@
           {
             "name": "timestamp",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BillingType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Flat"
+          },
+          {
+            "name": "Usage"
           }
         ]
       }
@@ -2340,6 +3225,54 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KeeperConfigInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "mode",
+            "type": {
+              "defined": {
+                "name": "KeeperMode"
+              }
+            }
+          },
+          {
+            "name": "keeper_authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KeeperConfigUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "mode",
+            "type": {
+              "defined": {
+                "name": "KeeperMode"
+              }
+            }
+          },
+          {
+            "name": "keeper_authority",
+            "type": "pubkey"
           }
         ]
       }
@@ -2445,6 +3378,30 @@
       }
     },
     {
+      "name": "PricingTier",
+      "docs": [
+        "A single tier in a usage-based pricing schedule.",
+        "24 bytes total (3 x u64)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "up_to",
+            "type": "u64"
+          },
+          {
+            "name": "rate_per_unit",
+            "type": "u64"
+          },
+          {
+            "name": "_padding",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "ProtocolConfig",
       "type": {
         "kind": "struct",
@@ -2476,6 +3433,14 @@
           {
             "name": "wrapping_vault",
             "type": "pubkey"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "paused_at",
+            "type": "i64"
           },
           {
             "name": "bump",
@@ -2529,7 +3494,7 @@
                 "generics": [
                   {
                     "kind": "const",
-                    "value": "8"
+                    "value": "10"
                   }
                 ]
               }
@@ -2573,6 +3538,239 @@
                 "generic": "O"
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateConfigIx",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "cluster_pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "cluster_type",
+            "type": {
+              "defined": {
+                "name": "ClusterType"
+              }
+            }
+          },
+          {
+            "name": "cluster_offset",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UsageChargeOutput",
+      "docs": [
+        "Output struct for both usage_charge and tiered_pricing circuits.",
+        "Both circuits return a single u64 plaintext value (the computed charge amount)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UsageComputationCompleteEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "approved_amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UsagePlan",
+      "docs": [
+        "UsagePlan PDA — a merchant's usage-based pricing plan with up to 5 tiers.",
+        "",
+        "Seeds: [b\"usage_plan\", merchant.key().as_ref(), plan_id.to_le_bytes().as_ref()]",
+        "SIZE: 8 + 32 + 8 + 32 + (24 * 5) + 1 + 8 + 8 + 32 + 1 + 1 = 251 bytes"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan_id",
+            "type": "u64"
+          },
+          {
+            "name": "unit_name",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "tiers",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "PricingTier"
+                  }
+                },
+                5
+              ]
+            }
+          },
+          {
+            "name": "tier_count",
+            "type": "u8"
+          },
+          {
+            "name": "max_charge_per_period",
+            "type": "u64"
+          },
+          {
+            "name": "settlement_frequency",
+            "type": "u64"
+          },
+          {
+            "name": "credential_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "PlanStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UsageReport",
+      "docs": [
+        "UsageReport PDA — encrypted usage data submitted by a merchant for a billing period.",
+        "",
+        "Seeds: [b\"usage_report\", mandate.key().as_ref(), period_start.to_le_bytes().as_ref()]",
+        "SIZE: 8 + 32 + 32 + 8 + 8 + (32 * 4) + 16 + 32 + 1 + 8 + 1 = 274 bytes"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "period_start",
+            "type": "i64"
+          },
+          {
+            "name": "period_end",
+            "type": "i64"
+          },
+          {
+            "name": "encrypted_usage",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                4
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u128"
+          },
+          {
+            "name": "pub_key",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "settled",
+            "type": "bool"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValidateMandateOutput",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValidationCompleteEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "approved",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -2649,6 +3847,14 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "billing_type",
+            "type": {
+              "defined": {
+                "name": "BillingType"
+              }
+            }
           }
         ]
       }
@@ -2697,62 +3903,6 @@
           {
             "name": "bump",
             "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "UpdateConfigIx",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "cluster_pubkey",
-            "type": "pubkey"
-          },
-          {
-            "name": "cluster_type",
-            "type": {
-              "defined": {
-                "name": "ClusterType"
-              }
-            }
-          },
-          {
-            "name": "cluster_offset",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ValidateMandateOutput",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "bool"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ValidationCompleteEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "mandate",
-            "type": "pubkey"
-          },
-          {
-            "name": "approved",
-            "type": "bool"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
           }
         ]
       }

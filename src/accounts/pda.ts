@@ -1,6 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
-import { KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES } from "../constants";
+import { CONFIG_SEED, KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES } from "../constants";
 
 /**
  * Derives the MerchantState PDA address.
@@ -73,6 +73,20 @@ export function deriveKeeperConfigAddress(
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [KEEPER_CONFIG_SEED],
+    programId,
+  );
+}
+
+/**
+ * Derives the ProtocolConfig PDA address.
+ * Seeds: ["config"]
+ * Singleton PDA -- one per program deployment
+ */
+export function deriveConfigAddress(
+  programId: PublicKey = PROGRAM_ID,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [CONFIG_SEED],
     programId,
   );
 }

@@ -76,3 +76,17 @@ export class MaxPullsTooLowError extends VelaError {
     this.name = "MaxPullsTooLowError";
   }
 }
+
+export class UnauthorizedAdminError extends VelaError {
+  constructor(context?: Record<string, unknown>) {
+    super("Only the protocol admin can perform this action", 6016, context);
+    this.name = "UnauthorizedAdminError";
+  }
+}
+
+export class ProtocolPausedError extends VelaError {
+  constructor(context?: Record<string, unknown>) {
+    super("Protocol is paused -- billing pulls are blocked", 6044, context);
+    this.name = "ProtocolPausedError";
+  }
+}

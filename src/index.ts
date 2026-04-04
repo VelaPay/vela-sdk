@@ -2,6 +2,7 @@
 
 // Account helpers
 export {
+  deriveConfigAddress,
   deriveCredentialMintAddress,
   deriveKeeperConfigAddress,
   deriveMandateAddress,
@@ -43,17 +44,22 @@ export {
   VelaError,
   translateError,
   UnauthorizedCancelError,
+  UnauthorizedAdminError,
+  ProtocolPausedError,
 } from "./errors";
 // Helius provider (opt-in)
 export { createHeliusConnection, sendWithPriorityFee } from "./helius/provider";
 export type {
+  BuildAdminCancelResult,
   BuildCancelResult,
   BuildCreatePlanResult,
   BuildExecutePullResult,
   BuildInitKeeperConfigResult,
+  BuildPauseProtocolResult,
   BuildRequestBillingRecordResult,
   BuildRequestValidationResult,
   BuildSubscribeResult,
+  BuildUnpauseProtocolResult,
   BuildUnwrapResult,
   BuildUpdateKeeperConfigResult,
   BuildWrapAndSubscribeResult,
@@ -63,16 +69,19 @@ export type {
 } from "./instructions";
 // Instruction builders
 export {
+  buildAdminCancelInstruction,
   buildCancelInstruction,
   buildCreatePlanInstruction,
   buildCreateUsagePlanInstruction,
   buildExecutePullInstruction,
   buildInitKeeperConfigInstruction,
+  buildPauseProtocolInstruction,
   buildRequestBillingRecordInstruction,
   buildRequestUsageComputationInstruction,
   buildRequestValidationInstruction,
   buildSubmitUsageReportInstruction,
   buildSubscribeInstruction,
+  buildUnpauseProtocolInstruction,
   buildUnwrapInstruction,
   buildUpdateKeeperConfigInstruction,
   buildWrapAndSubscribeInstructions,
@@ -101,6 +110,7 @@ export type {
   MerchantState,
   PlanStatus,
   PricingTier,
+  VelaAdminCancelParams,
   VelaCancelParams,
   VelaClientConfig,
   VelaCreatePlanParams,

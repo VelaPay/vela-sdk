@@ -42,3 +42,9 @@ export {
   buildRequestBillingRecordInstruction,
   deriveBillingComputationOffset,
 } from "./request-billing-record";
+export type { BuildPauseProtocolResult } from "./pause-protocol";
+export { buildPauseProtocolInstruction } from "./pause-protocol";
+export type { BuildUnpauseProtocolResult } from "./unpause-protocol";
+export { buildUnpauseProtocolInstruction } from "./unpause-protocol";
+export type { BuildAdminCancelResult } from "./admin-cancel";
+export { buildAdminCancelInstruction } from "./admin-cancel";

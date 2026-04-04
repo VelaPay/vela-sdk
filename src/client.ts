@@ -17,11 +17,14 @@ import { PROGRAM_ID } from "./constants";
 import { translateError } from "./errors";
 import { createHeliusConnection } from "./helius/provider";
 import {
+  buildAdminCancelInstruction,
   buildCancelInstruction,
   buildCreatePlanInstruction,
   buildExecutePullInstruction,
   buildInitKeeperConfigInstruction,
+  buildPauseProtocolInstruction,
   buildSubscribeInstruction,
+  buildUnpauseProtocolInstruction,
   buildUnwrapInstruction,
   buildUpdateKeeperConfigInstruction,
   buildWrapAndSubscribeInstructions,
@@ -38,6 +41,7 @@ import type {
   CancelValidationResult,
   InitKeeperConfigParams,
   KeeperConfig,
+  VelaAdminCancelParams,
   VelaCancelParams,
   VelaClientConfig,
   VelaCreatePlanParams,
@@ -114,6 +118,11 @@ export interface VelaClient {
   updateKeeperConfig: (
     params: UpdateKeeperConfigParams,
   ) => Promise<VelaMethodResult<KeeperConfig>>;
+  pauseProtocol: () => Promise<VelaMethodResult<void>>;
+  unpauseProtocol: () => Promise<VelaMethodResult<void>>;
+  adminCancel: (
+    params: VelaAdminCancelParams,
+  ) => Promise<VelaMethodResult<VelaMandate>>;
 
   // Usage-based billing
   createUsagePlan: (
@@ -155,6 +164,11 @@ export interface VelaClient {
     updateKeeperConfig: (
       params: UpdateKeeperConfigParams,
     ) => ReturnType<typeof buildUpdateKeeperConfigInstruction>;
+    pauseProtocol: (params?: { authority?: PublicKey }) => ReturnType<typeof buildPauseProtocolInstruction>;
+    unpauseProtocol: (params?: { authority?: PublicKey }) => ReturnType<typeof buildUnpauseProtocolInstruction>;
+    adminCancel: (
+      params: VelaAdminCancelParams,
+    ) => ReturnType<typeof buildAdminCancelInstruction>;
   };
 
   // Validation layer
@@ -565,6 +579,59 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         { method: "updateKeeperConfig" },
       ),
 
+    pauseProtocol: () =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, configAddress } = await buildPauseProtocolInstruction(
+            program,
+            { authority: wallet.publicKey },
+          );
+
+          const signature = await sendV0Transaction([instruction]);
+
+          return { signature, address: configAddress };
+        },
+        { method: "pauseProtocol" },
+      ),
+
+    unpauseProtocol: () =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, configAddress } = await buildUnpauseProtocolInstruction(
+            program,
+            { authority: wallet.publicKey },
+          );
+
+          const signature = await sendV0Transaction([instruction]);
+
+          return { signature, address: configAddress };
+        },
+        { method: "unpauseProtocol" },
+      ),
+
+    adminCancel: (params: VelaAdminCancelParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, mandateAddress } = await buildAdminCancelInstruction(
+            program,
+            { ...params, authority: wallet.publicKey },
+          );
+
+          const signature = await sendV0Transaction([instruction]);
+
+          // Fetch updated mandate
+          const raw = await (program.account as any).velaMandate.fetch(
+            mandateAddress,
+          );
+          const mandate = deserializeMandate(mandateAddress, raw);
+
+          await cancelScheduleForMandate(mandateAddress);
+
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "adminCancel" },
+      ),
+
     // Usage-based billing methods
     createUsagePlan: (params: VelaUsagePlanParams) =>
       usageCreateUsagePlan(program, {
@@ -631,6 +698,15 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         buildUpdateKeeperConfigInstruction(program, {
           ...params,
           admin: wallet.publicKey,
+        }),
+      pauseProtocol: (_params?) =>
+        buildPauseProtocolInstruction(program, { authority: wallet.publicKey }),
+      unpauseProtocol: (_params?) =>
+        buildUnpauseProtocolInstruction(program, { authority: wallet.publicKey }),
+      adminCancel: (params) =>
+        buildAdminCancelInstruction(program, {
+          ...params,
+          authority: wallet.publicKey,
         }),
     },
 

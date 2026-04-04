@@ -109,6 +109,13 @@ export interface VelaCancelParams {
   planAddress: PublicKey;
 }
 
+export interface VelaAdminCancelParams {
+  mandateAddress: PublicKey;
+  subscriberAddress: PublicKey;
+  planAddress: PublicKey;
+  credentialMintAddress?: PublicKey;
+}
+
 export interface VelaWrapParams {
   subscriber: PublicKey;
   amount: bigint;
