@@ -1,2 +1,10 @@
-#!/usr/bin/env bun
-import "../cli/index.ts";
+#!/usr/bin/env node
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const { runCli } = require("../dist/cjs/cli/index.cjs");
+
+void Promise.resolve(runCli()).catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

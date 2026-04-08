@@ -1,37 +1,46 @@
 async function build() {
+  const entrypoints = [
+    "./src/index.ts",
+    "./src/x402/index.ts",
+    "./cli/index.ts",
+  ];
+  const external = [
+    "@x402/core",
+    "@x402/fetch",
+    "@x402/hono",
+    "@x402/svm",
+    "@coral-xyz/anchor",
+    "@solana/web3.js",
+    "@solana/spl-token",
+    "commander",
+    "hono",
+    "helius-sdk",
+    "bn.js",
+    "anchor-litesvm",
+    "anchor-litesvm/node_modules/litesvm",
+  ];
+
   // Clean dist
   const { rmSync } = await import("node:fs");
   rmSync("./dist", { recursive: true, force: true });
 
   // ESM build
   const esmResult = await Bun.build({
-    entrypoints: ["./src/index.ts"],
+    entrypoints,
     outdir: "./dist/esm",
     format: "esm",
     target: "node",
-    external: [
-      "@coral-xyz/anchor",
-      "@solana/web3.js",
-      "@solana/spl-token",
-      "helius-sdk",
-      "bn.js",
-    ],
+    external,
   });
 
   // CJS build
   const cjsResult = await Bun.build({
-    entrypoints: ["./src/index.ts"],
+    entrypoints,
     outdir: "./dist/cjs",
     format: "cjs",
     target: "node",
-    naming: "[name].cjs",
-    external: [
-      "@coral-xyz/anchor",
-      "@solana/web3.js",
-      "@solana/spl-token",
-      "helius-sdk",
-      "bn.js",
-    ],
+    naming: "[dir]/[name].cjs",
+    external,
   });
 
   if (!esmResult.success) {

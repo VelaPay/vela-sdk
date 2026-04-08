@@ -1,4 +1,5 @@
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
+import { getAccount, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import type {
   Connection,
   PublicKey,
@@ -6,24 +7,39 @@ import type {
 } from "@solana/web3.js";
 import idl from "../idl/vela_protocol.json";
 import {
+  checkAgentBudget,
+  deserializeAgentMandate,
   deserializeMandate,
+  deriveAgentMandateAddress,
+  deriveAgentMandateWrappedAta,
+  deriveConfigAddress,
   deserializePlan,
   getActiveSubscriptions,
+  listAgentMandates,
   getMerchantState,
   getPlanDetails,
+  verifyAgentMandate,
 } from "./accounts";
 import { ALTManager } from "./alt/lookup-table";
 import { PROGRAM_ID } from "./constants";
 import { translateError } from "./errors";
 import { createHeliusConnection } from "./helius/provider";
+import { ensureAgentWebhook } from "./helius/webhooks";
 import {
+  buildAdjustAgentMandateInstruction,
+  buildAgentPullInstruction,
   buildAdminCancelInstruction,
   buildCancelInstruction,
+  buildCreateAgentMandateInstruction,
   buildCreatePlanInstruction,
+  buildDrainAgentMandateInstruction,
   buildExecutePullInstruction,
   buildInitKeeperConfigInstruction,
+  buildPauseAgentMandateInstruction,
   buildPauseProtocolInstruction,
+  buildResumeAgentMandateInstruction,
   buildSubscribeInstruction,
+  buildRevokeAgentMandateInstruction,
   buildUnpauseProtocolInstruction,
   buildUnwrapInstruction,
   buildUpdateKeeperConfigInstruction,
@@ -37,20 +53,36 @@ import {
 } from "./schedule";
 import type { KeeperScheduleOptions } from "./schedule";
 import type {
+  AgentMandate,
+  AgentBudgetSummary,
+  AgentMandateDrainResult,
+  AgentMandateMethodResult,
+  AgentMandateRevokeResult,
+  AgentMandateVerificationResult,
   BillingScheduleParams,
   CancelValidationResult,
+  CheckAgentBudgetParams,
   InitKeeperConfigParams,
   KeeperConfig,
+  ValidateAgentPullParams,
   VelaAdminCancelParams,
+  VelaAdjustAgentMandateParams,
+  VelaAgentPullParams,
   VelaCancelParams,
   VelaClientConfig,
+  VelaCreateAgentMandateParams,
   VelaCreatePlanParams,
+  VelaDrainAgentMandateParams,
   VelaMandate,
   VelaMethodResult,
+  VelaPauseAgentMandateParams,
   VelaPlan,
   VelaPullParams,
+  VelaResumeAgentMandateParams,
+  VelaRevokeAgentMandateParams,
   VelaSubmitUsageReportParams,
   VelaSubscribeParams,
+  VelaTopUpAgentMandateParams,
   SubscribablePlan,
   VelaUnwrapParams,
   VelaUsagePlanParams,
@@ -67,6 +99,7 @@ import {
   submitUsageReport as usageSubmitUsageReport,
 } from "./usage";
 import {
+  validateAgentPull,
   validateCancel,
   validatePullPayment,
   validateSubscribe,
@@ -85,6 +118,43 @@ export interface VelaClient {
   createPlan: (
     params: VelaCreatePlanParams,
   ) => Promise<VelaMethodResult<VelaPlan>>;
+  createAgentMandate: (
+    params: VelaCreateAgentMandateParams,
+  ) => Promise<AgentMandateMethodResult>;
+  wrapAndCreateAgentMandate: (
+    params: VelaCreateAgentMandateParams,
+  ) => Promise<AgentMandateMethodResult>;
+  topUpAgentMandate: (
+    params: VelaTopUpAgentMandateParams,
+  ) => Promise<AgentMandateMethodResult>;
+  agentPull: (
+    params: VelaAgentPullParams,
+  ) => Promise<AgentMandateMethodResult>;
+  adjustAgentMandate: (
+    params: VelaAdjustAgentMandateParams,
+  ) => Promise<AgentMandateMethodResult>;
+  pauseAgentMandate: (
+    params: VelaPauseAgentMandateParams,
+  ) => Promise<AgentMandateMethodResult>;
+  resumeAgentMandate: (
+    params: VelaResumeAgentMandateParams,
+  ) => Promise<AgentMandateMethodResult>;
+  revokeAgentMandate: (
+    params: VelaRevokeAgentMandateParams,
+  ) => Promise<AgentMandateRevokeResult>;
+  drainAgentMandate: (
+    params: VelaDrainAgentMandateParams,
+  ) => Promise<AgentMandateDrainResult>;
+  listAgentMandates: (authority?: PublicKey) => Promise<AgentMandate[]>;
+  checkAgentBudget: (
+    params: CheckAgentBudgetParams,
+  ) => Promise<AgentBudgetSummary>;
+  verifyAgentMandate: (
+    params: Parameters<typeof verifyAgentMandate>[2],
+  ) => Promise<AgentMandateVerificationResult>;
+  validateAgentPull: (
+    params: ValidateAgentPullParams,
+  ) => Promise<ReturnType<typeof validateAgentPull> extends Promise<infer T> ? T : never>;
   createSubscription: (
     params: VelaSubscribeParams,
   ) => Promise<VelaMethodResult<VelaMandate>>;
@@ -139,6 +209,27 @@ export interface VelaClient {
     createPlan: (
       params: VelaCreatePlanParams & { planId: bigint },
     ) => ReturnType<typeof buildCreatePlanInstruction>;
+    createAgentMandate: (
+      params: VelaCreateAgentMandateParams,
+    ) => ReturnType<typeof buildCreateAgentMandateInstruction>;
+    agentPull: (
+      params: VelaAgentPullParams,
+    ) => ReturnType<typeof buildAgentPullInstruction>;
+    adjustAgentMandate: (
+      params: VelaAdjustAgentMandateParams,
+    ) => ReturnType<typeof buildAdjustAgentMandateInstruction>;
+    pauseAgentMandate: (
+      params: VelaPauseAgentMandateParams,
+    ) => ReturnType<typeof buildPauseAgentMandateInstruction>;
+    resumeAgentMandate: (
+      params: VelaResumeAgentMandateParams,
+    ) => ReturnType<typeof buildResumeAgentMandateInstruction>;
+    revokeAgentMandate: (
+      params: VelaRevokeAgentMandateParams,
+    ) => ReturnType<typeof buildRevokeAgentMandateInstruction>;
+    drainAgentMandate: (
+      params: VelaDrainAgentMandateParams,
+    ) => ReturnType<typeof buildDrainAgentMandateInstruction>;
     subscribe: (
       params: VelaSubscribeParams & { credentialMintAddress?: PublicKey },
     ) => ReturnType<typeof buildSubscribeInstruction>;
@@ -173,6 +264,9 @@ export interface VelaClient {
 
   // Validation layer
   validate: {
+    agentPull: (
+      params: ValidateAgentPullParams,
+    ) => Promise<ReturnType<typeof validateAgentPull> extends Promise<infer T> ? T : never>;
     pullPayment: (mandateAddress: PublicKey) => Promise<ValidationResult>;
     subscribe: (planAddress: PublicKey) => Promise<SubscribeValidationResult>;
     cancel: (mandateAddress: PublicKey) => Promise<CancelValidationResult>;
@@ -218,26 +312,65 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
   const { wallet, commitment = "confirmed", programId = PROGRAM_ID } = config;
 
   let { connection } = config;
+  const programIdl = {
+    ...(idl as Record<string, unknown>),
+    address: programId.toBase58(),
+  };
+  let provider = new AnchorProvider(connection, wallet as any, {
+    commitment,
+  });
+  let program = new Program(programIdl as any, provider);
+
+  const syncRuntime = (nextConnection?: Connection) => {
+    if (nextConnection) {
+      connection = nextConnection;
+    }
+    provider = new AnchorProvider(connection, wallet as any, {
+      commitment,
+    });
+    program = new Program(programIdl as any, provider);
+  };
+
+  const inferHeliusCluster = (): string => {
+    const endpoint = (
+      connection as Connection & { rpcEndpoint?: string }
+    ).rpcEndpoint?.toLowerCase();
+    if (endpoint?.includes("devnet")) {
+      return "devnet";
+    }
+    if (endpoint?.includes("testnet")) {
+      return "testnet";
+    }
+    if (endpoint?.includes("mainnet")) {
+      return "mainnet-beta";
+    }
+    throw new Error(
+      "Unable to infer the Helius cluster from the RPC endpoint. Pass heliusCluster explicitly when creating the client.",
+    );
+  };
 
   // Lazy Helius connection upgrade
   let heliusConnectionPromise: Promise<Connection> | null = null;
   if (config.heliusApiKey) {
-    heliusConnectionPromise = createHeliusConnection(config.heliusApiKey).then(
-      (conn) => {
-        connection = conn;
-        return conn;
-      },
-    );
+    heliusConnectionPromise = createHeliusConnection(
+      config.heliusApiKey,
+      config.heliusCluster ?? inferHeliusCluster(),
+    ).then((conn) => {
+      syncRuntime(conn);
+      return conn;
+    });
   }
-
-  // Create Anchor provider and program
-  const provider = new AnchorProvider(connection, wallet as any, {
-    commitment,
-  });
-  const program = new Program(idl as any, provider);
+  let agentWebhookId: string | null = null;
+  let agentWebhookRegistrationPromise: Promise<string | null> | null = null;
 
   // ALT manager for Versioned Transactions
   const altManager = new ALTManager();
+
+  async function ensureRuntimeReady(): Promise<void> {
+    if (heliusConnectionPromise) {
+      await heliusConnectionPromise;
+    }
+  }
 
   function isMissingMerchantStateError(error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -253,15 +386,22 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
   async function sendV0Transaction(
     instructions: import("@solana/web3.js").TransactionInstruction[],
   ): Promise<string> {
-    // Wait for Helius connection if initializing
-    if (heliusConnectionPromise) {
-      await heliusConnectionPromise;
-    }
+    await ensureRuntimeReady();
 
     const signAndSend = async (tx: VersionedTransaction): Promise<string> => {
       const signed = await wallet.signTransaction(tx as any);
       const sig = await connection.sendRawTransaction(signed.serialize());
-      await connection.confirmTransaction(sig, commitment);
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash(commitment);
+      const confirmation = await connection.confirmTransaction(
+        { signature: sig, blockhash, lastValidBlockHeight },
+        commitment,
+      );
+      if (confirmation.value.err) {
+        throw new Error(
+          `Transaction failed: ${JSON.stringify(confirmation.value.err)}`,
+        );
+      }
       return sig;
     };
 
@@ -289,9 +429,103 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     context?: Record<string, unknown>,
   ): Promise<T> {
     try {
+      await ensureRuntimeReady();
       return await fn();
     } catch (err) {
       throw translateError(err, context);
+    }
+  }
+
+  async function resolveAgentProtocolAccounts(overrides: {
+    wrappedUsdcMint?: PublicKey;
+    wrappingVault?: PublicKey;
+  }): Promise<{ wrappedUsdcMint: PublicKey; wrappingVault: PublicKey }> {
+    if (overrides.wrappedUsdcMint && overrides.wrappingVault) {
+      return {
+        wrappedUsdcMint: overrides.wrappedUsdcMint,
+        wrappingVault: overrides.wrappingVault,
+      };
+    }
+
+    const [configAddress] = deriveConfigAddress(program.programId);
+    const configAccount = await (program.account as any).protocolConfig.fetch(
+      configAddress,
+    );
+
+    return {
+      wrappedUsdcMint: overrides.wrappedUsdcMint ?? configAccount.wrappedUsdcMint,
+      wrappingVault: overrides.wrappingVault ?? configAccount.wrappingVault,
+    };
+  }
+
+  async function fetchAgentMandate(
+    mandateAddress: PublicKey,
+  ): Promise<AgentMandate> {
+    const raw = await (program.account as any).agentMandate.fetch(mandateAddress);
+    return deserializeAgentMandate(mandateAddress, raw);
+  }
+
+  async function getAgentMandateWrappedBalance(
+    mandateAddress: PublicKey,
+    wrappedUsdcMint: PublicKey,
+  ): Promise<bigint> {
+    const wrappedAccount = deriveAgentMandateWrappedAta(
+      mandateAddress,
+      wrappedUsdcMint,
+    );
+    const account = await getAccount(
+      connection,
+      wrappedAccount,
+      commitment,
+      TOKEN_2022_PROGRAM_ID,
+    );
+    return BigInt(account.amount.toString());
+  }
+
+  async function createAgentMandateFlow(
+    params: VelaCreateAgentMandateParams,
+  ): Promise<AgentMandateMethodResult> {
+    const { instruction, mandateAddress } =
+      await buildCreateAgentMandateInstruction(program, {
+        ...params,
+        authority: wallet.publicKey,
+      });
+
+    const signature = await sendV0Transaction([instruction]);
+    const mandate = await fetchAgentMandate(mandateAddress);
+    await ensureAgentWebhookRegistered();
+
+    return { signature, address: mandateAddress, data: mandate };
+  }
+
+  async function ensureAgentWebhookRegistered(): Promise<void> {
+    if (!config.heliusApiKey || !config.agentWebhook || agentWebhookId != null) {
+      return;
+    }
+
+    if (agentWebhookRegistrationPromise == null) {
+      agentWebhookRegistrationPromise = ensureAgentWebhook({
+        apiKey: config.heliusApiKey,
+        agentWebhook: config.agentWebhook,
+        programId,
+      })
+        .then(({ webhookId }) => {
+          agentWebhookId = webhookId;
+          return webhookId;
+        })
+        .catch((error) => {
+          agentWebhookRegistrationPromise = null;
+          throw error;
+        });
+    }
+
+    try {
+      await agentWebhookRegistrationPromise;
+    } catch (error) {
+      console.warn(
+        "Agent mandate created, but webhook registration failed:",
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
@@ -416,6 +650,203 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         { method: "createPlan" },
       ),
 
+    createAgentMandate: (params: VelaCreateAgentMandateParams) =>
+      wrapWithErrorTranslation(
+        () => createAgentMandateFlow(params),
+        { method: "createAgentMandate" },
+      ),
+
+    wrapAndCreateAgentMandate: (params: VelaCreateAgentMandateParams) =>
+      wrapWithErrorTranslation(
+        () => createAgentMandateFlow(params),
+        { method: "wrapAndCreateAgentMandate" },
+      ),
+
+    topUpAgentMandate: (params: VelaTopUpAgentMandateParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { wrappedUsdcMint, wrappingVault } =
+            await resolveAgentProtocolAccounts(params);
+          const [mandateAddress] = deriveAgentMandateAddress(
+            wallet.publicKey,
+            params.agent,
+            program.programId,
+          );
+          const destinationWrappedAccount = deriveAgentMandateWrappedAta(
+            mandateAddress,
+            wrappedUsdcMint,
+          );
+          const { instruction } = await buildWrapInstruction(program, {
+            subscriber: wallet.publicKey,
+            amount: BigInt(params.amount),
+            splUsdcMint: params.splUsdcMint,
+            wrappedUsdcMint,
+            wrappingVault,
+            destinationOwner: mandateAddress,
+            destinationWrappedAccount,
+          });
+
+          const signature = await sendV0Transaction([instruction]);
+          const mandate = await fetchAgentMandate(mandateAddress);
+
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "topUpAgentMandate" },
+      ),
+
+    agentPull: (params: VelaAgentPullParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, mandateAddress } = await buildAgentPullInstruction(
+            program,
+            {
+              ...params,
+              payer: wallet.publicKey,
+              agent: wallet.publicKey,
+            },
+          );
+
+          const signature = await sendV0Transaction([instruction]);
+          const mandate = await fetchAgentMandate(mandateAddress);
+
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "agentPull" },
+      ),
+
+    adjustAgentMandate: (params: VelaAdjustAgentMandateParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, mandateAddress } =
+            await buildAdjustAgentMandateInstruction(program, {
+              ...params,
+              authority: wallet.publicKey,
+            });
+
+          const signature = await sendV0Transaction([instruction]);
+          const mandate = await fetchAgentMandate(mandateAddress);
+
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "adjustAgentMandate" },
+      ),
+
+    pauseAgentMandate: (params: VelaPauseAgentMandateParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, mandateAddress } =
+            await buildPauseAgentMandateInstruction(program, {
+              ...params,
+              authority: wallet.publicKey,
+            });
+
+          const signature = await sendV0Transaction([instruction]);
+          const mandate = await fetchAgentMandate(mandateAddress);
+
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "pauseAgentMandate" },
+      ),
+
+    resumeAgentMandate: (params: VelaResumeAgentMandateParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { instruction, mandateAddress } =
+            await buildResumeAgentMandateInstruction(program, {
+              ...params,
+              authority: wallet.publicKey,
+            });
+
+          const signature = await sendV0Transaction([instruction]);
+          const mandate = await fetchAgentMandate(mandateAddress);
+
+          return { signature, address: mandateAddress, data: mandate };
+        },
+        { method: "resumeAgentMandate" },
+      ),
+
+    revokeAgentMandate: (params: VelaRevokeAgentMandateParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { wrappedUsdcMint } = await resolveAgentProtocolAccounts(params);
+          const [mandateAddress] = deriveAgentMandateAddress(
+            wallet.publicKey,
+            params.agent,
+            program.programId,
+          );
+          const reclaimedAmount = await getAgentMandateWrappedBalance(
+            mandateAddress,
+            wrappedUsdcMint,
+          );
+          const { instruction } = await buildRevokeAgentMandateInstruction(
+            program,
+            {
+              ...params,
+              authority: wallet.publicKey,
+              wrappedUsdcMint,
+            },
+          );
+
+          const signature = await sendV0Transaction([instruction]);
+          const mandate = await fetchAgentMandate(mandateAddress);
+
+          return {
+            signature,
+            address: mandateAddress,
+            data: mandate,
+            reclaimedAmount,
+          };
+        },
+        { method: "revokeAgentMandate" },
+      ),
+
+    drainAgentMandate: (params: VelaDrainAgentMandateParams) =>
+      wrapWithErrorTranslation(
+        async () => {
+          const { wrappedUsdcMint } = await resolveAgentProtocolAccounts(params);
+          const [mandateAddress] = deriveAgentMandateAddress(
+            wallet.publicKey,
+            params.agent,
+            program.programId,
+          );
+          const drainedAmount = await getAgentMandateWrappedBalance(
+            mandateAddress,
+            wrappedUsdcMint,
+          );
+          const { instruction } = await buildDrainAgentMandateInstruction(
+            program,
+            {
+              ...params,
+              authority: wallet.publicKey,
+              wrappedUsdcMint,
+            },
+          );
+
+          const signature = await sendV0Transaction([instruction]);
+          const mandate = await fetchAgentMandate(mandateAddress);
+
+          return {
+            signature,
+            address: mandateAddress,
+            data: mandate,
+            drainedAmount,
+          };
+        },
+        { method: "drainAgentMandate" },
+      ),
+
+    listAgentMandates: (authority = wallet.publicKey) =>
+      ensureRuntimeReady().then(() => listAgentMandates(program, authority)),
+
+    checkAgentBudget: (params: CheckAgentBudgetParams) =>
+      ensureRuntimeReady().then(() => checkAgentBudget(program, connection, params)),
+
+    verifyAgentMandate: (params) =>
+      ensureRuntimeReady().then(() => verifyAgentMandate(program, connection, params)),
+
+    validateAgentPull: (params: ValidateAgentPullParams) =>
+      ensureRuntimeReady().then(() => validateAgentPull(program, connection, params)),
+
     createSubscription: (params: VelaSubscribeParams) =>
       wrapWithErrorTranslation(
         async () => {
@@ -533,15 +964,21 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         { method: "wrapAndSubscribe" },
       ),
 
-    getActiveSubscriptions: (filter) => getActiveSubscriptions(program, filter),
+    getActiveSubscriptions: (filter) =>
+      ensureRuntimeReady().then(() => getActiveSubscriptions(program, filter)),
 
-    getPlanDetails: (planAddress) => getPlanDetails(program, planAddress),
+    getPlanDetails: (planAddress) =>
+      ensureRuntimeReady().then(() => getPlanDetails(program, planAddress)),
 
     registerBillingSchedule: (params, options) =>
-      registerBillingSchedule(program, params, mergeKeeperOptions(options)),
+      ensureRuntimeReady().then(() =>
+        registerBillingSchedule(program, params, mergeKeeperOptions(options)),
+      ),
 
     cancelBillingSchedule: (mandateAddress, options) =>
-      cancelBillingSchedule(program, mandateAddress, mergeKeeperOptions(options)),
+      ensureRuntimeReady().then(() =>
+        cancelBillingSchedule(program, mandateAddress, mergeKeeperOptions(options)),
+      ),
 
     initKeeperConfig: (params: InitKeeperConfigParams) =>
       wrapWithErrorTranslation(
@@ -663,66 +1100,150 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     // ── Raw Instruction Layer ──────────────────────────────────────────
     instructions: {
       createPlan: (params) =>
-        buildCreatePlanInstruction(program, {
-          ...params,
-          merchant: wallet.publicKey,
-        }),
+        ensureRuntimeReady().then(() =>
+          buildCreatePlanInstruction(program, {
+            ...params,
+            merchant: wallet.publicKey,
+          }),
+        ),
+      createAgentMandate: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildCreateAgentMandateInstruction(program, {
+            ...params,
+            authority: wallet.publicKey,
+          }),
+        ),
+      agentPull: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildAgentPullInstruction(program, {
+            ...params,
+            payer: wallet.publicKey,
+            agent: wallet.publicKey,
+          }),
+        ),
+      adjustAgentMandate: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildAdjustAgentMandateInstruction(program, {
+            ...params,
+            authority: wallet.publicKey,
+          }),
+        ),
+      pauseAgentMandate: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildPauseAgentMandateInstruction(program, {
+            ...params,
+            authority: wallet.publicKey,
+          }),
+        ),
+      resumeAgentMandate: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildResumeAgentMandateInstruction(program, {
+            ...params,
+            authority: wallet.publicKey,
+          }),
+        ),
+      revokeAgentMandate: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildRevokeAgentMandateInstruction(program, {
+            ...params,
+            authority: wallet.publicKey,
+          }),
+        ),
+      drainAgentMandate: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildDrainAgentMandateInstruction(program, {
+            ...params,
+            authority: wallet.publicKey,
+          }),
+        ),
       subscribe: (params) =>
-        buildSubscribeInstruction(program, {
-          ...params,
-          subscriber: wallet.publicKey,
-        }),
+        ensureRuntimeReady().then(() =>
+          buildSubscribeInstruction(program, {
+            ...params,
+            subscriber: wallet.publicKey,
+          }),
+        ),
       executePull: (params) =>
-        buildExecutePullInstruction(program, connection, {
-          ...params,
-          payer: wallet.publicKey,
-        }),
+        ensureRuntimeReady().then(() =>
+          buildExecutePullInstruction(program, connection, {
+            ...params,
+            payer: wallet.publicKey,
+          }),
+        ),
       cancel: (params) =>
-        buildCancelInstruction(program, {
-          ...params,
-          authority: wallet.publicKey,
-        }),
-      wrap: (params) => buildWrapInstruction(program, params),
-      unwrap: (params) => buildUnwrapInstruction(program, params),
+        ensureRuntimeReady().then(() =>
+          buildCancelInstruction(program, {
+            ...params,
+            authority: wallet.publicKey,
+          }),
+        ),
+      wrap: (params) =>
+        ensureRuntimeReady().then(() => buildWrapInstruction(program, params)),
+      unwrap: (params) =>
+        ensureRuntimeReady().then(() => buildUnwrapInstruction(program, params)),
       wrapAndSubscribe: (params) =>
-        buildWrapAndSubscribeInstructions(program, {
-          ...params,
-          subscriber: wallet.publicKey,
-        }),
+        ensureRuntimeReady().then(() =>
+          buildWrapAndSubscribeInstructions(program, {
+            ...params,
+            subscriber: wallet.publicKey,
+          }),
+        ),
       initKeeperConfig: (params) =>
-        buildInitKeeperConfigInstruction(program, {
-          ...params,
-          admin: wallet.publicKey,
-        }),
+        ensureRuntimeReady().then(() =>
+          buildInitKeeperConfigInstruction(program, {
+            ...params,
+            admin: wallet.publicKey,
+          }),
+        ),
       updateKeeperConfig: (params) =>
-        buildUpdateKeeperConfigInstruction(program, {
-          ...params,
-          admin: wallet.publicKey,
-        }),
+        ensureRuntimeReady().then(() =>
+          buildUpdateKeeperConfigInstruction(program, {
+            ...params,
+            admin: wallet.publicKey,
+          }),
+        ),
       pauseProtocol: (_params?) =>
-        buildPauseProtocolInstruction(program, { authority: wallet.publicKey }),
+        ensureRuntimeReady().then(() =>
+          buildPauseProtocolInstruction(program, { authority: wallet.publicKey }),
+        ),
       unpauseProtocol: (_params?) =>
-        buildUnpauseProtocolInstruction(program, { authority: wallet.publicKey }),
+        ensureRuntimeReady().then(() =>
+          buildUnpauseProtocolInstruction(program, { authority: wallet.publicKey }),
+        ),
       adminCancel: (params) =>
-        buildAdminCancelInstruction(program, {
-          ...params,
-          authority: wallet.publicKey,
-        }),
+        ensureRuntimeReady().then(() =>
+          buildAdminCancelInstruction(program, {
+            ...params,
+            authority: wallet.publicKey,
+          }),
+        ),
     },
 
     // ── Validation Layer ───────────────────────────────────────────────
     validate: {
+      agentPull: (params) =>
+        ensureRuntimeReady().then(() => validateAgentPull(program, connection, params)),
       pullPayment: (mandateAddress) =>
-        validatePullPayment(program, connection, mandateAddress),
+        ensureRuntimeReady().then(() =>
+          validatePullPayment(program, connection, mandateAddress),
+        ),
       subscribe: (planAddress) =>
-        validateSubscribe(program, planAddress, wallet.publicKey),
+        ensureRuntimeReady().then(() =>
+          validateSubscribe(program, planAddress, wallet.publicKey),
+        ),
       cancel: (mandateAddress) =>
-        validateCancel(program, mandateAddress, wallet.publicKey),
+        ensureRuntimeReady().then(() =>
+          validateCancel(program, mandateAddress, wallet.publicKey),
+        ),
     },
 
     // ── Exposed Internals ──────────────────────────────────────────────
-    program,
-    connection,
+    get program() {
+      return program;
+    },
+    get connection() {
+      return connection;
+    },
   };
 
   return client;

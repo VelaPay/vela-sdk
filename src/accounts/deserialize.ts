@@ -1,5 +1,8 @@
 import type { PublicKey } from "@solana/web3.js";
 import type {
+  AgentMandate,
+  AgentMandateStatus,
+  AgentServiceLimit,
   BillingType,
   MandateStatus,
   MerchantState,
@@ -35,6 +38,22 @@ function mapBillingType(raw: any): BillingType {
   throw new Error(`Unknown BillingType variant: ${JSON.stringify(raw)}`);
 }
 
+function mapAgentMandateStatus(raw: any): AgentMandateStatus {
+  if (raw.active !== undefined) return "active";
+  if (raw.paused !== undefined) return "paused";
+  if (raw.revoked !== undefined) return "revoked";
+  throw new Error(`Unknown AgentMandateStatus variant: ${JSON.stringify(raw)}`);
+}
+
+function deserializeAgentServiceLimit(raw: any): AgentServiceLimit {
+  return {
+    service: raw.service,
+    dailyLimit: BigInt(raw.dailyLimit.toString()),
+    dailySpent: BigInt(raw.dailySpent.toString()),
+    lastReset: BigInt(raw.lastReset.toString()),
+  };
+}
+
 function decodeUnitName(raw: number[] | Uint8Array): string {
   const bytes = Uint8Array.from(raw);
   const terminator = bytes.indexOf(0);
@@ -61,6 +80,31 @@ export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
     status: mapMandateStatus(raw.status),
     bump: raw.bump,
     billingType: mapBillingType(raw.billingType),
+  };
+}
+
+/**
+ * Converts an Anchor-deserialized AgentMandate account (BN fields) to SDK type (bigint fields).
+ */
+export function deserializeAgentMandate(
+  address: PublicKey,
+  raw: any,
+): AgentMandate {
+  return {
+    address,
+    authority: raw.authority,
+    agent: raw.agent,
+    dailyLimit: BigInt(raw.dailyLimit.toString()),
+    dailySpent: BigInt(raw.dailySpent.toString()),
+    dailyLastReset: BigInt(raw.dailyLastReset.toString()),
+    lifetimeCap: BigInt(raw.lifetimeCap.toString()),
+    totalSpent: BigInt(raw.totalSpent.toString()),
+    minPullAmount: BigInt(raw.minPullAmount.toString()),
+    minPullInterval: BigInt(raw.minPullInterval.toString()),
+    lastPullAt: BigInt(raw.lastPullAt.toString()),
+    status: mapAgentMandateStatus(raw.status),
+    services: (raw.services ?? []).map(deserializeAgentServiceLimit),
+    bump: raw.bump,
   };
 }
 

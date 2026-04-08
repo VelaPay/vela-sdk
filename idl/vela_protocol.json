@@ -8,6 +8,128 @@
   },
   "instructions": [
     {
+      "name": "adjust_agent_mandate",
+      "discriminator": [
+        82,
+        10,
+        134,
+        90,
+        75,
+        74,
+        196,
+        146
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "agent"
+        },
+        {
+          "name": "agent_mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "agent"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate_wrapped_account"
+        },
+        {
+          "name": "wrapped_usdc_mint"
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "daily_limit",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "lifetime_cap",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "min_pull_amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "min_pull_interval",
+          "type": {
+            "option": "i64"
+          }
+        },
+        {
+          "name": "services",
+          "type": {
+            "option": {
+              "vec": {
+                "defined": {
+                  "name": "ServiceLimitInput"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "admin_cancel",
       "discriminator": [
         34,
@@ -68,6 +190,187 @@
       "args": []
     },
     {
+      "name": "agent_pull",
+      "discriminator": [
+        31,
+        192,
+        205,
+        47,
+        118,
+        20,
+        39,
+        217
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "agent",
+          "signer": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "agent_mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "agent"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate_wrapped_account",
+          "writable": true
+        },
+        {
+          "name": "service_wrapped_account",
+          "writable": true
+        },
+        {
+          "name": "pull_approval",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  112,
+                  112,
+                  114,
+                  111,
+                  118,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "agent_mandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "wrapped_usdc_mint",
+          "writable": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "wrapping_vault",
+          "writable": true
+        },
+        {
+          "name": "hook_program",
+          "address": "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX"
+        },
+        {
+          "name": "extra_account_meta_list",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wrapped_usdc_mint"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "hook_program"
+            }
+          }
+        },
+        {
+          "name": "protocol_program",
+          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "cancel",
       "discriminator": [
         232,
@@ -116,6 +419,230 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "create_agent_mandate",
+      "discriminator": [
+        18,
+        127,
+        239,
+        152,
+        115,
+        110,
+        62,
+        225
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "agent"
+        },
+        {
+          "name": "agent_mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "agent"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "mandate_wrapped_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "agent_mandate"
+              },
+              {
+                "kind": "account",
+                "path": "token_2022_program"
+              },
+              {
+                "kind": "account",
+                "path": "wrapped_usdc_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "wrapped_usdc_mint",
+          "writable": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_usdc_mint",
+          "docs": [
+            "The SPL USDC mint backing the protocol wrapping vault."
+          ]
+        },
+        {
+          "name": "wrapping_vault",
+          "writable": true
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "daily_limit",
+          "type": "u64"
+        },
+        {
+          "name": "lifetime_cap",
+          "type": "u64"
+        },
+        {
+          "name": "min_pull_amount",
+          "type": "u64"
+        },
+        {
+          "name": "min_pull_interval",
+          "type": "i64"
+        },
+        {
+          "name": "services",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "ServiceLimitInput"
+              }
+            }
+          }
+        },
+        {
+          "name": "funded_amount",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "create_plan",
@@ -380,6 +907,134 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "drain_agent_mandate",
+      "discriminator": [
+        223,
+        191,
+        76,
+        198,
+        252,
+        144,
+        205,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "agent"
+        },
+        {
+          "name": "agent_mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "agent"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate_wrapped_account",
+          "writable": true
+        },
+        {
+          "name": "authority_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "wrapped_usdc_mint",
+          "writable": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_usdc_mint"
+        },
+        {
+          "name": "wrapping_vault",
+          "writable": true
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": []
     },
     {
       "name": "execute_pull",
@@ -954,6 +1609,63 @@
         {
           "name": "rent",
           "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "pause_agent_mandate",
+      "discriminator": [
+        147,
+        96,
+        235,
+        182,
+        14,
+        27,
+        248,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "agent"
+        },
+        {
+          "name": "agent_mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "agent"
+              }
+            ]
+          }
         }
       ],
       "args": []
@@ -1782,6 +2494,191 @@
       ]
     },
     {
+      "name": "resume_agent_mandate",
+      "discriminator": [
+        253,
+        65,
+        131,
+        117,
+        206,
+        163,
+        79,
+        110
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "agent"
+        },
+        {
+          "name": "agent_mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "agent"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "revoke_agent_mandate",
+      "discriminator": [
+        209,
+        86,
+        165,
+        121,
+        56,
+        132,
+        131,
+        60
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "agent"
+        },
+        {
+          "name": "agent_mandate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116,
+                  45,
+                  109,
+                  97,
+                  110,
+                  100,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "agent"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate_wrapped_account",
+          "writable": true
+        },
+        {
+          "name": "authority_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "wrapped_usdc_mint",
+          "writable": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_usdc_mint"
+        },
+        {
+          "name": "wrapping_vault",
+          "writable": true
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spl_token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "token_2022_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "submit_usage_report",
       "discriminator": [
         133,
@@ -2597,6 +3494,19 @@
   ],
   "accounts": [
     {
+      "name": "AgentMandate",
+      "discriminator": [
+        31,
+        231,
+        224,
+        237,
+        201,
+        149,
+        38,
+        235
+      ]
+    },
+    {
       "name": "ArciumSignerAccount",
       "discriminator": [
         214,
@@ -2728,6 +3638,97 @@
     }
   ],
   "events": [
+    {
+      "name": "AgentMandateAdjusted",
+      "discriminator": [
+        144,
+        224,
+        235,
+        32,
+        74,
+        66,
+        88,
+        128
+      ]
+    },
+    {
+      "name": "AgentMandateCreated",
+      "discriminator": [
+        149,
+        186,
+        93,
+        120,
+        45,
+        8,
+        141,
+        216
+      ]
+    },
+    {
+      "name": "AgentMandateDrained",
+      "discriminator": [
+        40,
+        43,
+        200,
+        100,
+        95,
+        69,
+        125,
+        109
+      ]
+    },
+    {
+      "name": "AgentMandatePaused",
+      "discriminator": [
+        213,
+        24,
+        230,
+        24,
+        61,
+        87,
+        229,
+        134
+      ]
+    },
+    {
+      "name": "AgentMandateResumed",
+      "discriminator": [
+        29,
+        186,
+        56,
+        103,
+        247,
+        195,
+        74,
+        237
+      ]
+    },
+    {
+      "name": "AgentMandateRevoked",
+      "discriminator": [
+        103,
+        125,
+        249,
+        134,
+        2,
+        139,
+        248,
+        205
+      ]
+    },
+    {
+      "name": "AgentPullExecuted",
+      "discriminator": [
+        237,
+        59,
+        171,
+        122,
+        206,
+        115,
+        189,
+        17
+      ]
+    },
     {
       "name": "ArciumUnavailableEvent",
       "discriminator": [
@@ -2960,76 +3961,509 @@
     },
     {
       "code": 6030,
+      "name": "UnauthorizedAgent",
+      "msg": "Only the authorized agent signer can execute this pull"
+    },
+    {
+      "code": 6031,
+      "name": "UnauthorizedService",
+      "msg": "Destination service is not authorized on this agent mandate"
+    },
+    {
+      "code": 6032,
+      "name": "TooManyServices",
+      "msg": "Agent mandate service list exceeds the maximum allowed entries"
+    },
+    {
+      "code": 6033,
+      "name": "DuplicateService",
+      "msg": "Agent mandate service list contains a duplicate service"
+    },
+    {
+      "code": 6034,
+      "name": "MandatePaused",
+      "msg": "Agent mandate is paused and cannot process pulls"
+    },
+    {
+      "code": 6035,
+      "name": "MandateRevoked",
+      "msg": "Agent mandate is revoked and cannot process pulls"
+    },
+    {
+      "code": 6036,
+      "name": "DailyLimitExceeded",
+      "msg": "Agent mandate daily limit would be exceeded by this pull"
+    },
+    {
+      "code": 6037,
+      "name": "ServiceDailyLimitExceeded",
+      "msg": "Service daily limit would be exceeded by this pull"
+    },
+    {
+      "code": 6038,
+      "name": "LifetimeCapExceeded",
+      "msg": "Agent mandate lifetime cap would be exceeded by this pull"
+    },
+    {
+      "code": 6039,
+      "name": "PullAmountTooSmall",
+      "msg": "Pull amount is below the agent mandate minimum pull amount"
+    },
+    {
+      "code": 6040,
+      "name": "PullCooldownActive",
+      "msg": "Agent mandate pull cooldown is still active"
+    },
+    {
+      "code": 6041,
+      "name": "InvalidServiceList",
+      "msg": "Agent mandate service list is invalid"
+    },
+    {
+      "code": 6042,
+      "name": "AgentMandateAlreadyExists",
+      "msg": "Agent mandate already exists for this authority and agent"
+    },
+    {
+      "code": 6043,
+      "name": "AgentMandateNotFound",
+      "msg": "Agent mandate account was not found"
+    },
+    {
+      "code": 6044,
+      "name": "InsufficientMandateBalance",
+      "msg": "Mandate-owned wrapped token account has insufficient balance"
+    },
+    {
+      "code": 6045,
+      "name": "NoFundsToDrain",
+      "msg": "Agent mandate has no funds available to drain"
+    },
+    {
+      "code": 6046,
+      "name": "InvalidAgentMandateStatusTransition",
+      "msg": "Requested agent mandate status transition is invalid"
+    },
+    {
+      "code": 6047,
+      "name": "UnauthorizedAgentMandateAuthority",
+      "msg": "Only the agent mandate authority can perform this action"
+    },
+    {
+      "code": 6048,
       "name": "EndpointTooLong",
       "msg": "Keeper endpoint exceeds maximum length (128 bytes)"
     },
     {
-      "code": 6031,
+      "code": 6049,
       "name": "EndpointEmpty",
       "msg": "Keeper endpoint must not be empty"
     },
     {
-      "code": 6032,
+      "code": 6050,
       "name": "InvalidKeeperAuthority",
       "msg": "Keeper authority must not be the default (zero) public key"
     },
     {
-      "code": 6033,
+      "code": 6051,
       "name": "UnauthorizedKeeper",
       "msg": "Caller is not the authorized keeper"
     },
     {
-      "code": 6034,
+      "code": 6052,
       "name": "NoUpdateProvided",
       "msg": "At least one field must be provided for update"
     },
     {
-      "code": 6035,
+      "code": 6053,
       "name": "InvalidTierCount",
       "msg": "Usage plan requires 1-5 pricing tiers"
     },
     {
-      "code": 6036,
+      "code": 6054,
       "name": "BillingTypeMismatch",
       "msg": "Operation requires a different billing type"
     },
     {
-      "code": 6037,
+      "code": 6055,
       "name": "InvalidPeriod",
       "msg": "Invalid period boundaries"
     },
     {
-      "code": 6038,
+      "code": 6056,
       "name": "PeriodMismatch",
       "msg": "Usage report period must align with mandate next_payment_due"
     },
     {
-      "code": 6039,
+      "code": 6057,
       "name": "InvalidAmount",
       "msg": "Amount must be greater than zero"
     },
     {
-      "code": 6040,
+      "code": 6058,
       "name": "InvalidFrequency",
       "msg": "Settlement frequency must be greater than zero"
     },
     {
-      "code": 6041,
+      "code": 6059,
       "name": "InvalidTierBoundary",
       "msg": "Tier boundaries must be monotonically increasing"
     },
     {
-      "code": 6042,
+      "code": 6060,
       "name": "ProtocolPaused",
       "msg": "Protocol is paused -- billing pulls are blocked"
     },
     {
-      "code": 6043,
+      "code": 6061,
       "name": "UsageReportAlreadySettled",
       "msg": "Usage report has already been settled"
     }
   ],
   "types": [
+    {
+      "name": "AgentMandate",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_limit",
+            "type": "u64"
+          },
+          {
+            "name": "daily_spent",
+            "type": "u64"
+          },
+          {
+            "name": "daily_last_reset",
+            "type": "i64"
+          },
+          {
+            "name": "lifetime_cap",
+            "type": "u64"
+          },
+          {
+            "name": "total_spent",
+            "type": "u64"
+          },
+          {
+            "name": "min_pull_amount",
+            "type": "u64"
+          },
+          {
+            "name": "min_pull_interval",
+            "type": "i64"
+          },
+          {
+            "name": "last_pull_at",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "AgentMandateStatus"
+              }
+            }
+          },
+          {
+            "name": "services",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "ServiceLimit"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentMandateAdjusted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_limit",
+            "type": "u64"
+          },
+          {
+            "name": "lifetime_cap",
+            "type": "u64"
+          },
+          {
+            "name": "min_pull_amount",
+            "type": "u64"
+          },
+          {
+            "name": "min_pull_interval",
+            "type": "i64"
+          },
+          {
+            "name": "daily_spent",
+            "type": "u64"
+          },
+          {
+            "name": "total_spent",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentMandateCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_limit",
+            "type": "u64"
+          },
+          {
+            "name": "lifetime_cap",
+            "type": "u64"
+          },
+          {
+            "name": "service_count",
+            "type": "u8"
+          },
+          {
+            "name": "funded_amount",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentMandateDrained",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "AgentMandateStatus"
+              }
+            }
+          },
+          {
+            "name": "daily_spent",
+            "type": "u64"
+          },
+          {
+            "name": "total_spent",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentMandatePaused",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_spent",
+            "type": "u64"
+          },
+          {
+            "name": "total_spent",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentMandateResumed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_spent",
+            "type": "u64"
+          },
+          {
+            "name": "total_spent",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentMandateRevoked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_spent",
+            "type": "u64"
+          },
+          {
+            "name": "total_spent",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentMandateStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Paused"
+          },
+          {
+            "name": "Revoked"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentPullExecuted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "service",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "daily_spent",
+            "type": "u64"
+          },
+          {
+            "name": "total_spent",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
     {
       "name": "ArciumSignerAccount",
       "type": {
@@ -3499,6 +4933,46 @@
                 ]
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ServiceLimit",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "service",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_limit",
+            "type": "u64"
+          },
+          {
+            "name": "daily_spent",
+            "type": "u64"
+          },
+          {
+            "name": "last_reset",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ServiceLimitInput",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "service",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_limit",
+            "type": "u64"
           }
         ]
       }

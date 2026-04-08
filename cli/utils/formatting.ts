@@ -1,4 +1,13 @@
-import type { VelaMandate, VelaPlan } from "../../src/types";
+import type {
+  AgentBudgetSummary,
+  AgentMandate,
+  AgentMandateStatus,
+  AgentServiceLimit,
+  VelaMandate,
+  VelaPlan,
+} from "../../src/types";
+
+const AGENT_DAILY_RESET_WINDOW_SECONDS = 86_400n;
 
 /**
  * Converts raw USDC amount (6 decimals) to human-readable string.
@@ -20,6 +29,11 @@ export function formatLamports(lamports: bigint, decimals = 6): string {
  */
 export function formatTimestamp(unixSeconds: bigint): string {
   return new Date(Number(unixSeconds) * 1000).toISOString();
+}
+
+export function formatAddress(address: { toBase58(): string }): string {
+  const base58 = address.toBase58();
+  return `${base58.slice(0, 4)}...${base58.slice(-4)}`;
 }
 
 /**
@@ -51,6 +65,152 @@ export function formatDuration(seconds: bigint): string {
   }
 
   return s === 1 ? "1 second" : `${s} seconds`;
+}
+
+function formatAgentMandateStatus(status: AgentMandateStatus): string {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function clampRemaining(limit: bigint, spent: bigint): bigint {
+  return limit > spent ? limit - spent : 0n;
+}
+
+function computeResetWindow(
+  spent: bigint,
+  lastReset: bigint,
+  now: bigint,
+): { spent: bigint; nextResetAt: bigint } {
+  if (now - lastReset >= AGENT_DAILY_RESET_WINDOW_SECONDS) {
+    return {
+      spent: 0n,
+      nextResetAt: now + AGENT_DAILY_RESET_WINDOW_SECONDS,
+    };
+  }
+
+  return {
+    spent,
+    nextResetAt: lastReset + AGENT_DAILY_RESET_WINDOW_SECONDS,
+  };
+}
+
+function formatAgentServiceRow(
+  serviceLimit: AgentServiceLimit,
+  now: bigint,
+  selectedServiceBase58?: string,
+): string {
+  const serviceWindow = computeResetWindow(
+    serviceLimit.dailySpent,
+    serviceLimit.lastReset,
+    now,
+  );
+  const remaining = clampRemaining(serviceLimit.dailyLimit, serviceWindow.spent);
+  const selectedLabel =
+    selectedServiceBase58 != null &&
+    serviceLimit.service.toBase58() === selectedServiceBase58
+      ? " (selected)"
+      : "";
+
+  return [
+    `- ${serviceLimit.service.toBase58()}${selectedLabel}`,
+    `  Remaining: ${formatLamports(remaining)}`,
+    `  Limit: ${formatLamports(serviceLimit.dailyLimit)}`,
+    `  Reset: ${formatTimestamp(serviceWindow.nextResetAt)}`,
+  ].join("\n");
+}
+
+export function formatAgentMandateBudget(
+  summary: AgentBudgetSummary,
+  selectedService?: { toBase58(): string },
+): string {
+  const lifetimeRemaining = clampRemaining(
+    summary.mandate.lifetimeCap,
+    summary.mandate.totalSpent,
+  );
+  const now = BigInt(Math.floor(Date.now() / 1000));
+  const selectedServiceBase58 = selectedService?.toBase58();
+  const lines = [
+    `Mandate: ${summary.mandate.address.toBase58()}`,
+    `Status: ${formatAgentMandateStatus(summary.status)}`,
+    `Authority: ${summary.mandate.authority.toBase58()}`,
+    `Agent: ${summary.mandate.agent.toBase58()}`,
+    `Daily Remaining: ${formatLamports(summary.globalRemaining)}`,
+    `Daily Reset: ${formatTimestamp(summary.dailyResetAt)}`,
+    `Lifetime Remaining: ${formatLamports(lifetimeRemaining)}`,
+    `Wrapped Balance: ${formatLamports(summary.mandateBalance)}`,
+    `Funded: ${summary.funded ? "Yes" : "No"}`,
+    `Min Pull Amount: ${formatLamports(summary.mandate.minPullAmount)}`,
+    `Min Pull Interval: ${formatDuration(summary.mandate.minPullInterval)}`,
+  ];
+
+  if (selectedServiceBase58) {
+    lines.push(`Service Requested: ${selectedServiceBase58}`);
+    lines.push(`Service Authorized: ${summary.serviceAuthorized ? "Yes" : "No"}`);
+    lines.push(
+      `Service Remaining: ${
+        summary.serviceRemaining == null
+          ? "N/A"
+          : formatLamports(summary.serviceRemaining)
+      }`,
+    );
+    lines.push(
+      `Service Reset: ${
+        summary.serviceResetAt == null
+          ? "N/A"
+          : formatTimestamp(summary.serviceResetAt)
+      }`,
+    );
+  }
+
+  if (summary.mandate.services.length === 0) {
+    lines.push("Services: None");
+    return lines.join("\n");
+  }
+
+  lines.push("Services:");
+  for (const serviceLimit of summary.mandate.services) {
+    lines.push(
+      formatAgentServiceRow(serviceLimit, now, selectedServiceBase58),
+    );
+  }
+
+  return lines.join("\n");
+}
+
+export function formatAgentMandateList(
+  mandates: AgentMandate[],
+  authority?: { toBase58(): string },
+): string {
+  if (mandates.length === 0) {
+    return authority == null
+      ? "No agent mandates found."
+      : `No agent mandates found for ${authority.toBase58()}.`;
+  }
+
+  const header = [
+    "MANDATE".padEnd(14),
+    "AGENT".padEnd(14),
+    "STATUS".padEnd(10),
+    "DAILY REMAINING".padEnd(18),
+    "LIFETIME REMAINING".padEnd(21),
+    "SERVICES",
+  ].join(" ");
+
+  const rows = mandates.map((mandate) =>
+    [
+      formatAddress(mandate.address).padEnd(14),
+      formatAddress(mandate.agent).padEnd(14),
+      formatAgentMandateStatus(mandate.status).padEnd(10),
+      formatLamports(
+        clampRemaining(mandate.dailyLimit, mandate.dailySpent),
+      ).padEnd(18),
+      formatLamports(
+        clampRemaining(mandate.lifetimeCap, mandate.totalSpent),
+      ).padEnd(21),
+      mandate.services.length.toString(),
+    ].join(" "),
+  );
+
+  return [header, ...rows].join("\n");
 }
 
 /**

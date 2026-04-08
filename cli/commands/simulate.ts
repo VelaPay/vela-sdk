@@ -19,8 +19,8 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import { LiteSVMProvider } from "anchor-litesvm";
-import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import type { LiteSVMProvider } from "anchor-litesvm";
+import type { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
 import type { Command } from "commander";
 import idl from "../../idl/vela_protocol.json";
 import { PROGRAM_ID } from "../../src/constants";
@@ -44,6 +44,7 @@ export function registerSimulate(parent: Command): void {
     .option("--amount <usdc>", "Plan amount in USDC", "25")
     .option("--frequency <seconds>", "Billing frequency in seconds", "2592000")
     .action(async (opts) => {
+      const { LiteSVMProvider, LiteSVM } = await loadLiteSvm();
       const numPulls = parseInt(opts.pulls);
       const amount = BigInt(Math.round(parseFloat(opts.amount) * 1_000_000));
       const frequency = BigInt(opts.frequency);
@@ -441,4 +442,22 @@ async function mintTokens(
       TOKEN_PROGRAM_ID,
     ),
   ]);
+}
+
+async function loadLiteSvm(): Promise<{
+  LiteSVMProvider: typeof import("anchor-litesvm").LiteSVMProvider;
+  LiteSVM: typeof import("anchor-litesvm/node_modules/litesvm").LiteSVM;
+}> {
+  try {
+    const [{ LiteSVMProvider }, { LiteSVM }] = await Promise.all([
+      import("anchor-litesvm"),
+      import("anchor-litesvm/node_modules/litesvm"),
+    ]);
+    return { LiteSVMProvider, LiteSVM };
+  } catch (error) {
+    throw new Error(
+      "The simulate command requires optional LiteSVM dependencies. Install dev dependencies in vela-sdk before running `vela simulate`.",
+      { cause: error },
+    );
+  }
 }

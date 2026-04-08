@@ -1,4 +1,5 @@
 export {
+  validateAgentPull,
   validateCancel,
   validatePullPayment,
   validateSubscribe,

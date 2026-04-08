@@ -17,6 +17,7 @@ export const SEED_PREFIXES = {
   PLAN: Buffer.from("plan"),
   MANDATE: Buffer.from("mandate"),
   CREDENTIAL: Buffer.from("credential"),
+  AGENT_MANDATE: Buffer.from("agent-mandate"),
 } as const;
 
 // Wrapping-related PDAs

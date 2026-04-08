@@ -1,5 +1,5 @@
 import type { Program } from "@coral-xyz/anchor";
-import { sha256 } from "@noble/hashes/sha256";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { type Connection, PublicKey, type TransactionInstruction } from "@solana/web3.js";
 import { BILLING_SEED, CONFIG_SEED, PROGRAM_ID } from "../constants";
 

@@ -5,6 +5,9 @@ export interface VelaClientConfig {
   connection: Connection;
   wallet: VelaWallet;
   heliusApiKey?: string;
+  heliusCluster?: string;
+  agentWebhook?: AgentWebhookConfig;
+  onAgentEvent?: (event: AgentWebhookEvent) => void | Promise<void>;
   commitment?: Commitment;
   programId?: PublicKey;
   keeperEndpoint?: string;
@@ -21,6 +24,36 @@ export interface VelaWallet {
 
 export type MandateStatus = "active" | "cancelled" | "expired";
 export type PlanStatus = "active" | "inactive";
+export type AgentMandateStatus = "active" | "paused" | "revoked";
+
+export interface AgentServiceLimit {
+  service: PublicKey;
+  dailyLimit: bigint;
+  dailySpent: bigint;
+  lastReset: bigint;
+}
+
+export interface AgentServiceLimitInput {
+  service: PublicKey;
+  dailyLimit: bigint | number;
+}
+
+export interface AgentMandate {
+  address: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  dailyLimit: bigint;
+  dailySpent: bigint;
+  dailyLastReset: bigint;
+  lifetimeCap: bigint;
+  totalSpent: bigint;
+  minPullAmount: bigint;
+  minPullInterval: bigint;
+  lastPullAt: bigint;
+  status: AgentMandateStatus;
+  services: AgentServiceLimit[];
+  bump: number;
+}
 
 export interface VelaMandate {
   address: PublicKey;
@@ -100,6 +133,71 @@ export interface VelaPullParams {
   /** The Token-2022 wrapped USDC mint used for transfer_checked */
   wrappedUsdcMint: PublicKey;
   /** The protocol's SPL USDC vault (used for PDA resolution) */
+  wrappingVault?: PublicKey;
+}
+
+export interface VelaCreateAgentMandateParams {
+  agent: PublicKey;
+  splUsdcMint: PublicKey;
+  authorityUsdcAccount?: PublicKey;
+  wrappedUsdcMint?: PublicKey;
+  wrappingVault?: PublicKey;
+  dailyLimit: bigint | number;
+  lifetimeCap: bigint | number;
+  minPullAmount: bigint | number;
+  minPullInterval: bigint | number;
+  services: AgentServiceLimitInput[];
+  fundedAmount: bigint | number;
+}
+
+export interface VelaAgentPullParams {
+  mandateAddress?: PublicKey;
+  authority: PublicKey;
+  serviceWrappedAccount: PublicKey;
+  amount: bigint | number;
+  wrappedUsdcMint?: PublicKey;
+  wrappingVault?: PublicKey;
+}
+
+export interface VelaAdjustAgentMandateParams {
+  agent: PublicKey;
+  dailyLimit?: bigint | number;
+  lifetimeCap?: bigint | number;
+  minPullAmount?: bigint | number;
+  minPullInterval?: bigint | number;
+  services?: AgentServiceLimitInput[];
+  wrappedUsdcMint?: PublicKey;
+}
+
+export interface VelaPauseAgentMandateParams {
+  agent: PublicKey;
+}
+
+export interface VelaResumeAgentMandateParams {
+  agent: PublicKey;
+}
+
+export interface VelaRevokeAgentMandateParams {
+  agent: PublicKey;
+  splUsdcMint: PublicKey;
+  authorityUsdcAccount?: PublicKey;
+  wrappedUsdcMint?: PublicKey;
+  wrappingVault?: PublicKey;
+}
+
+export interface VelaDrainAgentMandateParams {
+  agent: PublicKey;
+  splUsdcMint: PublicKey;
+  authorityUsdcAccount?: PublicKey;
+  wrappedUsdcMint?: PublicKey;
+  wrappingVault?: PublicKey;
+}
+
+export interface VelaTopUpAgentMandateParams {
+  agent: PublicKey;
+  amount: bigint | number;
+  splUsdcMint: PublicKey;
+  wrappedUsdcMint?: PublicKey;
   wrappingVault?: PublicKey;
 }
 
@@ -185,6 +283,178 @@ export interface VelaMethodResult<T = void> {
   address?: PublicKey;
   data?: T;
 }
+
+export interface AgentMandateMethodResult
+  extends VelaMethodResult<AgentMandate> {}
+
+export interface AgentMandateDrainResult
+  extends VelaMethodResult<AgentMandate> {
+  drainedAmount: bigint;
+}
+
+export interface AgentMandateRevokeResult
+  extends VelaMethodResult<AgentMandate> {
+  reclaimedAmount: bigint;
+}
+
+export interface CheckAgentBudgetParams {
+  authority: PublicKey;
+  agent: PublicKey;
+  service?: PublicKey;
+  wrappedUsdcMint?: PublicKey;
+  now?: bigint | number;
+}
+
+export interface VerifyAgentMandateParams {
+  authority: PublicKey;
+  agent: PublicKey;
+  service?: PublicKey;
+  wrappedUsdcMint?: PublicKey;
+  now?: bigint | number;
+}
+
+export interface ValidateAgentPullParams {
+  authority: PublicKey;
+  agent: PublicKey;
+  serviceWrappedAccount: PublicKey;
+  amount: bigint | number;
+  wrappedUsdcMint?: PublicKey;
+  now?: bigint | number;
+}
+
+export interface AgentBudgetSummary {
+  mandate: AgentMandate;
+  status: AgentMandateStatus;
+  mandateBalance: bigint;
+  globalRemaining: bigint;
+  serviceRemaining: bigint | null;
+  dailyResetAt: bigint;
+  serviceResetAt: bigint | null;
+  serviceAuthorized: boolean;
+  funded: boolean;
+}
+
+export interface AgentMandateVerificationResult extends AgentBudgetSummary {
+  valid: boolean;
+  reasons: string[];
+}
+
+export interface AgentPullValidationResult extends AgentBudgetSummary {
+  canPull: boolean;
+  reasons: string[];
+}
+
+export interface AgentWebhookConfig {
+  url: string;
+  authHeader?: string;
+  webhookType?: string;
+  transactionTypes?: string[];
+}
+
+export interface HeliusWebhookTransaction {
+  signature?: string;
+  logs?: string[];
+  meta?: {
+    logMessages?: string[];
+  };
+}
+
+export interface HeliusWebhookPayload {
+  transactions: HeliusWebhookTransaction[];
+}
+
+export interface AgentPullExecutedEvent {
+  type: "AgentPullExecuted";
+  signature?: string;
+  mandate: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  service: PublicKey;
+  amount: bigint;
+  dailySpent: bigint;
+  totalSpent: bigint;
+  remainingBalance: bigint;
+}
+
+export interface AgentMandatePausedEvent {
+  type: "AgentMandatePaused";
+  signature?: string;
+  mandate: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  dailySpent: bigint;
+  totalSpent: bigint;
+}
+
+export interface AgentMandateRevokedEvent {
+  type: "AgentMandateRevoked";
+  signature?: string;
+  mandate: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  dailySpent: bigint;
+  totalSpent: bigint;
+  remainingBalance: bigint;
+}
+
+export interface AgentMandateCreatedEvent {
+  type: "AgentMandateCreated";
+  signature?: string;
+  mandate: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  dailyLimit: bigint;
+  lifetimeCap: bigint;
+  serviceCount: number;
+  fundedAmount: bigint;
+  remainingBalance: bigint;
+}
+
+export interface AgentMandateAdjustedEvent {
+  type: "AgentMandateAdjusted";
+  signature?: string;
+  mandate: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  dailyLimit: bigint;
+  lifetimeCap: bigint;
+  minPullAmount: bigint;
+  minPullInterval: bigint;
+  dailySpent: bigint;
+  totalSpent: bigint;
+  remainingBalance: bigint;
+}
+
+export interface AgentMandateResumedEvent {
+  type: "AgentMandateResumed";
+  signature?: string;
+  mandate: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  dailySpent: bigint;
+  totalSpent: bigint;
+}
+
+export interface AgentMandateDrainedEvent {
+  type: "AgentMandateDrained";
+  signature?: string;
+  mandate: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  status: AgentMandateStatus;
+  dailySpent: bigint;
+  totalSpent: bigint;
+  remainingBalance: bigint;
+}
+
+export type AgentWebhookEvent =
+  | AgentMandateCreatedEvent
+  | AgentMandateAdjustedEvent
+  | AgentMandateResumedEvent
+  | AgentMandateDrainedEvent
+  | AgentPullExecutedEvent
+  | AgentMandatePausedEvent
+  | AgentMandateRevokedEvent;
 
 export interface ValidationResult {
   canPull: boolean;

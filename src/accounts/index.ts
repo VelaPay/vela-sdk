@@ -1,4 +1,5 @@
 export {
+  deserializeAgentMandate,
   deserializeMandate,
   deserializeMerchantState,
   deserializePlan,
@@ -10,12 +11,17 @@ export {
   resolvePlanContext,
 } from "./subscribable-plan";
 export {
+  checkAgentBudget,
   getActiveSubscriptions,
+  listAgentMandates,
   getMerchantPlans,
   getMerchantState,
   getPlanDetails,
+  verifyAgentMandate,
 } from "./fetchers";
 export {
+  deriveAgentMandateAddress,
+  deriveAgentMandateWrappedAta,
   deriveConfigAddress,
   deriveCredentialMintAddress,
   deriveKeeperConfigAddress,

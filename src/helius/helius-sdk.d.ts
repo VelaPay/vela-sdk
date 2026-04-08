@@ -13,6 +13,27 @@ declare module "helius-sdk" {
     rpc: {
       sendSmartTransaction(serialized: any): Promise<string>;
     };
+    webhooks: {
+      getAll(): Promise<
+        Array<{
+          webhookID: string;
+          webhookURL: string;
+          accountAddresses: string[];
+          transactionTypes: string[];
+          webhookType: string;
+          authHeader?: string;
+        }>
+      >;
+      create(request: {
+        webhookURL: string;
+        accountAddresses: string[];
+        transactionTypes: string[];
+        webhookType?: string;
+        authHeader?: string;
+      }): Promise<{
+        webhookID: string;
+      }>;
+    };
     constructor(apiKey: string, cluster?: string);
   }
 }

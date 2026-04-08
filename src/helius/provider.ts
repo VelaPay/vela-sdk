@@ -1,19 +1,8 @@
 import type { Connection, VersionedTransaction } from "@solana/web3.js";
 
-/**
- * Creates a Solana Connection backed by Helius RPC.
- *
- * Uses dynamic import of helius-sdk to keep it as an optional peer dependency.
- * If helius-sdk is not installed, throws a clear installation instruction.
- */
-export async function createHeliusConnection(
-  apiKey: string,
-  cluster: string = "devnet",
-): Promise<Connection> {
+async function loadHeliusSdk() {
   try {
-    const { Helius } = await import("helius-sdk");
-    const helius = new Helius(apiKey, cluster as any);
-    return helius.connection;
+    return await import("helius-sdk");
   } catch (err: unknown) {
     if (
       err instanceof Error &&
@@ -28,6 +17,25 @@ export async function createHeliusConnection(
   }
 }
 
+export async function createHelius(apiKey: string, cluster?: string) {
+  const { Helius } = await loadHeliusSdk();
+  return new Helius(apiKey, cluster as any);
+}
+
+/**
+ * Creates a Solana Connection backed by Helius RPC.
+ *
+ * Uses dynamic import of helius-sdk to keep it as an optional peer dependency.
+ * If helius-sdk is not installed, throws a clear installation instruction.
+ */
+export async function createHeliusConnection(
+  apiKey: string,
+  cluster: string = "devnet",
+): Promise<Connection> {
+  const helius = await createHelius(apiKey, cluster);
+  return helius.connection;
+}
+
 /**
  * Sends a transaction using Helius priority fee estimation and smart sending.
  *
@@ -40,8 +48,7 @@ export async function sendWithPriorityFee(
   transaction: VersionedTransaction,
 ): Promise<string> {
   try {
-    const { Helius } = await import("helius-sdk");
-    const helius = new Helius(heliusApiKey);
+    const helius = await createHelius(heliusApiKey);
     // Helius sendSmartTransaction handles priority fee estimation
     const signature = await helius.rpc.sendSmartTransaction(
       transaction.serialize() as any,

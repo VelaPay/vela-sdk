@@ -1,3 +1,4 @@
+import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import { CONFIG_SEED, KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES } from "../constants";
@@ -60,6 +61,36 @@ export function deriveCredentialMintAddress(
   return PublicKey.findProgramAddressSync(
     [SEED_PREFIXES.CREDENTIAL, merchant.toBuffer(), planIdBuffer],
     programId,
+  );
+}
+
+/**
+ * Derives the AgentMandate PDA address.
+ * Seeds: ["agent-mandate", authority.pubkey, agent.pubkey]
+ */
+export function deriveAgentMandateAddress(
+  authority: PublicKey,
+  agent: PublicKey,
+  programId: PublicKey = PROGRAM_ID,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [SEED_PREFIXES.AGENT_MANDATE, authority.toBuffer(), agent.toBuffer()],
+    programId,
+  );
+}
+
+/**
+ * Derives the mandate-owned wrapped USDC ATA for an AgentMandate PDA.
+ */
+export function deriveAgentMandateWrappedAta(
+  agentMandateAddress: PublicKey,
+  wrappedUsdcMint: PublicKey,
+): PublicKey {
+  return getAssociatedTokenAddressSync(
+    wrappedUsdcMint,
+    agentMandateAddress,
+    true,
+    TOKEN_2022_PROGRAM_ID,
   );
 }
 

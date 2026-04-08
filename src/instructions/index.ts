@@ -1,5 +1,11 @@
+export type { BuildAdjustAgentMandateResult } from "./adjust-agent-mandate";
+export { buildAdjustAgentMandateInstruction } from "./adjust-agent-mandate";
+export type { BuildAgentPullResult } from "./agent-pull";
+export { buildAgentPullInstruction } from "./agent-pull";
 export type { BuildCancelResult } from "./cancel";
 export { buildCancelInstruction } from "./cancel";
+export type { BuildCreateAgentMandateResult } from "./create-agent-mandate";
+export { buildCreateAgentMandateInstruction } from "./create-agent-mandate";
 export type { BuildRequestValidationResult, RequestValidationParams } from "./request-validation";
 export {
   buildRequestValidationInstruction,
@@ -25,10 +31,18 @@ export {
 } from "./request-usage-computation";
 export type { BuildExecutePullResult } from "./execute-pull";
 export { buildExecutePullInstruction } from "./execute-pull";
+export type { BuildDrainAgentMandateResult } from "./drain-agent-mandate";
+export { buildDrainAgentMandateInstruction } from "./drain-agent-mandate";
 export type { BuildInitKeeperConfigResult } from "./init-keeper-config";
 export { buildInitKeeperConfigInstruction } from "./init-keeper-config";
+export type { BuildPauseAgentMandateResult } from "./pause-agent-mandate";
+export { buildPauseAgentMandateInstruction } from "./pause-agent-mandate";
 export type { BuildSubscribeResult } from "./subscribe";
 export { buildSubscribeInstruction } from "./subscribe";
+export type { BuildResumeAgentMandateResult } from "./resume-agent-mandate";
+export { buildResumeAgentMandateInstruction } from "./resume-agent-mandate";
+export type { BuildRevokeAgentMandateResult } from "./revoke-agent-mandate";
+export { buildRevokeAgentMandateInstruction } from "./revoke-agent-mandate";
 export type { BuildUpdateKeeperConfigResult } from "./update-keeper-config";
 export { buildUpdateKeeperConfigInstruction } from "./update-keeper-config";
 export type { BuildWrapResult } from "./wrap";
