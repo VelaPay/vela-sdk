@@ -4,6 +4,8 @@ import type { Commitment, Connection, PublicKey } from "@solana/web3.js";
 export interface VelaClientConfig {
   connection: Connection;
   wallet: VelaWallet;
+  dashboardApiUrl?: string;
+  apiKey?: string;
   heliusApiKey?: string;
   heliusCluster?: string;
   agentWebhook?: AgentWebhookConfig;
@@ -20,6 +22,40 @@ export interface VelaWallet {
   signAllTransactions?: <T extends { serialize(): Buffer }>(
     txs: T[],
   ) => Promise<T[]>;
+}
+
+// --- Checkout Sessions (HTTP API) ---
+
+export interface CreateCheckoutSessionParams {
+  planId: string;
+  successUrl: string;
+  cancelUrl?: string;
+  branding?: {
+    logo?: string;
+    accentColor?: string;
+  };
+  metadata?: Record<string, string>;
+  ttlMinutes?: number;
+}
+
+export interface CheckoutSession {
+  id: string;
+  url: string;
+  status: "created" | "pending" | "completed" | "expired";
+  planId: string;
+  successUrl: string;
+  cancelUrl?: string;
+  mandateAddress?: string;
+  txSignature?: string;
+  expiresAt: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface CheckoutSessionsNamespace {
+  create: (params: CreateCheckoutSessionParams) => Promise<CheckoutSession>;
+  get: (sessionId: string) => Promise<CheckoutSession>;
+  expire: (sessionId: string) => Promise<void>;
 }
 
 export type MandateStatus = "active" | "cancelled" | "expired";

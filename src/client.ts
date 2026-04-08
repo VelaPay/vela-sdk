@@ -62,6 +62,9 @@ import type {
   BillingScheduleParams,
   CancelValidationResult,
   CheckAgentBudgetParams,
+  CheckoutSession,
+  CheckoutSessionsNamespace,
+  CreateCheckoutSessionParams,
   InitKeeperConfigParams,
   KeeperConfig,
   ValidateAgentPullParams,
@@ -203,6 +206,7 @@ export interface VelaClient {
   ) => Promise<{ usageReportAddress: PublicKey; txSignature: string }>;
   getUsagePlan: (usagePlanAddress: PublicKey) => Promise<UsagePlanAccount>;
   getUsageReport: (usageReportAddress: PublicKey) => Promise<UsageReportAccount>;
+  checkoutSessions: CheckoutSessionsNamespace;
 
   // Raw instruction layer
   instructions: {
@@ -310,6 +314,8 @@ export interface VelaClient {
  */
 export function createVelaClient(config: VelaClientConfig): VelaClient {
   const { wallet, commitment = "confirmed", programId = PROGRAM_ID } = config;
+  const dashboardApiUrl = config.dashboardApiUrl?.replace(/\/+$/, "");
+  const apiKey = config.apiKey;
 
   let { connection } = config;
   const programIdl = {
@@ -616,6 +622,94 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       );
     }
   }
+
+  function requireDashboardConfig(): { apiKey: string; dashboardApiUrl: string } {
+    if (!dashboardApiUrl) {
+      throw new Error("dashboardApiUrl required for checkout sessions");
+    }
+    if (!apiKey) {
+      throw new Error("apiKey required for checkout sessions");
+    }
+    return { apiKey, dashboardApiUrl };
+  }
+
+  async function extractDashboardError(
+    response: Response,
+    fallback: string,
+  ): Promise<Error> {
+    try {
+      const payload = (await response.json()) as { error?: string; message?: string };
+      if (typeof payload.error === "string" && payload.error.length > 0) {
+        return new Error(payload.error);
+      }
+      if (typeof payload.message === "string" && payload.message.length > 0) {
+        return new Error(payload.message);
+      }
+    } catch {
+      // Ignore JSON parsing failures and fall back to plain text or status.
+    }
+
+    const text = await response.text().catch(() => "");
+    return new Error(text || fallback);
+  }
+
+  async function fetchCheckoutSession<T>(
+    path: string,
+    init?: RequestInit,
+  ): Promise<T> {
+    const { apiKey: token, dashboardApiUrl: baseUrl } = requireDashboardConfig();
+    const response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(init?.headers ?? {}),
+      },
+    });
+    if (!response.ok) {
+      throw await extractDashboardError(
+        response,
+        `Checkout session request failed: HTTP ${response.status}`,
+      );
+    }
+    return (await response.json()) as T;
+  }
+
+  const checkoutSessions: CheckoutSessionsNamespace = {
+    async create(params: CreateCheckoutSessionParams): Promise<CheckoutSession> {
+      return fetchCheckoutSession<CheckoutSession>("/api/checkout-sessions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(params),
+      });
+    },
+
+    async get(sessionId: string): Promise<CheckoutSession> {
+      return fetchCheckoutSession<CheckoutSession>(
+        `/api/checkout-sessions/${sessionId}`,
+      );
+    },
+
+    async expire(sessionId: string): Promise<void> {
+      const { apiKey: token, dashboardApiUrl: baseUrl } = requireDashboardConfig();
+      const response = await fetch(
+        `${baseUrl}/api/checkout-sessions/${sessionId}/expire`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      if (!response.ok) {
+        throw await extractDashboardError(
+          response,
+          `Failed to expire session: HTTP ${response.status}`,
+        );
+      }
+    },
+  };
 
   const client: VelaClient = {
     // ── Convenience Layer ──────────────────────────────────────────────
@@ -1096,6 +1190,8 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       const raw = await (program.account as any).usageReport.fetch(usageReportAddress);
       return raw as UsageReportAccount;
     },
+
+    checkoutSessions,
 
     // ── Raw Instruction Layer ──────────────────────────────────────────
     instructions: {
