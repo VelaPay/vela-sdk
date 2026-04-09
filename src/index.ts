@@ -31,6 +31,11 @@ export { ALTManager } from "./alt/lookup-table";
 export type { VelaClient } from "./client";
 // Client factory
 export { createVelaClient } from "./client";
+export type {
+  CreatePortalSessionParams,
+  PortalSession,
+  PortalSessionsNamespace,
+} from "./portal-sessions";
 // Usage-based billing
 export { createUsagePlan, submitUsageReport } from "./usage";
 // Constants

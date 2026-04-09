@@ -35,7 +35,14 @@ export async function ensureAgentWebhook(args: {
   const expectedWebhookType = args.agentWebhook.webhookType ?? "enhanced";
   const expectedAuthHeader = args.agentWebhook.authHeader ?? null;
   const existing = (await helius.webhooks.getAll()).find(
-    (webhook) =>
+    (webhook: {
+      webhookURL: string;
+      accountAddresses: string[];
+      webhookType: string;
+      transactionTypes?: string[];
+      authHeader?: string | null;
+      webhookID: string;
+    }) =>
       webhook.webhookURL === args.agentWebhook.url &&
       webhook.accountAddresses.includes(programId) &&
       webhook.webhookType === expectedWebhookType &&

@@ -51,6 +51,11 @@ import {
   fetchKeeperConfig,
   registerBillingSchedule,
 } from "./schedule";
+import type {
+  CreatePortalSessionParams,
+  PortalSession,
+  PortalSessionsNamespace,
+} from "./portal-sessions";
 import type { KeeperScheduleOptions } from "./schedule";
 import type {
   AgentMandate,
@@ -207,6 +212,7 @@ export interface VelaClient {
   getUsagePlan: (usagePlanAddress: PublicKey) => Promise<UsagePlanAccount>;
   getUsageReport: (usageReportAddress: PublicKey) => Promise<UsageReportAccount>;
   checkoutSessions: CheckoutSessionsNamespace;
+  portalSessions: PortalSessionsNamespace;
 
   // Raw instruction layer
   instructions: {
@@ -625,10 +631,10 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
   function requireDashboardConfig(): { apiKey: string; dashboardApiUrl: string } {
     if (!dashboardApiUrl) {
-      throw new Error("dashboardApiUrl required for checkout sessions");
+      throw new Error("dashboardApiUrl required for dashboard API namespaces");
     }
     if (!apiKey) {
-      throw new Error("apiKey required for checkout sessions");
+      throw new Error("apiKey required for dashboard API namespaces");
     }
     return { apiKey, dashboardApiUrl };
   }
@@ -653,7 +659,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     return new Error(text || fallback);
   }
 
-  async function fetchCheckoutSession<T>(
+  async function fetchDashboardApi<T>(
     path: string,
     init?: RequestInit,
   ): Promise<T> {
@@ -666,17 +672,14 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       },
     });
     if (!response.ok) {
-      throw await extractDashboardError(
-        response,
-        `Checkout session request failed: HTTP ${response.status}`,
-      );
+      throw await extractDashboardError(response, `Dashboard API request failed: HTTP ${response.status}`);
     }
     return (await response.json()) as T;
   }
 
   const checkoutSessions: CheckoutSessionsNamespace = {
     async create(params: CreateCheckoutSessionParams): Promise<CheckoutSession> {
-      return fetchCheckoutSession<CheckoutSession>("/api/checkout-sessions", {
+      return fetchDashboardApi<CheckoutSession>("/api/checkout-sessions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -686,7 +689,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     },
 
     async get(sessionId: string): Promise<CheckoutSession> {
-      return fetchCheckoutSession<CheckoutSession>(
+      return fetchDashboardApi<CheckoutSession>(
         `/api/checkout-sessions/${sessionId}`,
       );
     },
@@ -708,6 +711,18 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           `Failed to expire session: HTTP ${response.status}`,
         );
       }
+    },
+  };
+
+  const portalSessions: PortalSessionsNamespace = {
+    async create(params: CreatePortalSessionParams): Promise<PortalSession> {
+      return fetchDashboardApi<PortalSession>("/api/portal-sessions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(params),
+      });
     },
   };
 
@@ -1192,6 +1207,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     },
 
     checkoutSessions,
+    portalSessions,
 
     // ── Raw Instruction Layer ──────────────────────────────────────────
     instructions: {
