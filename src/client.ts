@@ -10,9 +10,9 @@ import {
   checkAgentBudget,
   deserializeAgentMandate,
   deserializeMandate,
+  PDAFactory,
   deriveAgentMandateAddress,
   deriveAgentMandateWrappedAta,
-  deriveConfigAddress,
   deserializePlan,
   getActiveSubscriptions,
   listAgentMandates,
@@ -20,6 +20,7 @@ import {
   getPlanDetails,
   verifyAgentMandate,
 } from "./accounts";
+import { deserializeProtocolConfig } from "./accounts/deserialize";
 import { ALTManager } from "./alt/lookup-table";
 import { PROGRAM_ID } from "./constants";
 import { translateError } from "./errors";
@@ -72,6 +73,7 @@ import type {
   CreateCheckoutSessionParams,
   InitKeeperConfigParams,
   KeeperConfig,
+  ProtocolConfig,
   ValidateAgentPullParams,
   VelaAdminCancelParams,
   VelaAdjustAgentMandateParams,
@@ -182,6 +184,8 @@ export interface VelaClient {
     merchant?: PublicKey;
   }) => Promise<VelaMandate[]>;
   getPlanDetails: (planAddress: PublicKey) => Promise<VelaPlan>;
+  getProtocolConfig: () => Promise<ProtocolConfig>;
+  refreshConfig: () => Promise<ProtocolConfig>;
   registerBillingSchedule: (
     params: BillingScheduleParams,
     options?: KeeperScheduleOptions | string,
@@ -377,11 +381,42 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
   // ALT manager for Versioned Transactions
   const altManager = new ALTManager();
+  let protocolConfigCache: ProtocolConfig | null = null;
+  let protocolConfigPromise: Promise<ProtocolConfig> | null = null;
 
   async function ensureRuntimeReady(): Promise<void> {
     if (heliusConnectionPromise) {
       await heliusConnectionPromise;
     }
+  }
+
+  async function loadProtocolConfig(): Promise<ProtocolConfig> {
+    const [configAddress] = PDAFactory.config(program.programId);
+    const raw = await (program.account as any).protocolConfig.fetch(configAddress);
+    const configAccount = deserializeProtocolConfig(raw);
+    protocolConfigCache = configAccount;
+    return configAccount;
+  }
+
+  async function getProtocolConfigCached(): Promise<ProtocolConfig> {
+    if (protocolConfigCache) {
+      return protocolConfigCache;
+    }
+
+    if (protocolConfigPromise == null) {
+      protocolConfigPromise = loadProtocolConfig().catch((error) => {
+        protocolConfigPromise = null;
+        throw error;
+      });
+    }
+
+    return protocolConfigPromise;
+  }
+
+  async function refreshProtocolConfigCache(): Promise<ProtocolConfig> {
+    protocolConfigCache = null;
+    protocolConfigPromise = null;
+    return getProtocolConfigCached();
   }
 
   function isMissingMerchantStateError(error: unknown) {
@@ -459,10 +494,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       };
     }
 
-    const [configAddress] = deriveConfigAddress(program.programId);
-    const configAccount = await (program.account as any).protocolConfig.fetch(
-      configAddress,
-    );
+    const configAccount = await getProtocolConfigCached();
 
     return {
       wrappedUsdcMint: overrides.wrappedUsdcMint ?? configAccount.wrappedUsdcMint,
@@ -586,6 +618,12 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
   }
 
   async function registerScheduleForMandate(mandate: VelaMandate): Promise<void> {
+    if (!mandate.plan) {
+      throw new Error(
+        `Mandate ${mandate.address.toBase58()} is missing a plan reference required for keeper schedule registration.`,
+      );
+    }
+
     const options = await resolveKeeperOptionsForLifecycleSync();
     if (!options?.keeperEndpoint) {
       return;
@@ -1078,6 +1116,18 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
     getPlanDetails: (planAddress) =>
       ensureRuntimeReady().then(() => getPlanDetails(program, planAddress)),
+
+    getProtocolConfig: () =>
+      wrapWithErrorTranslation(
+        async () => getProtocolConfigCached(),
+        { method: "getProtocolConfig" },
+      ),
+
+    refreshConfig: () =>
+      wrapWithErrorTranslation(
+        async () => refreshProtocolConfigCache(),
+        { method: "refreshConfig" },
+      ),
 
     registerBillingSchedule: (params, options) =>
       ensureRuntimeReady().then(() =>

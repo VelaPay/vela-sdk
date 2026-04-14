@@ -3,10 +3,13 @@ import type {
   AgentMandate,
   AgentMandateStatus,
   AgentServiceLimit,
+  BillingRail,
   BillingType,
   MandateStatus,
   MerchantState,
   PlanStatus,
+  ProtocolConfig,
+  TokenConfig,
   VelaMandate,
   VelaPlan,
   VelaUsagePlan,
@@ -61,25 +64,46 @@ function decodeUnitName(raw: number[] | Uint8Array): string {
   return Buffer.from(slice).toString("utf-8");
 }
 
+function toBigInt(raw: { toString(): string } | bigint | number): bigint {
+  return BigInt(raw.toString());
+}
+
+function toReserved(raw: number[] | Uint8Array | undefined): number[] | undefined {
+  if (raw == null) {
+    return undefined;
+  }
+  return Array.from(raw);
+}
+
+function mapBillingRail(raw: any): BillingRail {
+  if (!raw || raw.transferHook !== undefined) return "transferHook";
+  if (raw.tokenDelegate !== undefined) return "tokenDelegate";
+  throw new Error(`Unknown BillingRail variant: ${JSON.stringify(raw)}`);
+}
+
 /**
  * Converts an Anchor-deserialized VelaMandate account (BN fields) to SDK type (bigint fields).
  */
 export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
+  const version = Number(raw.version ?? 0);
   return {
     address,
     subscriber: raw.subscriber,
-    plan: raw.plan,
+    plan: version === 0 ? raw.plan : (raw.plan ?? undefined),
     merchant: raw.merchant,
-    amount: BigInt(raw.amount.toString()),
-    frequency: BigInt(raw.frequency.toString()),
-    startDate: BigInt(raw.startDate.toString()),
-    expiry: BigInt(raw.expiry.toString()),
-    maxPulls: BigInt(raw.maxPulls.toString()),
-    pullsExecuted: BigInt(raw.pullsExecuted.toString()),
-    nextPaymentDue: BigInt(raw.nextPaymentDue.toString()),
+    mandateIndex: version >= 1 ? toBigInt(raw.mandateIndex ?? 0) : undefined,
+    amount: toBigInt(raw.amount),
+    frequency: toBigInt(raw.frequency),
+    startDate: toBigInt(raw.startDate),
+    expiry: toBigInt(raw.expiry),
+    maxPulls: toBigInt(raw.maxPulls),
+    pullsExecuted: toBigInt(raw.pullsExecuted),
+    nextPaymentDue: toBigInt(raw.nextPaymentDue),
     status: mapMandateStatus(raw.status),
     bump: raw.bump,
     billingType: mapBillingType(raw.billingType),
+    version,
+    _reserved: toReserved(raw._reserved),
   };
 }
 
@@ -105,6 +129,8 @@ export function deserializeAgentMandate(
     status: mapAgentMandateStatus(raw.status),
     services: (raw.services ?? []).map(deserializeAgentServiceLimit),
     bump: raw.bump,
+    version: raw.version,
+    _reserved: toReserved(raw._reserved),
   };
 }
 
@@ -124,6 +150,8 @@ export function deserializePlan(address: PublicKey, raw: any): VelaPlan {
     status: mapPlanStatus(raw.status),
     credentialMint: raw.credentialMint,
     bump: raw.bump,
+    version: raw.version,
+    _reserved: toReserved(raw._reserved),
   };
 }
 
@@ -155,6 +183,8 @@ export function deserializeUsagePlan(
     status: mapPlanStatus(raw.status),
     credentialMint: raw.credentialMint,
     bump: raw.bump,
+    version: raw.version,
+    _reserved: toReserved(raw._reserved),
   };
 }
 
@@ -165,10 +195,37 @@ export function deserializeMerchantState(
   address: PublicKey,
   raw: any,
 ): MerchantState {
+  const version = raw.version;
   return {
     address,
     merchant: raw.merchant,
-    planCount: BigInt(raw.planCount.toString()),
+    planCount: toBigInt(raw.planCount),
     bump: raw.bump,
+    credentialMint: version != null ? raw.credentialMint : undefined,
+    mandateCounter: version != null ? toBigInt(raw.mandateCounter ?? 0) : 0n,
+    version,
+    _reserved: toReserved(raw._reserved),
+  };
+}
+
+export function deserializeProtocolConfig(raw: any): ProtocolConfig {
+  return {
+    admin: raw.admin,
+    wrappedUsdcMint: raw.wrappedUsdcMint,
+    wrappingVault: raw.wrappingVault,
+    transferHookProgramId: raw.transferHookProgramId,
+    paused: raw.paused,
+    version: Number(raw.version ?? 0),
+  };
+}
+
+export function deserializeTokenConfig(raw: any): TokenConfig {
+  return {
+    mint: raw.mint,
+    tokenProgram: raw.tokenProgram,
+    billingRail: mapBillingRail(raw.billingRail),
+    decimals: Number(raw.decimals ?? 0),
+    enabled: Boolean(raw.enabled),
+    oracleReference: raw.oracleReference,
   };
 }

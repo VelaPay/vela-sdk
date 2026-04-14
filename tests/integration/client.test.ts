@@ -309,7 +309,12 @@ describe("SDK Client Integration", () => {
     expect(mandate.maxPulls).toBe(PLAN_MAX_PULLS);
     expect(mandate.subscriber.equals(subscriber.publicKey)).toBe(true);
     expect(mandate.merchant.equals(merchant.publicKey)).toBe(true);
-    expect(mandate.plan.equals(planAddress)).toBe(true);
+    const mandatePlan = mandate.plan;
+    expect(mandatePlan).toBeDefined();
+    if (!mandatePlan) {
+      throw new Error("Expected subscribe flow to persist a plan reference");
+    }
+    expect(mandatePlan.equals(planAddress)).toBe(true);
     expect(mandate.address.equals(mandateAddress)).toBe(true);
   });
 
