@@ -1,7 +1,8 @@
 import type { Program } from "@coral-xyz/anchor";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { type Connection, PublicKey, type TransactionInstruction } from "@solana/web3.js";
-import { BILLING_SEED, CONFIG_SEED, PROGRAM_ID } from "../constants";
+import { PDAFactory } from "../accounts/pda";
+import { PROGRAM_ID } from "../constants";
 
 // Arcium program ID (from arcium-client IDL: Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ)
 const ARCIUM_PROGRAM_ID = new PublicKey("Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ");
@@ -170,7 +171,7 @@ export async function buildRequestBillingRecordInstruction(
   const programId = program.programId ?? PROGRAM_ID;
 
   // Fetch ProtocolConfig for cluster info
-  const [configAddress] = PublicKey.findProgramAddressSync([CONFIG_SEED], programId);
+  const [configAddress] = PDAFactory.config(programId);
   const config = await (program.account as any).protocolConfig.fetch(configAddress) as {
     clusterPubkey: PublicKey;
     clusterOffset: { toNumber?: () => number } | number;
@@ -197,11 +198,9 @@ export async function buildRequestBillingRecordInstruction(
   const mandateData = await (program.account as any).velaMandate.fetch(mandateAddress);
   const pullsExecuted = BigInt(mandateData.pullsExecuted.toString());
 
-  // Derive BillingEvent PDA: seeds = [b"billing", mandate.key().as_ref(), pulls_executed.to_le_bytes()]
-  const pullsExecutedLeBytes = Buffer.alloc(8);
-  pullsExecutedLeBytes.writeBigUInt64LE(pullsExecuted);
-  const [billingEventAddress] = PublicKey.findProgramAddressSync(
-    [BILLING_SEED, mandateAddress.toBuffer(), pullsExecutedLeBytes],
+  const [billingEventAddress] = PDAFactory.billing(
+    mandateAddress,
+    pullsExecuted,
     programId,
   );
 

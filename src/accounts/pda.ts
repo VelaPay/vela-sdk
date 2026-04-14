@@ -12,8 +12,13 @@ import {
   SEED_PREFIXES,
   TOKEN_CONFIG_SEED,
 } from "../constants";
+import {
+  USAGE_CREDENTIAL_SEED,
+  USAGE_PLAN_SEED,
+  USAGE_REPORT_SEED,
+} from "../types";
 
-function toLe8(value: bigint | number): Buffer {
+function toLe8(value: BN | bigint | number): Buffer {
   return new BN(value.toString()).toArrayLike(Buffer, "le", 8);
 }
 
@@ -108,6 +113,39 @@ export class PDAFactory {
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [SEED_PREFIXES.PLAN, merchant.toBuffer(), toLe8(planId)],
+      programId,
+    );
+  }
+
+  static usagePlan(
+    merchant: PublicKey,
+    planId: BN | bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [USAGE_PLAN_SEED, merchant.toBuffer(), toLe8(planId)],
+      programId,
+    );
+  }
+
+  static usageCredential(
+    merchant: PublicKey,
+    planId: BN | bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [USAGE_CREDENTIAL_SEED, merchant.toBuffer(), toLe8(planId)],
+      programId,
+    );
+  }
+
+  static usageReport(
+    mandate: PublicKey,
+    periodStart: BN | bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [USAGE_REPORT_SEED, mandate.toBuffer(), toLe8(periodStart)],
       programId,
     );
   }

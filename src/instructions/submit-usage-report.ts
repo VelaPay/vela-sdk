@@ -5,7 +5,7 @@ import {
   type TransactionInstruction,
 } from "@solana/web3.js";
 import BN from "bn.js";
-import { USAGE_REPORT_SEED } from "../types";
+import { PDAFactory } from "../accounts/pda";
 
 export interface BuildSubmitUsageReportResult {
   instruction: TransactionInstruction;
@@ -21,11 +21,7 @@ export function deriveUsageReportAddress(
   periodStart: BN,
   programId: PublicKey,
 ): [PublicKey, number] {
-  const periodStartBuf = periodStart.toArrayLike(Buffer, "le", 8);
-  return PublicKey.findProgramAddressSync(
-    [USAGE_REPORT_SEED, mandateAddress.toBuffer(), periodStartBuf],
-    programId,
-  );
+  return PDAFactory.usageReport(mandateAddress, periodStart, programId);
 }
 
 export interface SubmitUsageReportParams {

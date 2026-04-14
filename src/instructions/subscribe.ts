@@ -6,7 +6,7 @@ import {
   SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
-import { deriveMandateAddress } from "../accounts/pda";
+import { PDAFactory } from "../accounts/pda";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
@@ -38,23 +38,28 @@ export async function buildSubscribeInstruction(
   program: Program,
   params: VelaSubscribeParams & {
     subscriber: PublicKey;
+    credentialMint?: PublicKey;
     credentialMintAddress?: PublicKey;
   },
 ): Promise<BuildSubscribeResult> {
   const { subscriber, planAddress, merchantAddress } = params;
 
-  // Derive mandate PDA
-  const [mandateAddress] = deriveMandateAddress(
+  const programId = program.programId;
+  const [mandateAddress] = PDAFactory.mandateV1(
     subscriber,
     planAddress,
-    program.programId,
+    programId,
   );
 
-  // Resolve credential mint -- either from param or by fetching the plan
+  // Resolve credential mint -- explicit override wins, otherwise prefer the V2
+  // merchant credential and fall back to the plan-scoped legacy credential when
+  // the fetched plan still points at the older mint.
   let credentialMint: PublicKey;
   let resolvedMerchant = merchantAddress;
-  if (params.credentialMintAddress) {
-    credentialMint = params.credentialMintAddress;
+  const explicitCredentialMint =
+    params.credentialMint ?? params.credentialMintAddress;
+  if (explicitCredentialMint) {
+    credentialMint = explicitCredentialMint;
   } else {
     const planAccount = await getSubscribablePlan(
       program,
@@ -63,6 +68,22 @@ export async function buildSubscribeInstruction(
     const resolvedPlan = resolvePlanContext(planAccount);
     credentialMint = resolvedPlan.credentialMint;
     resolvedMerchant = resolvedPlan.merchant;
+    const [merchantCredentialMint] = PDAFactory.credential(
+      resolvedMerchant,
+      programId,
+    );
+    const [legacyCredentialMint] = PDAFactory.credentialV1(
+      resolvedMerchant,
+      resolvedPlan.plan.planId,
+      programId,
+    );
+    if (credentialMint.equals(legacyCredentialMint)) {
+      credentialMint = legacyCredentialMint;
+    } else if (credentialMint.equals(merchantCredentialMint)) {
+      credentialMint = merchantCredentialMint;
+    } else {
+      credentialMint = resolvedPlan.credentialMint;
+    }
   }
 
   // Derive subscriber's credential ATA (Token-2022, for the non-transferable credential NFT)

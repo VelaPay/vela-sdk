@@ -1,7 +1,7 @@
 import type { Program } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { deriveMandateAddress } from "../accounts/pda";
+import { PDAFactory } from "../accounts/pda";
 import {
   getSubscribablePlan,
   resolvePlanContext,
@@ -25,28 +25,48 @@ export async function buildCancelInstruction(
   params: VelaCancelParams & {
     authority: PublicKey;
     usdcMintAddress: PublicKey;
+    credentialMint?: PublicKey;
     credentialMintAddress?: PublicKey;
   },
 ): Promise<BuildCancelResult> {
   const { authority, subscriberAddress, planAddress, usdcMintAddress } = params;
+  const programId = program.programId;
 
-  // Derive mandate PDA
-  const [mandateAddress] = deriveMandateAddress(
+  const [derivedMandateAddress] = PDAFactory.mandateV1(
     subscriberAddress,
     planAddress,
-    program.programId,
+    programId,
   );
+  const mandateAddress = params.mandateAddress ?? derivedMandateAddress;
 
-  // Resolve credential mint -- either from param or by fetching the plan
+  // Resolve credential mint -- explicit override wins, otherwise prefer the V2
+  // merchant credential and fall back to the plan-scoped legacy credential when
+  // the fetched plan still points at the older mint.
   let credentialMint: PublicKey;
-  if (params.credentialMintAddress) {
-    credentialMint = params.credentialMintAddress;
+  const explicitCredentialMint =
+    params.credentialMint ?? params.credentialMintAddress;
+  if (explicitCredentialMint) {
+    credentialMint = explicitCredentialMint;
   } else {
     const planAccount = await getSubscribablePlan(
       program,
       planAddress,
     );
-    credentialMint = resolvePlanContext(planAccount).credentialMint;
+    const resolvedPlan = resolvePlanContext(planAccount);
+    const [merchantCredentialMint] = PDAFactory.credential(
+      resolvedPlan.merchant,
+      programId,
+    );
+    const [legacyCredentialMint] = PDAFactory.credentialV1(
+      resolvedPlan.merchant,
+      resolvedPlan.plan.planId,
+      programId,
+    );
+    credentialMint = resolvedPlan.credentialMint.equals(legacyCredentialMint)
+      ? legacyCredentialMint
+      : resolvedPlan.credentialMint.equals(merchantCredentialMint)
+        ? merchantCredentialMint
+        : resolvedPlan.credentialMint;
   }
 
   // Derive subscriber's credential ATA and USDC ATA

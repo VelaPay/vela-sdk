@@ -6,9 +6,9 @@ import {
   type TransactionInstruction,
 } from "@solana/web3.js";
 import BN from "bn.js";
+import { PDAFactory } from "../accounts/pda";
 import { TOKEN_2022_PROGRAM_ID } from "../constants";
 import type { PricingTier, VelaUsagePlanParams } from "../types";
-import { USAGE_CREDENTIAL_SEED, USAGE_PLAN_SEED } from "../types";
 
 export interface BuildCreateUsagePlanResult {
   instruction: TransactionInstruction;
@@ -25,11 +25,7 @@ export function deriveUsagePlanAddress(
   planId: BN,
   programId: PublicKey,
 ): [PublicKey, number] {
-  const planIdBuf = planId.toArrayLike(Buffer, "le", 8);
-  return PublicKey.findProgramAddressSync(
-    [USAGE_PLAN_SEED, merchant.toBuffer(), planIdBuf],
-    programId,
-  );
+  return PDAFactory.usagePlan(merchant, planId, programId);
 }
 
 /**
@@ -41,11 +37,7 @@ export function deriveUsageCredentialMintAddress(
   planId: BN,
   programId: PublicKey,
 ): [PublicKey, number] {
-  const planIdBuf = planId.toArrayLike(Buffer, "le", 8);
-  return PublicKey.findProgramAddressSync(
-    [USAGE_CREDENTIAL_SEED, merchant.toBuffer(), planIdBuf],
-    programId,
-  );
+  return PDAFactory.usageCredential(merchant, planId, programId);
 }
 
 /**
@@ -70,16 +62,10 @@ export async function buildCreateUsagePlanInstruction(
 
   const programId = program.programId;
 
-  // Derive UsagePlan PDA
-  const planIdBuf = planId.toArrayLike(Buffer, "le", 8);
-  const [usagePlanAddress] = PublicKey.findProgramAddressSync(
-    [USAGE_PLAN_SEED, merchant.toBuffer(), planIdBuf],
-    programId,
-  );
-
-  // Derive usage credential mint PDA
-  const [credentialMintAddress] = PublicKey.findProgramAddressSync(
-    [USAGE_CREDENTIAL_SEED, merchant.toBuffer(), planIdBuf],
+  const [usagePlanAddress] = deriveUsagePlanAddress(merchant, planId, programId);
+  const [credentialMintAddress] = deriveUsageCredentialMintAddress(
+    merchant,
+    planId,
     programId,
   );
 

@@ -6,7 +6,8 @@ import {
 } from "@solana/spl-token";
 import { PublicKey, type TransactionInstruction } from "@solana/web3.js";
 import BN from "bn.js";
-import { CONFIG_SEED, MINT_AUTHORITY_SEED, PROGRAM_ID } from "../constants";
+import { PDAFactory } from "../accounts/pda";
+import { PROGRAM_ID } from "../constants";
 import type { VelaUnwrapParams } from "../types";
 
 export interface BuildUnwrapResult {
@@ -28,17 +29,8 @@ export async function buildUnwrapInstruction(
 
   const programId = program.programId ?? PROGRAM_ID;
 
-  // Derive ProtocolConfig PDA: seeds = [b"config"]
-  const [config] = PublicKey.findProgramAddressSync(
-    [CONFIG_SEED],
-    programId,
-  );
-
-  // Derive mint_authority PDA: seeds = [b"mint-authority"]
-  const [mintAuthority] = PublicKey.findProgramAddressSync(
-    [MINT_AUTHORITY_SEED],
-    programId,
-  );
+  const [config] = PDAFactory.config(programId);
+  const [mintAuthority] = PDAFactory.mintAuthority(programId);
 
   // User's Token-2022 wrapped USDC ATA
   const userWrappedAccount = getAssociatedTokenAddressSync(

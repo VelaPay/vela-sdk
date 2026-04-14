@@ -5,7 +5,8 @@ import {
   SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
-import { APPROVAL_SEED, CONFIG_SEED, PROGRAM_ID } from "../constants";
+import { PDAFactory } from "../accounts/pda";
+import { PROGRAM_ID } from "../constants";
 import type { VelaRequestUsageComputationParams } from "../types";
 
 // Arcium program ID (same as request-validation.ts)
@@ -188,7 +189,7 @@ export async function buildRequestUsageComputationInstruction(
   const programId = program.programId ?? PROGRAM_ID;
 
   // Fetch ProtocolConfig for cluster info
-  const [configAddress] = PublicKey.findProgramAddressSync([CONFIG_SEED], programId);
+  const [configAddress] = PDAFactory.config(programId);
   const config = await (program.account as any).protocolConfig.fetch(configAddress) as {
     clusterPubkey: PublicKey;
     clusterOffset: { toNumber?: () => number } | number;
@@ -209,11 +210,7 @@ export async function buildRequestUsageComputationInstruction(
   const compDefAccount = deriveCompDefPda(programId, circuitName);
   const signPdaAccount = deriveSignPda();
 
-  // Derive PullApproval PDA: seeds = [b"approval", mandate.key()]
-  const [pullApproval] = PublicKey.findProgramAddressSync(
-    [APPROVAL_SEED, mandateAddress.toBuffer()],
-    programId,
-  );
+  const [pullApproval] = PDAFactory.approval(mandateAddress, programId);
 
   // Convert ciphertext to number[][] format expected by Anchor
   const ciphertextArrays = ciphertext.map((ct) => Array.from(ct));

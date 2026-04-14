@@ -1,7 +1,8 @@
 import type { Program } from "@coral-xyz/anchor";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { type Connection, PublicKey, type TransactionInstruction } from "@solana/web3.js";
-import { APPROVAL_SEED, CONFIG_SEED, PROGRAM_ID } from "../constants";
+import { PDAFactory } from "../accounts/pda";
+import { PROGRAM_ID } from "../constants";
 
 // Arcium program ID (from arcium-client IDL: Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ)
 const ARCIUM_PROGRAM_ID = new PublicKey("Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ");
@@ -192,7 +193,7 @@ export async function buildRequestValidationInstruction(
   const programId = program.programId ?? PROGRAM_ID;
 
   // Fetch ProtocolConfig for cluster info
-  const [configAddress] = PublicKey.findProgramAddressSync([CONFIG_SEED], programId);
+  const [configAddress] = PDAFactory.config(programId);
   const config = await (program.account as any).protocolConfig.fetch(configAddress) as {
     clusterPubkey: PublicKey;
     clusterOffset: { toNumber?: () => number } | number;
@@ -214,10 +215,7 @@ export async function buildRequestValidationInstruction(
   const signPdaAccount = deriveSignPda();
 
   // Derive PullApproval PDA: seeds = [b"approval", mandate.key()]
-  const [pullApproval] = PublicKey.findProgramAddressSync(
-    [APPROVAL_SEED, params.mandateAddress.toBuffer()],
-    programId,
-  );
+  const [pullApproval] = PDAFactory.approval(params.mandateAddress, programId);
 
   // Convert ciphertext Vec<[u8;32]> to the Anchor-expected format (array of number arrays)
   const ciphertextArrays = params.ciphertext.map((ct) => Array.from(ct));

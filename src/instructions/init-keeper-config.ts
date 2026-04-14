@@ -1,7 +1,7 @@
 import type { Program } from "@coral-xyz/anchor";
 import { PublicKey, type TransactionInstruction } from "@solana/web3.js";
-import { deriveKeeperConfigAddress } from "../accounts/pda";
-import { CONFIG_SEED, PROGRAM_ID } from "../constants";
+import { PDAFactory } from "../accounts/pda";
+import { PROGRAM_ID } from "../constants";
 import type { InitKeeperConfigParams } from "../types";
 
 export interface BuildInitKeeperConfigResult {
@@ -23,11 +23,8 @@ export async function buildInitKeeperConfigInstruction(
 
   const programId = program.programId ?? PROGRAM_ID;
 
-  const [keeperConfigAddress] = deriveKeeperConfigAddress(programId);
-  const [protocolConfig] = PublicKey.findProgramAddressSync(
-    [CONFIG_SEED],
-    programId,
-  );
+  const [keeperConfigAddress] = PDAFactory.keeperConfig(programId);
+  const [protocolConfig] = PDAFactory.config(programId);
 
   // Map TypeScript mode string to Anchor enum object
   const modeEnum =
