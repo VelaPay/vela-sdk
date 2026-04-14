@@ -61,6 +61,7 @@ export interface CheckoutSessionsNamespace {
 export type MandateStatus = "active" | "cancelled" | "expired";
 export type PlanStatus = "active" | "inactive";
 export type AgentMandateStatus = "active" | "paused" | "revoked";
+export type BillingRail = "transferHook" | "tokenDelegate";
 
 export interface AgentServiceLimit {
   service: PublicKey;
@@ -89,13 +90,16 @@ export interface AgentMandate {
   status: AgentMandateStatus;
   services: AgentServiceLimit[];
   bump: number;
+  version?: number;
+  _reserved?: number[];
 }
 
 export interface VelaMandate {
   address: PublicKey;
   subscriber: PublicKey;
-  plan: PublicKey;
+  plan?: PublicKey;
   merchant: PublicKey;
+  mandateIndex?: bigint;
   amount: bigint;
   frequency: bigint;
   startDate: bigint;
@@ -106,6 +110,8 @@ export interface VelaMandate {
   status: MandateStatus;
   bump: number;
   billingType: BillingType;
+  version: number;
+  _reserved?: number[];
 }
 
 export interface VelaPlan {
@@ -120,6 +126,8 @@ export interface VelaPlan {
   status: PlanStatus;
   credentialMint: PublicKey;
   bump: number;
+  version?: number;
+  _reserved?: number[];
 }
 
 export interface VelaUsagePlan {
@@ -135,6 +143,8 @@ export interface VelaUsagePlan {
   status: PlanStatus;
   credentialMint: PublicKey;
   bump: number;
+  version?: number;
+  _reserved?: number[];
 }
 
 export type SubscribablePlan = VelaPlan | VelaUsagePlan;
@@ -144,6 +154,28 @@ export interface MerchantState {
   merchant: PublicKey;
   planCount: bigint;
   bump: number;
+  credentialMint?: PublicKey;
+  mandateCounter: bigint;
+  version?: number;
+  _reserved?: number[];
+}
+
+export interface ProtocolConfig {
+  admin: PublicKey;
+  wrappedUsdcMint: PublicKey;
+  wrappingVault: PublicKey;
+  transferHookProgramId: PublicKey;
+  paused: boolean;
+  version: number;
+}
+
+export interface TokenConfig {
+  mint: PublicKey;
+  tokenProgram: PublicKey;
+  billingRail: BillingRail;
+  decimals: number;
+  enabled: boolean;
+  oracleReference: PublicKey;
 }
 
 export interface VelaCreatePlanParams {
@@ -289,6 +321,8 @@ export interface KeeperConfig {
   keeperEndpoint: string;
   keeperAuthority: PublicKey;
   bump: number;
+  version?: number;
+  _reserved?: number[];
 }
 
 export interface BillingScheduleParams {

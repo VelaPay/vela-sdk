@@ -173,6 +173,7 @@ export type {
   AgentServiceLimit,
   AgentServiceLimitInput,
   BillingScheduleParams,
+  BillingRail,
   BillingType,
   CancelValidationResult,
   CheckAgentBudgetParams,
@@ -184,6 +185,7 @@ export type {
   KeeperMode,
   MandateStatus,
   MerchantState,
+  ProtocolConfig,
   PlanStatus,
   PricingTier,
   VelaAdminCancelParams,
@@ -221,6 +223,7 @@ export type {
   ValidationResult,
   ValidateAgentPullParams,
   VerifyAgentMandateParams,
+  TokenConfig,
 } from "./types";
 // Usage seed constants
 export { USAGE_CREDENTIAL_SEED, USAGE_PLAN_SEED, USAGE_REPORT_SEED } from "./types";
