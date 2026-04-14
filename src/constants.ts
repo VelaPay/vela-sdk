@@ -8,6 +8,7 @@ import { PublicKey } from "@solana/web3.js";
 export const PROGRAM_ID = new PublicKey(
   "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC",
 );
+/** Default hook program ID. SDK fetches dynamically from ProtocolConfig at runtime (SDK-03). Kept as fallback for offline/test scenarios. */
 export const TRANSFER_HOOK_PROGRAM_ID = new PublicKey(
   "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX",
 );
@@ -18,6 +19,8 @@ export const SEED_PREFIXES = {
   MANDATE: Buffer.from("mandate"),
   CREDENTIAL: Buffer.from("credential"),
   AGENT_MANDATE: Buffer.from("agent-mandate"),
+  MERCHANT_CREDENTIAL: Buffer.from("merchant-credential"),
+  TOKEN_CONFIG: Buffer.from("token_config"),
 } as const;
 
 // Wrapping-related PDAs
@@ -27,6 +30,7 @@ export const CONFIG_SEED = Buffer.from("config");
 export const APPROVAL_SEED = Buffer.from("approval");
 export const BILLING_SEED = Buffer.from("billing");
 export const KEEPER_CONFIG_SEED = Buffer.from("keeper-config");
+export const TOKEN_CONFIG_SEED = Buffer.from("token_config");
 
 // Token constants
 export const USDC_DECIMALS = 6;
