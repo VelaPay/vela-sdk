@@ -1,12 +1,10 @@
 import type { Program } from "@coral-xyz/anchor";
 import { SystemProgram, type PublicKey, type TransactionInstruction } from "@solana/web3.js";
+import { PDAFactory } from "../accounts/pda";
 import type { VelaAgentPullParams } from "../types";
 import {
   TOKEN_2022_PROGRAM_ID,
-  TRANSFER_HOOK_PROGRAM_ID,
   deriveAgentMandateContext,
-  deriveAgentPullApprovalAddress,
-  deriveExtraAccountMetaListAddress,
   resolveAgentProtocolAccounts,
   toBn,
 } from "./agent-mandate-shared";
@@ -23,10 +21,11 @@ export async function buildAgentPullInstruction(
   params: VelaAgentPullParams & { payer: PublicKey; agent: PublicKey },
 ): Promise<BuildAgentPullResult> {
   const { payer, agent, authority, mandateAddress: expectedMandateAddress, serviceWrappedAccount, amount } = params;
-  const { protocolConfig, wrappedUsdcMint, wrappingVault } =
+  const { protocolConfig, wrappedUsdcMint, wrappingVault, hookProgramId } =
     await resolveAgentProtocolAccounts(program, {
       wrappedUsdcMint: params.wrappedUsdcMint,
       wrappingVault: params.wrappingVault,
+      hookProgramId: params.hookProgramId,
     });
   const { mandateAddress, mandateWrappedAccount } = deriveAgentMandateContext(
     authority,
@@ -42,11 +41,14 @@ export async function buildAgentPullInstruction(
       `Provided mandate ${expectedMandateAddress.toBase58()} does not match the authority/agent-derived mandate ${mandateAddress.toBase58()}.`,
     );
   }
-  const pullApprovalAddress = deriveAgentPullApprovalAddress(
+  const [pullApprovalAddress] = PDAFactory.approval(
     mandateAddress,
     program.programId,
   );
-  const extraAccountMetaList = deriveExtraAccountMetaListAddress(wrappedUsdcMint);
+  const [extraAccountMetaList] = PDAFactory.extraAccountMetas(
+    wrappedUsdcMint,
+    hookProgramId,
+  );
 
   const instruction = await (program.methods as any)
     .agentPull(toBn(amount))
@@ -61,7 +63,7 @@ export async function buildAgentPullInstruction(
       wrappedUsdcMint,
       protocolConfig,
       wrappingVault,
-      hookProgram: TRANSFER_HOOK_PROGRAM_ID,
+      hookProgram: hookProgramId,
       extraAccountMetaList,
       protocolProgram: program.programId,
       token2022Program: TOKEN_2022_PROGRAM_ID,

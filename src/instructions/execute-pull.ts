@@ -4,12 +4,8 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { type Connection, PublicKey, type TransactionInstruction } from "@solana/web3.js";
-import { deriveMandateAddress } from "../accounts/pda";
+import { PDAFactory, deriveMandateAddress } from "../accounts/pda";
 import {
-  APPROVAL_SEED,
-  CONFIG_SEED,
-  EXTRA_ACCOUNT_METAS_SEED,
-  KEEPER_CONFIG_SEED,
   PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../constants";
@@ -20,19 +16,18 @@ export interface BuildExecutePullResult {
   mandateAddress: PublicKey;
 }
 
-async function fetchWrappingVault(
-  connection: Connection,
+async function fetchProtocolConfigValues(
+  program: Program,
   protocolConfig: PublicKey,
-): Promise<PublicKey> {
-  const accountInfo = await connection.getAccountInfo(protocolConfig);
-  if (!accountInfo || accountInfo.data.length < 145) {
-    throw new Error("ProtocolConfig account not found or invalid");
-  }
-
-  const wrappingVaultOffset = 113;
-  return new PublicKey(
-    accountInfo.data.subarray(wrappingVaultOffset, wrappingVaultOffset + 32),
-  );
+): Promise<{
+  wrappingVault: PublicKey;
+  hookProgramId: PublicKey;
+}> {
+  const raw = await (program.account as any).protocolConfig.fetch(protocolConfig);
+  return {
+    wrappingVault: raw.wrappingVault,
+    hookProgramId: raw.transferHookProgramId ?? TRANSFER_HOOK_PROGRAM_ID,
+  };
 }
 
 /**
@@ -65,22 +60,18 @@ export async function buildExecutePullInstruction(
     explicitMandateAddress ??
     deriveMandateAddress(subscriberAddress, planAddress, programId)[0];
 
-  // Derive PullApproval PDA: seeds = [b"approval", mandate.key()]
-  const [pullApproval] = PublicKey.findProgramAddressSync(
-    [APPROVAL_SEED, mandateAddress.toBuffer()],
-    programId,
+  const [pullApproval] = PDAFactory.approval(mandateAddress, programId);
+  const [protocolConfig] = PDAFactory.config(programId);
+  const [keeperConfig] = PDAFactory.keeperConfig(programId);
+  const protocolConfigValues = await fetchProtocolConfigValues(
+    program,
+    protocolConfig,
   );
-  const [protocolConfig] = PublicKey.findProgramAddressSync(
-    [CONFIG_SEED],
-    programId,
-  );
-  const [extraAccountMetaList] = PublicKey.findProgramAddressSync(
-    [EXTRA_ACCOUNT_METAS_SEED, wrappedUsdcMint.toBuffer()],
-    TRANSFER_HOOK_PROGRAM_ID,
-  );
-  const [keeperConfig] = PublicKey.findProgramAddressSync(
-    [KEEPER_CONFIG_SEED],
-    programId,
+  const effectiveHookProgramId =
+    params.hookProgramId ?? protocolConfigValues.hookProgramId;
+  const [extraAccountMetaList] = PDAFactory.extraAccountMetas(
+    wrappedUsdcMint,
+    effectiveHookProgramId,
   );
 
   // Derive Token-2022 ATAs for wrapped USDC
@@ -100,7 +91,7 @@ export async function buildExecutePullInstruction(
 
   const wrappingVault =
     params.wrappingVault ??
-    (await fetchWrappingVault(_connection, protocolConfig));
+    protocolConfigValues.wrappingVault;
 
   const baseInstruction = await (program.methods as any)
     .executePull()
@@ -117,7 +108,7 @@ export async function buildExecutePullInstruction(
       pullApproval,
       protocolConfig,
       wrappingVault,
-      hookProgram: TRANSFER_HOOK_PROGRAM_ID,
+      hookProgram: effectiveHookProgramId,
       extraAccountMetaList,
       protocolProgram: programId,
       token2022Program: TOKEN_2022_PROGRAM_ID,

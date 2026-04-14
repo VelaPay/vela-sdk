@@ -2,16 +2,9 @@ import type { Program } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
+import { PDAFactory } from "../accounts/pda";
 import {
-  deriveAgentMandateAddress,
-  deriveAgentMandateWrappedAta,
-  deriveConfigAddress,
-} from "../accounts/pda";
-import {
-  APPROVAL_SEED,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  EXTRA_ACCOUNT_METAS_SEED,
-  MINT_AUTHORITY_SEED,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
@@ -39,23 +32,18 @@ export function deriveAgentPullApprovalAddress(
   mandateAddress: PublicKey,
   programId: PublicKey,
 ): PublicKey {
-  return PublicKey.findProgramAddressSync(
-    [APPROVAL_SEED, mandateAddress.toBuffer()],
-    programId,
-  )[0];
+  return PDAFactory.approval(mandateAddress, programId)[0];
 }
 
 export function deriveMintAuthorityAddress(programId: PublicKey): PublicKey {
-  return PublicKey.findProgramAddressSync([MINT_AUTHORITY_SEED], programId)[0];
+  return PDAFactory.mintAuthority(programId)[0];
 }
 
 export function deriveExtraAccountMetaListAddress(
   wrappedUsdcMint: PublicKey,
+  hookProgramId: PublicKey = TRANSFER_HOOK_PROGRAM_ID,
 ): PublicKey {
-  return PublicKey.findProgramAddressSync(
-    [EXTRA_ACCOUNT_METAS_SEED, wrappedUsdcMint.toBuffer()],
-    TRANSFER_HOOK_PROGRAM_ID,
-  )[0];
+  return PDAFactory.extraAccountMetas(wrappedUsdcMint, hookProgramId)[0];
 }
 
 export function deriveAuthorityUsdcAccount(
@@ -75,14 +63,14 @@ export function deriveAgentMandateContext(
   agent: PublicKey,
   wrappedUsdcMint: PublicKey,
   programId: PublicKey,
-): {
+  ): {
   mandateAddress: PublicKey;
   mandateWrappedAccount: PublicKey;
 } {
-  const [mandateAddress] = deriveAgentMandateAddress(authority, agent, programId);
+  const [mandateAddress] = PDAFactory.agentMandate(authority, agent, programId);
   return {
     mandateAddress,
-    mandateWrappedAccount: deriveAgentMandateWrappedAta(
+    mandateWrappedAccount: PDAFactory.agentMandateWrappedAta(
       mandateAddress,
       wrappedUsdcMint,
     ),
@@ -94,19 +82,26 @@ export async function resolveAgentProtocolAccounts(
   overrides: {
     wrappedUsdcMint?: PublicKey;
     wrappingVault?: PublicKey;
+    hookProgramId?: PublicKey;
   } = {},
 ): Promise<{
   protocolConfig: PublicKey;
   wrappedUsdcMint: PublicKey;
   wrappingVault: PublicKey;
+  hookProgramId: PublicKey;
 }> {
-  const [protocolConfig] = deriveConfigAddress(program.programId);
+  const [protocolConfig] = PDAFactory.config(program.programId);
 
-  if (overrides.wrappedUsdcMint && overrides.wrappingVault) {
+  if (
+    overrides.wrappedUsdcMint &&
+    overrides.wrappingVault &&
+    overrides.hookProgramId
+  ) {
     return {
       protocolConfig,
       wrappedUsdcMint: overrides.wrappedUsdcMint,
       wrappingVault: overrides.wrappingVault,
+      hookProgramId: overrides.hookProgramId,
     };
   }
 
@@ -115,6 +110,8 @@ export async function resolveAgentProtocolAccounts(
     protocolConfig,
     wrappedUsdcMint: overrides.wrappedUsdcMint ?? raw.wrappedUsdcMint,
     wrappingVault: overrides.wrappingVault ?? raw.wrappingVault,
+    hookProgramId:
+      overrides.hookProgramId ?? raw.transferHookProgramId,
   };
 }
 

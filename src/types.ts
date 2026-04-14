@@ -202,6 +202,8 @@ export interface VelaPullParams {
   wrappedUsdcMint: PublicKey;
   /** The protocol's SPL USDC vault (used for PDA resolution) */
   wrappingVault?: PublicKey;
+  /** Optional override for dynamic transfer-hook resolution. */
+  hookProgramId?: PublicKey;
 }
 
 export interface VelaCreateAgentMandateParams {
@@ -225,6 +227,7 @@ export interface VelaAgentPullParams {
   amount: bigint | number;
   wrappedUsdcMint?: PublicKey;
   wrappingVault?: PublicKey;
+  hookProgramId?: PublicKey;
 }
 
 export interface VelaAdjustAgentMandateParams {
