@@ -3,6 +3,7 @@
 // Account helpers
 export {
   checkAgentBudget,
+  PDAFactory,
   deriveAgentMandateAddress,
   deriveAgentMandateWrappedAta,
   deriveConfigAddress,

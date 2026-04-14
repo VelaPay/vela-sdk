@@ -1,123 +1,238 @@
 import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
-import { CONFIG_SEED, KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES } from "../constants";
+import {
+  APPROVAL_SEED,
+  BILLING_SEED,
+  CONFIG_SEED,
+  EXTRA_ACCOUNT_METAS_SEED,
+  KEEPER_CONFIG_SEED,
+  MINT_AUTHORITY_SEED,
+  PROGRAM_ID,
+  SEED_PREFIXES,
+  TOKEN_CONFIG_SEED,
+} from "../constants";
 
-/**
- * Derives the MerchantState PDA address.
- * Seeds: ["merchant", merchant.pubkey]
- */
-export function deriveMerchantStateAddress(
-  merchant: PublicKey,
-  programId: PublicKey = PROGRAM_ID,
-): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [SEED_PREFIXES.MERCHANT, merchant.toBuffer()],
-    programId,
-  );
+function toLe8(value: bigint | number): Buffer {
+  return new BN(value.toString()).toArrayLike(Buffer, "le", 8);
 }
 
-/**
- * Derives the VelaPlan PDA address.
- * Seeds: ["plan", merchant.pubkey, plan_id.to_le_bytes()]
- */
+export class PDAFactory {
+  static mandate(
+    subscriber: PublicKey,
+    merchant: PublicKey,
+    mandateIndex: bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [
+        SEED_PREFIXES.MANDATE,
+        subscriber.toBuffer(),
+        merchant.toBuffer(),
+        toLe8(mandateIndex),
+      ],
+      programId,
+    );
+  }
+
+  /**
+   * @deprecated Use PDAFactory.mandate() with V2 seed scheme.
+   */
+  static mandateV1(
+    subscriber: PublicKey,
+    plan: PublicKey,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [SEED_PREFIXES.MANDATE, subscriber.toBuffer(), plan.toBuffer()],
+      programId,
+    );
+  }
+
+  static credential(
+    merchant: PublicKey,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [SEED_PREFIXES.MERCHANT_CREDENTIAL, merchant.toBuffer()],
+      programId,
+    );
+  }
+
+  /**
+   * @deprecated Use PDAFactory.credential() for per-merchant credential.
+   */
+  static credentialV1(
+    merchant: PublicKey,
+    planId: bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [SEED_PREFIXES.CREDENTIAL, merchant.toBuffer(), toLe8(planId)],
+      programId,
+    );
+  }
+
+  static tokenConfig(
+    mint: PublicKey,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [TOKEN_CONFIG_SEED, mint.toBuffer()],
+      programId,
+    );
+  }
+
+  static config(programId: PublicKey = PROGRAM_ID): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([CONFIG_SEED], programId);
+  }
+
+  static keeperConfig(programId: PublicKey = PROGRAM_ID): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([KEEPER_CONFIG_SEED], programId);
+  }
+
+  static merchantState(
+    merchant: PublicKey,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [SEED_PREFIXES.MERCHANT, merchant.toBuffer()],
+      programId,
+    );
+  }
+
+  static plan(
+    merchant: PublicKey,
+    planId: bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [SEED_PREFIXES.PLAN, merchant.toBuffer(), toLe8(planId)],
+      programId,
+    );
+  }
+
+  static agentMandate(
+    authority: PublicKey,
+    agent: PublicKey,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [SEED_PREFIXES.AGENT_MANDATE, authority.toBuffer(), agent.toBuffer()],
+      programId,
+    );
+  }
+
+  static approval(
+    mandate: PublicKey,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [APPROVAL_SEED, mandate.toBuffer()],
+      programId,
+    );
+  }
+
+  static billing(
+    mandate: PublicKey,
+    pullsExecuted: bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [BILLING_SEED, mandate.toBuffer(), toLe8(pullsExecuted)],
+      programId,
+    );
+  }
+
+  static extraAccountMetas(
+    mint: PublicKey,
+    hookProgramId: PublicKey,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [EXTRA_ACCOUNT_METAS_SEED, mint.toBuffer()],
+      hookProgramId,
+    );
+  }
+
+  static mintAuthority(programId: PublicKey = PROGRAM_ID): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([MINT_AUTHORITY_SEED], programId);
+  }
+
+  static agentMandateWrappedAta(
+    agentMandateAddress: PublicKey,
+    wrappedUsdcMint: PublicKey,
+  ): PublicKey {
+    return getAssociatedTokenAddressSync(
+      wrappedUsdcMint,
+      agentMandateAddress,
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
+  }
+}
+
+/** @deprecated Use PDAFactory.merchantState(). */
+export function deriveMerchantStateAddress(
+  merchant: PublicKey,
+  programId?: PublicKey,
+): [PublicKey, number] {
+  return PDAFactory.merchantState(merchant, programId);
+}
+
+/** @deprecated Use PDAFactory.plan(). */
 export function derivePlanAddress(
   merchant: PublicKey,
   planId: bigint | number,
-  programId: PublicKey = PROGRAM_ID,
+  programId?: PublicKey,
 ): [PublicKey, number] {
-  const planIdBuffer = new BN(planId.toString()).toArrayLike(Buffer, "le", 8);
-  return PublicKey.findProgramAddressSync(
-    [SEED_PREFIXES.PLAN, merchant.toBuffer(), planIdBuffer],
-    programId,
-  );
+  return PDAFactory.plan(merchant, planId, programId);
 }
 
-/**
- * Derives the VelaMandate PDA address.
- * Seeds: ["mandate", subscriber.pubkey, plan.pubkey]
- */
+/** @deprecated Use PDAFactory.mandateV1() or PDAFactory.mandate() for V2 seeds. */
 export function deriveMandateAddress(
   subscriber: PublicKey,
   plan: PublicKey,
-  programId: PublicKey = PROGRAM_ID,
+  programId?: PublicKey,
 ): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [SEED_PREFIXES.MANDATE, subscriber.toBuffer(), plan.toBuffer()],
-    programId,
-  );
+  return PDAFactory.mandateV1(subscriber, plan, programId);
 }
 
-/**
- * Derives the CredentialMint PDA address.
- * Seeds: ["credential", merchant.pubkey, plan_id.to_le_bytes()]
- */
+/** @deprecated Use PDAFactory.credentialV1() or PDAFactory.credential() for V2 seeds. */
 export function deriveCredentialMintAddress(
   merchant: PublicKey,
   planId: bigint | number,
-  programId: PublicKey = PROGRAM_ID,
+  programId?: PublicKey,
 ): [PublicKey, number] {
-  const planIdBuffer = new BN(planId.toString()).toArrayLike(Buffer, "le", 8);
-  return PublicKey.findProgramAddressSync(
-    [SEED_PREFIXES.CREDENTIAL, merchant.toBuffer(), planIdBuffer],
-    programId,
-  );
+  return PDAFactory.credentialV1(merchant, planId, programId);
 }
 
-/**
- * Derives the AgentMandate PDA address.
- * Seeds: ["agent-mandate", authority.pubkey, agent.pubkey]
- */
+/** @deprecated Use PDAFactory.agentMandate(). */
 export function deriveAgentMandateAddress(
   authority: PublicKey,
   agent: PublicKey,
-  programId: PublicKey = PROGRAM_ID,
+  programId?: PublicKey,
 ): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [SEED_PREFIXES.AGENT_MANDATE, authority.toBuffer(), agent.toBuffer()],
-    programId,
-  );
+  return PDAFactory.agentMandate(authority, agent, programId);
 }
 
-/**
- * Derives the mandate-owned wrapped USDC ATA for an AgentMandate PDA.
- */
+/** @deprecated Use PDAFactory.agentMandateWrappedAta(). */
 export function deriveAgentMandateWrappedAta(
   agentMandateAddress: PublicKey,
   wrappedUsdcMint: PublicKey,
 ): PublicKey {
-  return getAssociatedTokenAddressSync(
-    wrappedUsdcMint,
-    agentMandateAddress,
-    true,
-    TOKEN_2022_PROGRAM_ID,
-  );
+  return PDAFactory.agentMandateWrappedAta(agentMandateAddress, wrappedUsdcMint);
 }
 
-/**
- * Derives the KeeperConfig PDA address.
- * Seeds: ["keeper-config"]
- * Singleton PDA -- one per program deployment
- */
+/** @deprecated Use PDAFactory.keeperConfig(). */
 export function deriveKeeperConfigAddress(
-  programId: PublicKey = PROGRAM_ID,
+  programId?: PublicKey,
 ): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [KEEPER_CONFIG_SEED],
-    programId,
-  );
+  return PDAFactory.keeperConfig(programId);
 }
 
-/**
- * Derives the ProtocolConfig PDA address.
- * Seeds: ["config"]
- * Singleton PDA -- one per program deployment
- */
+/** @deprecated Use PDAFactory.config(). */
 export function deriveConfigAddress(
-  programId: PublicKey = PROGRAM_ID,
+  programId?: PublicKey,
 ): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [CONFIG_SEED],
-    programId,
-  );
+  return PDAFactory.config(programId);
 }

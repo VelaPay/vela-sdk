@@ -20,6 +20,7 @@ export {
   verifyAgentMandate,
 } from "./fetchers";
 export {
+  PDAFactory,
   deriveAgentMandateAddress,
   deriveAgentMandateWrappedAta,
   deriveConfigAddress,
