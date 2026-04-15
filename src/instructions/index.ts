@@ -6,7 +6,10 @@ export type { BuildCancelResult } from "./cancel";
 export { buildCancelInstruction } from "./cancel";
 export type { BuildCreateAgentMandateResult } from "./create-agent-mandate";
 export { buildCreateAgentMandateInstruction } from "./create-agent-mandate";
-export type { BuildRequestValidationResult, RequestValidationParams } from "./request-validation";
+export type {
+  BuildRequestValidationResult,
+  RequestValidationParams,
+} from "./request-validation";
 export {
   buildRequestValidationInstruction,
   deriveValidationComputationOffset,
@@ -19,7 +22,10 @@ export {
   deriveUsagePlanAddress,
   deriveUsageCredentialMintAddress,
 } from "./create-usage-plan";
-export type { BuildSubmitUsageReportResult, SubmitUsageReportParams } from "./submit-usage-report";
+export type {
+  BuildSubmitUsageReportResult,
+  SubmitUsageReportParams,
+} from "./submit-usage-report";
 export {
   buildSubmitUsageReportInstruction,
   deriveUsageReportAddress,
@@ -35,6 +41,17 @@ export type { BuildDrainAgentMandateResult } from "./drain-agent-mandate";
 export { buildDrainAgentMandateInstruction } from "./drain-agent-mandate";
 export type { BuildInitKeeperConfigResult } from "./init-keeper-config";
 export { buildInitKeeperConfigInstruction } from "./init-keeper-config";
+export type {
+  BuildInitMerchantCredentialParams,
+  BuildInitMerchantCredentialResult,
+} from "./init-merchant-credential";
+export { buildInitMerchantCredentialInstruction } from "./init-merchant-credential";
+export type {
+  BuildInitTokenConfigParams,
+  BuildInitTokenConfigResult,
+  TokenConfigBillingRail,
+} from "./init-token-config";
+export { buildInitTokenConfigInstruction } from "./init-token-config";
 export type { BuildPauseAgentMandateResult } from "./pause-agent-mandate";
 export { buildPauseAgentMandateInstruction } from "./pause-agent-mandate";
 export type { BuildSubscribeResult } from "./subscribe";
@@ -45,13 +62,21 @@ export type { BuildRevokeAgentMandateResult } from "./revoke-agent-mandate";
 export { buildRevokeAgentMandateInstruction } from "./revoke-agent-mandate";
 export type { BuildUpdateKeeperConfigResult } from "./update-keeper-config";
 export { buildUpdateKeeperConfigInstruction } from "./update-keeper-config";
+export type {
+  BuildUpdateTokenConfigParams,
+  BuildUpdateTokenConfigResult,
+} from "./update-token-config";
+export { buildUpdateTokenConfigInstruction } from "./update-token-config";
 export type { BuildWrapResult } from "./wrap";
 export { buildWrapInstruction } from "./wrap";
 export type { BuildUnwrapResult } from "./unwrap";
 export { buildUnwrapInstruction } from "./unwrap";
 export type { BuildWrapAndSubscribeResult } from "./wrap-and-subscribe";
 export { buildWrapAndSubscribeInstructions } from "./wrap-and-subscribe";
-export type { BuildRequestBillingRecordResult, RequestBillingRecordParams } from "./request-billing-record";
+export type {
+  BuildRequestBillingRecordResult,
+  RequestBillingRecordParams,
+} from "./request-billing-record";
 export {
   buildRequestBillingRecordInstruction,
   deriveBillingComputationOffset,

@@ -40,7 +40,13 @@ export type {
 // Usage-based billing
 export { createUsagePlan, submitUsageReport } from "./usage";
 // Constants
-export { BILLING_SEED, KEEPER_CONFIG_SEED, PROGRAM_ID, SEED_PREFIXES, TRANSFER_HOOK_PROGRAM_ID } from "./constants";
+export {
+  BILLING_SEED,
+  KEEPER_CONFIG_SEED,
+  PROGRAM_ID,
+  SEED_PREFIXES,
+  TRANSFER_HOOK_PROGRAM_ID,
+} from "./constants";
 // Errors
 export {
   AgentMandateAlreadyExistsError,
@@ -98,6 +104,10 @@ export type {
   BuildDrainAgentMandateResult,
   BuildExecutePullResult,
   BuildInitKeeperConfigResult,
+  BuildInitMerchantCredentialParams,
+  BuildInitMerchantCredentialResult,
+  BuildInitTokenConfigParams,
+  BuildInitTokenConfigResult,
   BuildPauseAgentMandateResult,
   BuildPauseProtocolResult,
   BuildResumeAgentMandateResult,
@@ -107,11 +117,14 @@ export type {
   BuildSubscribeResult,
   BuildUnpauseProtocolResult,
   BuildUnwrapResult,
+  BuildUpdateTokenConfigParams,
+  BuildUpdateTokenConfigResult,
   BuildUpdateKeeperConfigResult,
   BuildWrapAndSubscribeResult,
   BuildWrapResult,
   RequestBillingRecordParams,
   RequestValidationParams,
+  TokenConfigBillingRail,
 } from "./instructions";
 // Instruction builders
 export {
@@ -125,6 +138,8 @@ export {
   buildDrainAgentMandateInstruction,
   buildExecutePullInstruction,
   buildInitKeeperConfigInstruction,
+  buildInitMerchantCredentialInstruction,
+  buildInitTokenConfigInstruction,
   buildPauseAgentMandateInstruction,
   buildPauseProtocolInstruction,
   buildResumeAgentMandateInstruction,
@@ -136,6 +151,7 @@ export {
   buildSubscribeInstruction,
   buildUnpauseProtocolInstruction,
   buildUnwrapInstruction,
+  buildUpdateTokenConfigInstruction,
   buildUpdateKeeperConfigInstruction,
   buildWrapAndSubscribeInstructions,
   buildWrapInstruction,
@@ -226,7 +242,11 @@ export type {
   TokenConfig,
 } from "./types";
 // Usage seed constants
-export { USAGE_CREDENTIAL_SEED, USAGE_PLAN_SEED, USAGE_REPORT_SEED } from "./types";
+export {
+  USAGE_CREDENTIAL_SEED,
+  USAGE_PLAN_SEED,
+  USAGE_REPORT_SEED,
+} from "./types";
 // Validators
 export {
   validateAgentPull,
