@@ -1,4 +1,5 @@
-import type { PublicKey } from "@solana/web3.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { type Connection, PublicKey } from "@solana/web3.js";
 import type {
   AgentMandate,
   AgentMandateStatus,
@@ -14,6 +15,8 @@ import type {
   VelaPlan,
   VelaUsagePlan,
 } from "../types";
+import type { StreamMandate, StreamStatus } from "../types/stream-mandate";
+import { WrongAccountTypeError } from "../errors/stream-errors";
 
 /**
  * Maps an Anchor-deserialized MandateStatus enum variant to SDK string literal.
@@ -79,6 +82,153 @@ function mapBillingRail(raw: any): BillingRail {
   if (!raw || raw.transferHook !== undefined) return "transferHook";
   if (raw.tokenDelegate !== undefined) return "tokenDelegate";
   throw new Error(`Unknown BillingRail variant: ${JSON.stringify(raw)}`);
+}
+
+function mapStreamStatus(raw: number): StreamStatus {
+  switch (raw) {
+    case 0:
+      return "active";
+    case 1:
+      return "paused";
+    case 2:
+      return "cancelled";
+    default:
+      throw new Error(`Unknown StreamStatus variant: ${raw}`);
+  }
+}
+
+function readOptionU64(
+  data: Buffer,
+  offset: number,
+): { value: bigint | null; nextOffset: number } {
+  const tag = data.readUInt8(offset);
+  if (tag === 0) {
+    return { value: null, nextOffset: offset + 9 };
+  }
+  return {
+    value: data.readBigUInt64LE(offset + 1),
+    nextOffset: offset + 9,
+  };
+}
+
+function readOptionI64(
+  data: Buffer,
+  offset: number,
+): { value: bigint | null; nextOffset: number } {
+  const tag = data.readUInt8(offset);
+  if (tag === 0) {
+    return { value: null, nextOffset: offset + 9 };
+  }
+  return {
+    value: data.readBigInt64LE(offset + 1),
+    nextOffset: offset + 9,
+  };
+}
+
+function discriminatorHex(data: Buffer | Uint8Array): string {
+  return Buffer.from(data).toString("hex");
+}
+
+export const STREAM_MANDATE_DISCRIMINATOR = Buffer.from(
+  sha256(new TextEncoder().encode("account:StreamMandate")).slice(0, 8),
+);
+
+export function deserializeStreamMandate(
+  address: PublicKey,
+  raw: Buffer | Uint8Array,
+): StreamMandate {
+  const data = Buffer.from(raw);
+  if (data.length < 225) {
+    throw new Error(`StreamMandate account ${address.toBase58()} is truncated`);
+  }
+  const gotDiscriminator = data.subarray(0, 8);
+  if (!Buffer.from(STREAM_MANDATE_DISCRIMINATOR).equals(gotDiscriminator)) {
+    throw new WrongAccountTypeError(
+      address,
+      "StreamMandate",
+      discriminatorHex(gotDiscriminator),
+    );
+  }
+
+  const version = data.readUInt8(8);
+  switch (version) {
+    case 1:
+      break;
+    case 2:
+      throw new Error("StreamMandate version 2 deserializer not yet implemented");
+    default:
+      throw new Error(`Unsupported StreamMandate version: ${version}`);
+  }
+
+  let offset = 9;
+  const subscriber = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const merchant = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const mint = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const ratePerSecond = data.readBigUInt64LE(offset);
+  offset += 8;
+  const authorizedMaxRate = data.readBigUInt64LE(offset);
+  offset += 8;
+  const lastSettledTs = data.readBigInt64LE(offset);
+  offset += 8;
+  const totalStreamed = data.readBigUInt64LE(offset);
+  offset += 8;
+  const maxStreamed = readOptionU64(data, offset);
+  offset = maxStreamed.nextOffset;
+  const pausedAt = readOptionI64(data, offset);
+  offset = pausedAt.nextOffset;
+  const minSettleInterval = data.readUInt32LE(offset);
+  offset += 4;
+  const status = mapStreamStatus(data.readUInt8(offset));
+  offset += 1;
+  const mandateIndex = data.readBigUInt64LE(offset);
+  offset += 8;
+  const bump = data.readUInt8(offset);
+
+  return {
+    address,
+    version,
+    subscriber,
+    merchant,
+    mint,
+    ratePerSecond,
+    authorizedMaxRate,
+    lastSettledTs,
+    totalStreamed,
+    maxStreamed: maxStreamed.value,
+    pausedAt: pausedAt.value,
+    minSettleInterval,
+    status,
+    mandateIndex,
+    bump,
+  };
+}
+
+export async function fetchStreamMandate(
+  connection: Connection,
+  address: PublicKey,
+): Promise<StreamMandate> {
+  const info = await connection.getAccountInfo(address);
+  if (!info) {
+    throw new Error(`StreamMandate account not found: ${address.toBase58()}`);
+  }
+
+  const data = Buffer.from(info.data);
+  const gotDiscriminator = data.subarray(0, Math.min(8, data.length));
+  if (
+    data.length < 8 ||
+    !Buffer.from(STREAM_MANDATE_DISCRIMINATOR).equals(gotDiscriminator)
+  ) {
+    throw new WrongAccountTypeError(
+      address,
+      "StreamMandate",
+      discriminatorHex(gotDiscriminator),
+    );
+  }
+
+  return deserializeStreamMandate(address, data);
 }
 
 /**

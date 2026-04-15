@@ -1,9 +1,12 @@
 export {
+  STREAM_MANDATE_DISCRIMINATOR,
   deserializeAgentMandate,
   deserializeMandate,
   deserializeMerchantState,
   deserializePlan,
+  deserializeStreamMandate,
   deserializeUsagePlan,
+  fetchStreamMandate,
 } from "./deserialize";
 export {
   getSubscribablePlan,
