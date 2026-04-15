@@ -1,14 +1,16 @@
 import type { Program } from "@coral-xyz/anchor";
 import {
-  TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
-import { type Connection, PublicKey, type TransactionInstruction } from "@solana/web3.js";
-import { PDAFactory, deriveMandateAddress } from "../accounts/pda";
 import {
-  PROGRAM_ID,
-  TRANSFER_HOOK_PROGRAM_ID,
-} from "../constants";
+  type Connection,
+  type PublicKey,
+  SystemProgram,
+  type TransactionInstruction,
+} from "@solana/web3.js";
+import { PDAFactory } from "../accounts/pda";
+import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../constants";
 import type { VelaPullParams } from "../types";
 
 export interface BuildExecutePullResult {
@@ -23,7 +25,9 @@ async function fetchProtocolConfigValues(
   wrappingVault: PublicKey;
   hookProgramId: PublicKey;
 }> {
-  const raw = await (program.account as any).protocolConfig.fetch(protocolConfig);
+  const raw = await (program.account as any).protocolConfig.fetch(
+    protocolConfig,
+  );
   return {
     wrappingVault: raw.wrappingVault,
     hookProgramId: raw.transferHookProgramId ?? TRANSFER_HOOK_PROGRAM_ID,
@@ -55,12 +59,18 @@ export async function buildExecutePullInstruction(
 
   const programId = program.programId ?? PROGRAM_ID;
 
-  // Derive mandate PDA
-  const mandateAddress =
-    explicitMandateAddress ??
-    deriveMandateAddress(subscriberAddress, planAddress, programId)[0];
+  if (!explicitMandateAddress) {
+    throw new Error(
+      "buildExecutePullInstruction: mandateAddress is required (V2 -- cannot be re-derived from plan alone).",
+    );
+  }
+  const mandateAddress = explicitMandateAddress;
 
   const [pullApproval] = PDAFactory.approval(mandateAddress, programId);
+  const [tokenConfigAddress] = PDAFactory.tokenConfig(
+    wrappedUsdcMint,
+    programId,
+  );
   const [protocolConfig] = PDAFactory.config(programId);
   const [keeperConfig] = PDAFactory.keeperConfig(programId);
   const protocolConfigValues = await fetchProtocolConfigValues(
@@ -90,8 +100,7 @@ export async function buildExecutePullInstruction(
   );
 
   const wrappingVault =
-    params.wrappingVault ??
-    protocolConfigValues.wrappingVault;
+    params.wrappingVault ?? protocolConfigValues.wrappingVault;
 
   const baseInstruction = await (program.methods as any)
     .executePull()
@@ -106,12 +115,14 @@ export async function buildExecutePullInstruction(
       merchantWrappedAccount,
       wrappedUsdcMint,
       pullApproval,
+      tokenConfig: tokenConfigAddress,
       protocolConfig,
       wrappingVault,
       hookProgram: effectiveHookProgramId,
       extraAccountMetaList,
       protocolProgram: programId,
       token2022Program: TOKEN_2022_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
     })
     .instruction();
 

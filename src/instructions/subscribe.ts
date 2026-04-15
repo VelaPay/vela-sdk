@@ -8,14 +8,14 @@ import {
 } from "@solana/web3.js";
 import { PDAFactory } from "../accounts/pda";
 import {
+  getSubscribablePlan,
+  resolvePlanContext,
+} from "../accounts/subscribable-plan";
+import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "../constants";
-import {
-  getSubscribablePlan,
-  resolvePlanContext,
-} from "../accounts/subscribable-plan";
 import type { VelaSubscribeParams } from "../types";
 
 export interface BuildSubscribeResult {
@@ -45,11 +45,6 @@ export async function buildSubscribeInstruction(
   const { subscriber, planAddress, merchantAddress } = params;
 
   const programId = program.programId;
-  const [mandateAddress] = PDAFactory.mandateV1(
-    subscriber,
-    planAddress,
-    programId,
-  );
 
   // Resolve credential mint -- explicit override wins, otherwise prefer the V2
   // merchant credential and fall back to the plan-scoped legacy credential when
@@ -58,13 +53,10 @@ export async function buildSubscribeInstruction(
   let resolvedMerchant = merchantAddress;
   const explicitCredentialMint =
     params.credentialMint ?? params.credentialMintAddress;
-  if (explicitCredentialMint) {
+  if (explicitCredentialMint && resolvedMerchant != null) {
     credentialMint = explicitCredentialMint;
   } else {
-    const planAccount = await getSubscribablePlan(
-      program,
-      planAddress,
-    );
+    const planAccount = await getSubscribablePlan(program, planAddress);
     const resolvedPlan = resolvePlanContext(planAccount);
     credentialMint = resolvedPlan.credentialMint;
     resolvedMerchant = resolvedPlan.merchant;
@@ -86,6 +78,23 @@ export async function buildSubscribeInstruction(
     }
   }
 
+  const [merchantStateAddress] = PDAFactory.merchantState(
+    resolvedMerchant,
+    programId,
+  );
+  const rawMerchantState = await (program.account as any).merchantState.fetch(
+    merchantStateAddress,
+  );
+  const mandateIndex = BigInt(
+    (rawMerchantState.mandateCounter ?? 0).toString(),
+  );
+  const [mandateAddress] = PDAFactory.mandate(
+    subscriber,
+    resolvedMerchant,
+    mandateIndex,
+    programId,
+  );
+
   // Derive subscriber's credential ATA (Token-2022, for the non-transferable credential NFT)
   const subscriberCredentialAccount = getAssociatedTokenAddressSync(
     credentialMint,
@@ -101,6 +110,7 @@ export async function buildSubscribeInstruction(
     .accounts({
       subscriber,
       merchant: resolvedMerchant,
+      merchantState: merchantStateAddress,
       plan: planAddress,
       mandate: mandateAddress,
       credentialMint,

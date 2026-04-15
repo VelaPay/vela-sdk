@@ -13,7 +13,14 @@ import { join } from "node:path";
  * ARCIUM_PROGRAM_ID. Those derivations are NOT Vela PDAs and must stay local.
  */
 
-const INSTRUCTIONS_DIR = join(import.meta.dir, "..", "..", "src", "instructions");
+const INSTRUCTIONS_DIR = join(
+  import.meta.dir,
+  "..",
+  "..",
+  "src",
+  "instructions",
+);
+const SRC_DIR = join(import.meta.dir, "..", "..", "src");
 
 // Files exempt from the zero-findProgramAddressSync rule. These files resolve
 // external-program (Arcium) PDAs locally; they do not derive any Vela PDAs via
@@ -28,6 +35,10 @@ function listInstructionFiles(): string[] {
   return readdirSync(INSTRUCTIONS_DIR).filter(
     (f) => f.endsWith(".ts") && f !== "index.ts",
   );
+}
+
+function readSource(path: string): string {
+  return readFileSync(join(SRC_DIR, path), "utf8");
 }
 
 describe("instructions/ regression: no inline findProgramAddressSync for Vela PDAs", () => {
@@ -59,5 +70,36 @@ describe("instructions/ regression: no inline findProgramAddressSync for Vela PD
     // directory was actually read.
     const files = listInstructionFiles();
     expect(files.length).toBeGreaterThanOrEqual(20);
+  });
+
+  test("subscribe.ts uses PDAFactory.mandate (V2) and includes merchantState", () => {
+    const src = readSource("instructions/subscribe.ts");
+    expect(src).toContain("PDAFactory.mandate(");
+    expect(src).not.toContain("PDAFactory.mandateV1(");
+    expect(src).not.toContain("deriveMandateAddress(");
+    expect(src).toMatch(/merchantState:\s*merchantStateAddress/);
+  });
+
+  test("cancel.ts uses mandateAddress input and includes merchant + merchantState", () => {
+    const src = readSource("instructions/cancel.ts");
+    expect(src).not.toContain("PDAFactory.mandateV1(");
+    expect(src).not.toContain("deriveMandateAddress(");
+    expect(src).toMatch(/merchant:\s*merchantAddress/);
+    expect(src).toMatch(/merchantState:\s*merchantStateAddress/);
+  });
+
+  test("execute-pull.ts includes tokenConfig + systemProgram and avoids V1 derivation", () => {
+    const src = readSource("instructions/execute-pull.ts");
+    expect(src).toContain("PDAFactory.tokenConfig(");
+    expect(src).toMatch(/tokenConfig:\s*tokenConfigAddress/);
+    expect(src).toMatch(/systemProgram:\s*SystemProgram\.programId/);
+    expect(src).not.toContain("deriveMandateAddress(");
+  });
+
+  test("preflight.ts uses PDAFactory.mandate and no V1 mandate derivation", () => {
+    const src = readSource("validators/preflight.ts");
+    expect(src).toContain("PDAFactory.mandate(");
+    expect(src).not.toContain("deriveMandateAddress(");
+    expect(src).not.toContain("PDAFactory.mandateV1(");
   });
 });

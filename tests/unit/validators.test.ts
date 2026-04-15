@@ -56,6 +56,20 @@ function createMockPlan(
   };
 }
 
+function createMockMerchantState(
+  overrides: { mandateCounter?: number; merchant?: PublicKey } = {},
+) {
+  return {
+    merchant: overrides.merchant ?? Keypair.generate().publicKey,
+    planCount: new BN(1),
+    bump: 253,
+    credentialMint: Keypair.generate().publicKey,
+    mandateCounter: new BN(overrides.mandateCounter ?? 0),
+    version: 1,
+    _reserved: new Uint8Array(32),
+  };
+}
+
 /**
  * Creates a mock Anchor Program with controllable account fetches.
  */
@@ -63,8 +77,13 @@ function createMockProgram(
   opts: {
     mandate?: ReturnType<typeof createMockMandate> | Error;
     plan?: ReturnType<typeof createMockPlan> | Error;
+    merchantState?: ReturnType<typeof createMockMerchantState> | Error;
   } = {},
 ) {
+  const defaultPlan =
+    opts.plan instanceof Error || opts.plan == null
+      ? createMockPlan()
+      : opts.plan;
   return {
     programId: new PublicKey("BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"),
     account: {
@@ -77,7 +96,21 @@ function createMockProgram(
       velaPlan: {
         fetch: mock(async () => {
           if (opts.plan instanceof Error) throw opts.plan;
-          return opts.plan ?? createMockPlan();
+          return opts.plan ?? defaultPlan;
+        }),
+      },
+      merchantState: {
+        fetch: mock(async () => {
+          if (opts.merchantState instanceof Error) throw opts.merchantState;
+          return (
+            opts.merchantState ??
+            createMockMerchantState({ merchant: defaultPlan.merchant })
+          );
+        }),
+      },
+      usagePlan: {
+        fetch: mock(async () => {
+          throw new Error("Account does not exist");
         }),
       },
     },

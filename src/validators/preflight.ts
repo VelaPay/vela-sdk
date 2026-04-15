@@ -1,18 +1,19 @@
 import type { Program } from "@coral-xyz/anchor";
-import { PublicKey, type Connection } from "@solana/web3.js";
-import { TOKEN_2022_PROGRAM_ID, getAccount } from "@solana/spl-token";
+import { getAccount, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { type Connection, PublicKey } from "@solana/web3.js";
 import {
   checkAgentBudget,
-  deserializeMandate,
   deriveConfigAddress,
-  deriveMandateAddress,
+  deserializeMandate,
+  deserializeMerchantState,
+  PDAFactory,
 } from "../accounts";
 import { getSubscribablePlan } from "../accounts/subscribable-plan";
 import type {
   AgentPullValidationResult,
   CancelValidationResult,
-  ValidateAgentPullParams,
   SubscribeValidationResult,
+  ValidateAgentPullParams,
   ValidationResult,
 } from "../types";
 
@@ -88,9 +89,21 @@ export async function validateSubscribe(
   }
 
   // Check if mandate already exists (PDA collision)
-  const [mandateAddress] = deriveMandateAddress(
+  const [merchantStateAddress] = PDAFactory.merchantState(
+    plan.merchant,
+    program.programId,
+  );
+  const rawMerchantState = await (program.account as any).merchantState.fetch(
+    merchantStateAddress,
+  );
+  const merchantState = deserializeMerchantState(
+    merchantStateAddress,
+    rawMerchantState,
+  );
+  const [mandateAddress] = PDAFactory.mandate(
     subscriber,
-    planAddress,
+    plan.merchant,
+    merchantState.mandateCounter,
     program.programId,
   );
   try {
@@ -211,15 +224,11 @@ export async function validateAgentPull(
       ? 0n
       : serviceLimit.dailyLimit - (budget.serviceRemaining ?? 0n);
   const nextServiceSpent = serviceSpent + amount;
-  if (
-    serviceLimit != null &&
-    nextServiceSpent > serviceLimit.dailyLimit
-  ) {
+  if (serviceLimit != null && nextServiceSpent > serviceLimit.dailyLimit) {
     reasons.push("Service daily limit would be exceeded");
   }
 
-  const currentDailySpent =
-    budget.mandate.dailyLimit - budget.globalRemaining;
+  const currentDailySpent = budget.mandate.dailyLimit - budget.globalRemaining;
   const nextDailySpent = currentDailySpent + amount;
   if (nextDailySpent > budget.mandate.dailyLimit) {
     reasons.push("Daily limit would be exceeded");
@@ -234,7 +243,9 @@ export async function validateAgentPull(
   }
   if (budget.mandate.lastPullAt > 0n && budget.mandate.minPullInterval > 0n) {
     const now =
-      params.now == null ? BigInt(Math.floor(Date.now() / 1000)) : BigInt(params.now);
+      params.now == null
+        ? BigInt(Math.floor(Date.now() / 1000))
+        : BigInt(params.now);
     const elapsed = now - budget.mandate.lastPullAt;
     if (elapsed < budget.mandate.minPullInterval) {
       reasons.push("Pull cooldown is still active");

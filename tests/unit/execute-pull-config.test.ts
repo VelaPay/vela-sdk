@@ -1,10 +1,10 @@
-import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { describe, expect, test } from "bun:test";
+import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import idl from "../../idl/vela_protocol.json";
-import { buildExecutePullInstruction } from "../../src/instructions/execute-pull";
 import { PDAFactory } from "../../src/accounts/pda";
 import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../../src/constants";
+import { buildExecutePullInstruction } from "../../src/instructions/execute-pull";
 
 /**
  * SDK-03 coverage: `buildExecutePullInstruction` must resolve the transfer-hook
@@ -43,11 +43,26 @@ function fixedParams() {
   const merchantAddress = Keypair.generate().publicKey;
   // Use a valid-ish plan PDA so deriveMandateAddress works deterministically.
   const [planAddress] = PDAFactory.plan(merchantAddress, 0n);
+  const [mandateAddress] = PDAFactory.mandate(
+    subscriberAddress,
+    merchantAddress,
+    0n,
+  );
   const wrappedUsdcMint = Keypair.generate().publicKey;
-  return { payer, subscriberAddress, merchantAddress, planAddress, wrappedUsdcMint };
+  return {
+    payer,
+    mandateAddress,
+    subscriberAddress,
+    merchantAddress,
+    planAddress,
+    wrappedUsdcMint,
+  };
 }
 
-function findKey(ix: { keys: { pubkey: PublicKey }[] }, target: PublicKey): boolean {
+function findKey(
+  ix: { keys: { pubkey: PublicKey }[] },
+  target: PublicKey,
+): boolean {
   return ix.keys.some((k) => k.pubkey.equals(target));
 }
 

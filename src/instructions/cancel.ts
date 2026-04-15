@@ -22,7 +22,8 @@ export interface BuildCancelResult {
  */
 export async function buildCancelInstruction(
   program: Program,
-  params: VelaCancelParams & {
+  params: Omit<VelaCancelParams, "mandateAddress"> & {
+    mandateAddress?: PublicKey;
     authority: PublicKey;
     usdcMintAddress: PublicKey;
     credentialMint?: PublicKey;
@@ -31,13 +32,20 @@ export async function buildCancelInstruction(
 ): Promise<BuildCancelResult> {
   const { authority, subscriberAddress, planAddress, usdcMintAddress } = params;
   const programId = program.programId;
+  const mandateAddress = params.mandateAddress;
+  if (!mandateAddress) {
+    throw new Error(
+      "buildCancelInstruction: mandateAddress is required (V2 -- cannot be re-derived from plan alone).",
+    );
+  }
 
-  const [derivedMandateAddress] = PDAFactory.mandateV1(
-    subscriberAddress,
-    planAddress,
+  const planAccount = await getSubscribablePlan(program, planAddress);
+  const resolvedPlan = resolvePlanContext(planAccount);
+  const merchantAddress = resolvedPlan.merchant;
+  const [merchantStateAddress] = PDAFactory.merchantState(
+    merchantAddress,
     programId,
   );
-  const mandateAddress = params.mandateAddress ?? derivedMandateAddress;
 
   // Resolve credential mint -- explicit override wins, otherwise prefer the V2
   // merchant credential and fall back to the plan-scoped legacy credential when
@@ -48,17 +56,12 @@ export async function buildCancelInstruction(
   if (explicitCredentialMint) {
     credentialMint = explicitCredentialMint;
   } else {
-    const planAccount = await getSubscribablePlan(
-      program,
-      planAddress,
-    );
-    const resolvedPlan = resolvePlanContext(planAccount);
     const [merchantCredentialMint] = PDAFactory.credential(
-      resolvedPlan.merchant,
+      merchantAddress,
       programId,
     );
     const [legacyCredentialMint] = PDAFactory.credentialV1(
-      resolvedPlan.merchant,
+      merchantAddress,
       resolvedPlan.plan.planId,
       programId,
     );
@@ -89,6 +92,8 @@ export async function buildCancelInstruction(
     .accounts({
       authority,
       subscriber: subscriberAddress,
+      merchant: merchantAddress,
+      merchantState: merchantStateAddress,
       plan: planAddress,
       mandate: mandateAddress,
       subscriberCredentialAccount,

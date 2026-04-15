@@ -209,7 +209,9 @@ describe("validateAgentPull", () => {
       connection: {
         getParsedAccountInfo: mock(async () => ({
           value: {
-            data: { parsed: { info: { owner: authority.publicKey.toBase58() } } },
+            data: {
+              parsed: { info: { owner: authority.publicKey.toBase58() } },
+            },
           },
         })),
         getTokenAccountBalance: mock(async () => ({
@@ -227,11 +229,18 @@ describe("validateAgentPull", () => {
       agent: authority.publicKey,
       services: [{ service: authority.publicKey, dailyLimit: 2_000_000 }],
     });
-    (client.program.account as any).agentMandate.fetch = mock(async () => mandate);
-    (client.program.account as any).protocolConfig.fetch = mock(async () => ({
-      wrappedUsdcMint,
-      paused: false,
-    }));
+    (client.program as any).account = {
+      ...((client.program as any).account ?? {}),
+      agentMandate: {
+        fetch: mock(async () => mandate),
+      },
+      protocolConfig: {
+        fetch: mock(async () => ({
+          wrappedUsdcMint,
+          paused: false,
+        })),
+      },
+    };
     const params: ValidateAgentPullParams = {
       authority: authority.publicKey,
       agent: authority.publicKey,

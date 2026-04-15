@@ -1,5 +1,9 @@
 import type { Program } from "@coral-xyz/anchor";
-import { SystemProgram, type PublicKey, type TransactionInstruction } from "@solana/web3.js";
+import {
+  SystemProgram,
+  type PublicKey,
+  type TransactionInstruction,
+} from "@solana/web3.js";
 import { PDAFactory } from "../accounts/pda";
 import type { VelaAgentPullParams } from "../types";
 import {
@@ -20,7 +24,14 @@ export async function buildAgentPullInstruction(
   program: Program,
   params: VelaAgentPullParams & { payer: PublicKey; agent: PublicKey },
 ): Promise<BuildAgentPullResult> {
-  const { payer, agent, authority, mandateAddress: expectedMandateAddress, serviceWrappedAccount, amount } = params;
+  const {
+    payer,
+    agent,
+    authority,
+    mandateAddress: expectedMandateAddress,
+    serviceWrappedAccount,
+    amount,
+  } = params;
   const { protocolConfig, wrappedUsdcMint, wrappingVault, hookProgramId } =
     await resolveAgentProtocolAccounts(program, {
       wrappedUsdcMint: params.wrappedUsdcMint,
@@ -45,6 +56,10 @@ export async function buildAgentPullInstruction(
     mandateAddress,
     program.programId,
   );
+  const [tokenConfigAddress] = PDAFactory.tokenConfig(
+    wrappedUsdcMint,
+    program.programId,
+  );
   const [extraAccountMetaList] = PDAFactory.extraAccountMetas(
     wrappedUsdcMint,
     hookProgramId,
@@ -60,6 +75,7 @@ export async function buildAgentPullInstruction(
       mandateWrappedAccount,
       serviceWrappedAccount,
       pullApproval: pullApprovalAddress,
+      tokenConfig: tokenConfigAddress,
       wrappedUsdcMint,
       protocolConfig,
       wrappingVault,

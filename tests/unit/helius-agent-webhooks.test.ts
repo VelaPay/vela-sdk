@@ -1,11 +1,4 @@
-import {
-  afterAll,
-  beforeEach,
-  describe,
-  expect,
-  mock,
-  test,
-} from "bun:test";
+import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test";
 import { EventParser } from "@coral-xyz/anchor";
 import {
   Keypair,
@@ -363,25 +356,32 @@ describe("agent mandate helius webhooks", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    (client.program.account as any).protocolConfig.fetch = mock(async () => ({
-      wrappedUsdcMint,
-      wrappingVault: Keypair.generate().publicKey,
-    }));
-    (client.program.account as any).agentMandate.fetch = mock(async () => ({
-      authority: authority.publicKey,
-      agent,
-      dailyLimit: { toString: () => "5000000" },
-      dailySpent: { toString: () => "0" },
-      dailyLastReset: { toString: () => "1000" },
-      lifetimeCap: { toString: () => "20000000" },
-      totalSpent: { toString: () => "0" },
-      minPullAmount: { toString: () => "100000" },
-      minPullInterval: { toString: () => "0" },
-      lastPullAt: { toString: () => "0" },
-      status: { active: {} },
-      services: [],
-      bump: 255,
-    }));
+    (client.program as any).account = {
+      ...((client.program as any).account ?? {}),
+      protocolConfig: {
+        fetch: mock(async () => ({
+          wrappedUsdcMint,
+          wrappingVault: Keypair.generate().publicKey,
+        })),
+      },
+      agentMandate: {
+        fetch: mock(async () => ({
+          authority: authority.publicKey,
+          agent,
+          dailyLimit: { toString: () => "5000000" },
+          dailySpent: { toString: () => "0" },
+          dailyLastReset: { toString: () => "1000" },
+          lifetimeCap: { toString: () => "20000000" },
+          totalSpent: { toString: () => "0" },
+          minPullAmount: { toString: () => "100000" },
+          minPullInterval: { toString: () => "0" },
+          lastPullAt: { toString: () => "0" },
+          status: { active: {} },
+          services: [],
+          bump: 255,
+        })),
+      },
+    };
     (client.program as any).methods = {
       createAgentMandate: () => ({
         accounts: () => ({
