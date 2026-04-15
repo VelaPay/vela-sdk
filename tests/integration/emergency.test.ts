@@ -29,6 +29,8 @@ import {
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
 import {
+  bootstrapMerchantCredential,
+  bootstrapTokenConfig,
   createToken2022Ata,
   findHookSo,
   installPhase7AdminState,
@@ -127,11 +129,18 @@ describe("emergency instructions", () => {
     subscriberProgram = new Program(idl as any, subscriberProvider);
 
     // Create a minimal SPL USDC mint for wrapping infrastructure
-    const { createMintToInstruction, createInitializeMint2Instruction, MINT_SIZE } = await import("@solana/spl-token");
+    const {
+      createMintToInstruction,
+      createInitializeMint2Instruction,
+      MINT_SIZE,
+    } = await import("@solana/spl-token");
     const { SystemProgram } = await import("@solana/web3.js");
 
     const splUsdcMintKp = Keypair.generate();
-    const lamports = await adminProvider.connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+    const lamports =
+      await adminProvider.connection.getMinimumBalanceForRentExemption(
+        MINT_SIZE,
+      );
 
     await sendInstructions(
       adminProvider,
@@ -166,6 +175,22 @@ describe("emergency instructions", () => {
     });
     wrappedUsdcMint = adminState.wrappedUsdcMint;
     wrappingVault = adminState.wrappingVault;
+
+    const merchantBootstrap = await bootstrapMerchantCredential(
+      adminProvider,
+      adminProgram,
+      admin,
+    );
+    credentialMintAddress = merchantBootstrap.credentialMintAddress;
+
+    await bootstrapTokenConfig(
+      adminProvider,
+      adminProgram,
+      admin,
+      wrappedUsdcMint,
+      "hook",
+      DECIMALS,
+    );
 
     // Create subscriber's SPL USDC account and mint tokens
     const subscriberSplAccount = getAssociatedTokenAddressSync(
@@ -211,19 +236,21 @@ describe("emergency instructions", () => {
     await adminProvider.sendAndConfirm!(createTx, []);
 
     planAddress = createResult.planAddress;
-    credentialMintAddress = createResult.credentialMintAddress;
 
     // Wrap USDC and subscribe
-    const subResult = await buildWrapAndSubscribeInstructions(subscriberProgram, {
-      subscriber: subscriber.publicKey,
-      planAddress,
-      merchantAddress: admin.publicKey,
-      splUsdcMint,
-      wrappedUsdcMint,
-      wrappingVault,
-      amount: PLAN_AMOUNT * (PLAN_MAX_PULLS + 2n),
-      credentialMintAddress,
-    });
+    const subResult = await buildWrapAndSubscribeInstructions(
+      subscriberProgram,
+      {
+        subscriber: subscriber.publicKey,
+        planAddress,
+        merchantAddress: admin.publicKey,
+        splUsdcMint,
+        wrappedUsdcMint,
+        wrappingVault,
+        amount: PLAN_AMOUNT * (PLAN_MAX_PULLS + 2n),
+        credentialMintAddress,
+      },
+    );
     await helperSendInstructions(subscriberProvider, subResult.instructions);
     mandateAddress = subResult.mandateAddress;
   });
@@ -232,9 +259,12 @@ describe("emergency instructions", () => {
 
   describe("pause/unpause protocol", () => {
     test("pause_protocol sets paused=true on ProtocolConfig", async () => {
-      const { instruction } = await buildPauseProtocolInstruction(adminProgram, {
-        authority: admin.publicKey,
-      });
+      const { instruction } = await buildPauseProtocolInstruction(
+        adminProgram,
+        {
+          authority: admin.publicKey,
+        },
+      );
       await sendInstructions(adminProvider, [instruction]);
 
       // Fetch ProtocolConfig and verify paused=true
@@ -248,7 +278,9 @@ describe("emergency instructions", () => {
 
     test("execute_pull fails with ProtocolPaused when paused", async () => {
       // Protocol is already paused from previous test
-      const rawMandate = await (adminProgram.account as any).velaMandate.fetch(mandateAddress);
+      const rawMandate = await (adminProgram.account as any).velaMandate.fetch(
+        mandateAddress,
+      );
       const mandate = deserializeMandate(mandateAddress, rawMandate);
 
       advanceClock(svm, mandate.nextPaymentDue);
@@ -280,15 +312,22 @@ describe("emergency instructions", () => {
         threw = true;
         const msg = String(err);
         // Custom error code 6044 = ProtocolPaused
-        expect(msg.includes("ProtocolPaused") || msg.includes("6044") || msg.includes("0x17AC")).toBe(true);
+        expect(
+          msg.includes("ProtocolPaused") ||
+            msg.includes("6044") ||
+            msg.includes("0x17AC"),
+        ).toBe(true);
       }
       expect(threw).toBe(true);
     });
 
     test("unpause_protocol sets paused=false on ProtocolConfig", async () => {
-      const { instruction } = await buildUnpauseProtocolInstruction(adminProgram, {
-        authority: admin.publicKey,
-      });
+      const { instruction } = await buildUnpauseProtocolInstruction(
+        adminProgram,
+        {
+          authority: admin.publicKey,
+        },
+      );
       await sendInstructions(adminProvider, [instruction]);
 
       const raw = await (adminProgram.account as any).protocolConfig.fetch(
@@ -300,7 +339,9 @@ describe("emergency instructions", () => {
 
     test("execute_pull succeeds after unpause", async () => {
       // Protocol is unpaused -- pull should succeed
-      const rawMandate = await (adminProgram.account as any).velaMandate.fetch(mandateAddress);
+      const rawMandate = await (adminProgram.account as any).velaMandate.fetch(
+        mandateAddress,
+      );
       const mandate = deserializeMandate(mandateAddress, rawMandate);
 
       // Advance clock and insert approval
@@ -327,7 +368,9 @@ describe("emergency instructions", () => {
       );
 
       // Should not throw
-      const sig = await sendInstructions(adminProvider, [pullResult.instruction]);
+      const sig = await sendInstructions(adminProvider, [
+        pullResult.instruction,
+      ]);
       expect(typeof sig).toBe("string");
       expect(sig.length).toBeGreaterThan(0);
     });
@@ -335,9 +378,12 @@ describe("emergency instructions", () => {
     test("non-admin cannot pause protocol", async () => {
       // subscriber is not the admin
       const nonAdminProgram = subscriberProgram;
-      const { instruction } = await buildPauseProtocolInstruction(nonAdminProgram, {
-        authority: subscriberProgram.provider.publicKey!,
-      });
+      const { instruction } = await buildPauseProtocolInstruction(
+        nonAdminProgram,
+        {
+          authority: subscriberProgram.provider.publicKey!,
+        },
+      );
 
       let threw = false;
       try {
@@ -345,7 +391,11 @@ describe("emergency instructions", () => {
       } catch (err) {
         threw = true;
         const msg = String(err);
-        expect(msg.includes("UnauthorizedAdmin") || msg.includes("6016") || msg.includes("0x1790")).toBe(true);
+        expect(
+          msg.includes("UnauthorizedAdmin") ||
+            msg.includes("6016") ||
+            msg.includes("0x1790"),
+        ).toBe(true);
       }
       expect(threw).toBe(true);
     });
@@ -370,23 +420,34 @@ describe("emergency instructions", () => {
       freshSubscriber = Keypair.generate();
       airdropSol(svm, freshSubscriber.publicKey, 5n * BigInt(LAMPORTS_PER_SOL));
 
-      const freshSubscriberProvider = new LiteSVMProvider(svm, new Wallet(freshSubscriber));
-      const freshSubscriberProgram = new Program(idl as any, freshSubscriberProvider);
+      const freshSubscriberProvider = new LiteSVMProvider(
+        svm,
+        new Wallet(freshSubscriber),
+      );
+      const freshSubscriberProgram = new Program(
+        idl as any,
+        freshSubscriberProvider,
+      );
 
       // We need SPL USDC mint -- get it from the vault's token account
       // Derive it from the wrapping vault mint authority pattern
       // Instead, create a second plan with the same wrapped USDC to avoid fetching SPL mint
       // Re-use the existing plan (planAddress). We need fresh subscriber to subscribe.
-      const { createInitializeMint2Instruction, MINT_SIZE } = await import("@solana/spl-token");
+      const { createInitializeMint2Instruction, MINT_SIZE } = await import(
+        "@solana/spl-token"
+      );
 
       // For simplicity, mint SPL USDC directly to fresh subscriber using admin as authority
       // We need to find the SPL USDC mint -- look at vault's token account
       // Actually the simplest approach: get it from the existing subscribed mandate
       // Get the SPL USDC mint by reading the wrapping vault token account's mint field
       // SPL token account layout: first 32 bytes = mint pubkey
-      const vaultInfo = await adminProvider.connection.getAccountInfo(wrappingVault);
+      const vaultInfo =
+        await adminProvider.connection.getAccountInfo(wrappingVault);
       if (!vaultInfo) throw new Error("wrapping vault not found");
-      const splUsdcMint = new (await import("@solana/web3.js")).PublicKey(vaultInfo.data.slice(0, 32));
+      const splUsdcMint = new (await import("@solana/web3.js")).PublicKey(
+        vaultInfo.data.slice(0, 32),
+      );
 
       const freshSubscriberSplAccount = getAssociatedTokenAddressSync(
         splUsdcMint,
@@ -415,17 +476,23 @@ describe("emergency instructions", () => {
       ]);
 
       // Subscribe fresh subscriber to the same plan
-      const freshSubResult = await buildWrapAndSubscribeInstructions(freshSubscriberProgram, {
-        subscriber: freshSubscriber.publicKey,
-        planAddress,
-        merchantAddress: admin.publicKey,
-        splUsdcMint,
-        wrappedUsdcMint,
-        wrappingVault,
-        amount: PLAN_AMOUNT * (PLAN_MAX_PULLS + 2n),
-        credentialMintAddress,
-      });
-      await helperSendInstructions(freshSubscriberProvider, freshSubResult.instructions);
+      const freshSubResult = await buildWrapAndSubscribeInstructions(
+        freshSubscriberProgram,
+        {
+          subscriber: freshSubscriber.publicKey,
+          planAddress,
+          merchantAddress: admin.publicKey,
+          splUsdcMint,
+          wrappedUsdcMint,
+          wrappingVault,
+          amount: PLAN_AMOUNT * (PLAN_MAX_PULLS + 2n),
+          credentialMintAddress,
+        },
+      );
+      await helperSendInstructions(
+        freshSubscriberProvider,
+        freshSubResult.instructions,
+      );
       freshMandateAddress = freshSubResult.mandateAddress;
     });
 
@@ -442,7 +509,9 @@ describe("emergency instructions", () => {
       await sendInstructions(adminProvider, [instruction]);
 
       // Verify mandate is now cancelled
-      const raw = await (adminProgram.account as any).velaMandate.fetch(freshMandateAddress);
+      const raw = await (adminProgram.account as any).velaMandate.fetch(
+        freshMandateAddress,
+      );
       const mandate = deserializeMandate(freshMandateAddress, raw);
       expect(mandate.status).toBe("cancelled");
 
@@ -465,13 +534,16 @@ describe("emergency instructions", () => {
 
     test("non-admin cannot admin-cancel mandate", async () => {
       // Non-admin (subscriber) tries to admin-cancel the main mandate
-      const { instruction } = await buildAdminCancelInstruction(subscriberProgram, {
-        authority: subscriberProgram.provider.publicKey!,
-        mandateAddress,
-        subscriberAddress: subscriberProgram.provider.publicKey!,
-        planAddress,
-        credentialMintAddress,
-      });
+      const { instruction } = await buildAdminCancelInstruction(
+        subscriberProgram,
+        {
+          authority: subscriberProgram.provider.publicKey!,
+          mandateAddress,
+          subscriberAddress: subscriberProgram.provider.publicKey!,
+          planAddress,
+          credentialMintAddress,
+        },
+      );
 
       let threw = false;
       try {
@@ -479,7 +551,11 @@ describe("emergency instructions", () => {
       } catch (err) {
         threw = true;
         const msg = String(err);
-        expect(msg.includes("UnauthorizedAdmin") || msg.includes("6016") || msg.includes("0x1790")).toBe(true);
+        expect(
+          msg.includes("UnauthorizedAdmin") ||
+            msg.includes("6016") ||
+            msg.includes("0x1790"),
+        ).toBe(true);
       }
       expect(threw).toBe(true);
     });
@@ -502,7 +578,11 @@ describe("emergency instructions", () => {
         threw = true;
         const msg = String(err);
         // MandateNotActive = 6001
-        expect(msg.includes("MandateNotActive") || msg.includes("6001") || msg.includes("0x1771")).toBe(true);
+        expect(
+          msg.includes("MandateNotActive") ||
+            msg.includes("6001") ||
+            msg.includes("0x1771"),
+        ).toBe(true);
       }
       expect(threw).toBe(true);
     });

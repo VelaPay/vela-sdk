@@ -12,6 +12,8 @@ export {
 } from "./subscribable-plan";
 export {
   checkAgentBudget,
+  fetchAgentMandate,
+  getAgentMandate,
   getActiveSubscriptions,
   listAgentMandates,
   getMerchantPlans,

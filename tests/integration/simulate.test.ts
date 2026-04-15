@@ -34,6 +34,8 @@ import {
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
 import {
+  bootstrapMerchantCredential,
+  bootstrapTokenConfig,
   createToken2022Ata,
   findHookSo,
   installPhase7AdminState,
@@ -228,6 +230,31 @@ describe("Full Billing Cycle Simulation", () => {
       planAmount * (maxPulls + 1n),
     );
 
+    const phase7State = await installPhase7AdminState({
+      provider: merchantProvider,
+      svm,
+      admin: merchant,
+      splUsdcMint: usdcMint,
+    });
+    const wrappedUsdcMint = phase7State.wrappedUsdcMint;
+    const wrappingVault = phase7State.wrappingVault;
+
+    const merchantBootstrap = await bootstrapMerchantCredential(
+      merchantProvider,
+      merchantProgram,
+      merchant,
+    );
+    const credentialMintAddress = merchantBootstrap.credentialMintAddress;
+
+    await bootstrapTokenConfig(
+      merchantProvider,
+      merchantProgram,
+      merchant,
+      wrappedUsdcMint,
+      "hook",
+      DECIMALS,
+    );
+
     // ── 1. Create Plan ──
     const createResult = await buildCreatePlanInstruction(merchantProgram, {
       merchant: merchant.publicKey,
@@ -243,14 +270,6 @@ describe("Full Billing Cycle Simulation", () => {
     await merchantProvider.sendAndConfirm!(createTx, []);
 
     const planAddress = createResult.planAddress;
-    const credentialMintAddress = createResult.credentialMintAddress;
-
-    const { wrappedUsdcMint, wrappingVault } = await installPhase7AdminState({
-      provider: merchantProvider,
-      svm,
-      admin: merchant,
-      splUsdcMint: usdcMint,
-    });
     const merchantWrappedAccount = await createToken2022Ata(
       merchantProvider,
       merchant.publicKey,
@@ -258,16 +277,19 @@ describe("Full Billing Cycle Simulation", () => {
     );
 
     // ── 2. Wrap + Subscribe ──
-    const subResult = await buildWrapAndSubscribeInstructions(subscriberProgram, {
-      subscriber: subscriber.publicKey,
-      planAddress,
-      merchantAddress: merchant.publicKey,
-      splUsdcMint: usdcMint,
-      wrappedUsdcMint,
-      wrappingVault,
-      amount: planAmount * (maxPulls + 1n),
-      credentialMintAddress,
-    });
+    const subResult = await buildWrapAndSubscribeInstructions(
+      subscriberProgram,
+      {
+        subscriber: subscriber.publicKey,
+        planAddress,
+        merchantAddress: merchant.publicKey,
+        splUsdcMint: usdcMint,
+        wrappedUsdcMint,
+        wrappingVault,
+        amount: planAmount * (maxPulls + 1n),
+        credentialMintAddress,
+      },
+    );
 
     await sendInstructions(subscriberProvider, subResult.instructions);
 

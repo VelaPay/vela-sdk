@@ -1,7 +1,7 @@
 import type { Program } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { deriveConfigAddress } from "../accounts/pda";
+import { PDAFactory, deriveConfigAddress } from "../accounts/pda";
 import {
   getSubscribablePlan,
   resolvePlanContext,
@@ -29,14 +29,20 @@ export async function buildAdminCancelInstruction(
   params: VelaAdminCancelParams & { authority: PublicKey },
 ): Promise<BuildAdminCancelResult> {
   const { authority, subscriberAddress, planAddress, mandateAddress } = params;
+  const planAccount = await getSubscribablePlan(program, planAddress);
+  const resolvedPlan = resolvePlanContext(planAccount);
+  const merchantAddress = resolvedPlan.merchant;
+  const [merchantStateAddress] = PDAFactory.merchantState(
+    merchantAddress,
+    program.programId,
+  );
 
   // Resolve credential mint -- either from param or by fetching the plan
   let credentialMint: PublicKey;
   if (params.credentialMintAddress) {
     credentialMint = params.credentialMintAddress;
   } else {
-    const planAccount = await getSubscribablePlan(program, planAddress);
-    credentialMint = resolvePlanContext(planAccount).credentialMint;
+    credentialMint = resolvedPlan.credentialMint;
   }
 
   // Derive subscriber's credential ATA (Token-2022)
@@ -55,6 +61,8 @@ export async function buildAdminCancelInstruction(
     .accounts({
       admin: authority,
       protocolConfig,
+      merchant: merchantAddress,
+      merchantState: merchantStateAddress,
       subscriber: subscriberAddress,
       plan: planAddress,
       mandate: mandateAddress,

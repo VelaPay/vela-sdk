@@ -1,5 +1,5 @@
 import type { Program } from "@coral-xyz/anchor";
-import type { Connection, PublicKey } from "@solana/web3.js";
+import { PublicKey, type Connection } from "@solana/web3.js";
 import type {
   AgentBudgetSummary,
   AgentMandate,
@@ -24,6 +24,132 @@ import {
 } from "./pda";
 
 const AGENT_DAILY_RESET_WINDOW_SECONDS = 86_400n;
+const AGENT_MANDATE_DISCRIMINATOR = Uint8Array.from([
+  31, 231, 224, 237, 201, 149, 38, 235,
+]);
+const AGENT_MANDATE_RESERVED_BYTES = 64;
+const AGENT_MANDATE_AUTHORITY_OFFSET = 8;
+const AGENT_MANDATE_AGENT_OFFSET = AGENT_MANDATE_AUTHORITY_OFFSET + 32;
+
+function mapAgentMandateStatus(status: number): AgentMandate["status"] {
+  switch (status) {
+    case 0:
+      return "active";
+    case 1:
+      return "paused";
+    case 2:
+      return "revoked";
+    default:
+      throw new Error(`Unknown AgentMandate status discriminator: ${status}`);
+  }
+}
+
+function readAgentMandateAccount(
+  address: PublicKey,
+  raw: Buffer | Uint8Array,
+): AgentMandate {
+  const data = Buffer.from(raw);
+  if (data.length < 170) {
+    throw new Error(`AgentMandate account ${address.toBase58()} is truncated`);
+  }
+  if (!Buffer.from(AGENT_MANDATE_DISCRIMINATOR).equals(data.subarray(0, 8))) {
+    throw new Error(
+      `Account ${address.toBase58()} does not contain an AgentMandate`,
+    );
+  }
+
+  let offset = 8;
+  const authority = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const agent = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const dailyLimit = data.readBigUInt64LE(offset);
+  offset += 8;
+  const dailySpent = data.readBigUInt64LE(offset);
+  offset += 8;
+  const dailyLastReset = data.readBigInt64LE(offset);
+  offset += 8;
+  const lifetimeCap = data.readBigUInt64LE(offset);
+  offset += 8;
+  const totalSpent = data.readBigUInt64LE(offset);
+  offset += 8;
+  const minPullAmount = data.readBigUInt64LE(offset);
+  offset += 8;
+  const minPullInterval = data.readBigInt64LE(offset);
+  offset += 8;
+  const lastPullAt = data.readBigInt64LE(offset);
+  offset += 8;
+  const status = mapAgentMandateStatus(data.readUInt8(offset));
+  offset += 1;
+
+  const servicesLen = data.readUInt32LE(offset);
+  offset += 4;
+  const services = Array.from({ length: servicesLen }, () => {
+    const service = new PublicKey(data.subarray(offset, offset + 32));
+    offset += 32;
+    const dailyLimit = data.readBigUInt64LE(offset);
+    offset += 8;
+    const dailySpent = data.readBigUInt64LE(offset);
+    offset += 8;
+    const lastReset = data.readBigInt64LE(offset);
+    offset += 8;
+    return { service, dailyLimit, dailySpent, lastReset };
+  });
+
+  const bump = data.readUInt8(offset);
+  offset += 1;
+  const version = data.readUInt8(offset);
+  offset += 1;
+  const reserved = Array.from(
+    data.subarray(offset, offset + AGENT_MANDATE_RESERVED_BYTES),
+  );
+
+  return {
+    address,
+    authority,
+    agent,
+    dailyLimit,
+    dailySpent,
+    dailyLastReset,
+    lifetimeCap,
+    totalSpent,
+    minPullAmount,
+    minPullInterval,
+    lastPullAt,
+    status,
+    services,
+    bump,
+    version,
+    _reserved: reserved,
+  };
+}
+
+function getProgramConnection(program: Program): Connection | undefined {
+  return (program.provider as { connection?: Connection } | undefined)
+    ?.connection;
+}
+
+function getLegacyAgentMandateFetcher(program: Program): {
+  fetch: (address: PublicKey) => Promise<unknown>;
+} | null {
+  const client = (program.account as any).agentMandate;
+  if (client && typeof client.fetch === "function") {
+    return client;
+  }
+  return null;
+}
+
+function getLegacyAgentMandateLister(program: Program): {
+  all: (
+    filters?: Array<{ memcmp: { offset: number; bytes: string } }>,
+  ) => Promise<Array<{ publicKey: PublicKey; account: unknown }>>;
+} | null {
+  const client = (program.account as any).agentMandate;
+  if (client && typeof client.all === "function") {
+    return client;
+  }
+  return null;
+}
 
 function resolveNow(now?: bigint | number): bigint {
   return now == null ? BigInt(Math.floor(Date.now() / 1000)) : BigInt(now);
@@ -60,7 +186,9 @@ async function resolveWrappedUsdcMint(
   }
 
   const [configAddress] = deriveConfigAddress(program.programId);
-  const raw = await (program.account as any).protocolConfig.fetch(configAddress);
+  const raw = await (program.account as any).protocolConfig.fetch(
+    configAddress,
+  );
   return raw.wrappedUsdcMint;
 }
 
@@ -68,30 +196,102 @@ async function getMandateBalance(
   connection: Connection,
   mandateWrappedAccount: PublicKey,
 ): Promise<bigint> {
-  const balance = await connection.getTokenAccountBalance(mandateWrappedAccount);
+  const balance = await connection.getTokenAccountBalance(
+    mandateWrappedAccount,
+  );
   return BigInt(balance.value.amount);
+}
+
+export async function fetchAgentMandate(
+  connection: Connection,
+  address: PublicKey,
+  program?: Program,
+): Promise<AgentMandate> {
+  if (typeof connection.getAccountInfo === "function") {
+    const account = await connection.getAccountInfo(address);
+    if (!account) {
+      throw new Error(`AgentMandate account not found: ${address.toBase58()}`);
+    }
+    return readAgentMandateAccount(address, account.data);
+  }
+
+  const legacyFetcher = program ? getLegacyAgentMandateFetcher(program) : null;
+  if (legacyFetcher) {
+    const raw = await legacyFetcher.fetch(address);
+    return deserializeAgentMandate(address, raw);
+  }
+
+  throw new Error("Connection does not expose getAccountInfo");
 }
 
 async function getAgentMandateAccount(
   program: Program,
+  connection: Connection,
   authority: PublicKey,
   agent: PublicKey,
 ): Promise<AgentMandate> {
-  const [address] = deriveAgentMandateAddress(authority, agent, program.programId);
-  const raw = await (program.account as any).agentMandate.fetch(address);
-  return deserializeAgentMandate(address, raw);
+  const [address] = deriveAgentMandateAddress(
+    authority,
+    agent,
+    program.programId,
+  );
+  return fetchAgentMandate(connection, address, program);
 }
 
 export async function listAgentMandates(
   program: Program,
   authority: PublicKey,
 ): Promise<AgentMandate[]> {
-  const accounts = await (program.account as any).agentMandate.all([
-    { memcmp: { offset: 8, bytes: authority.toBase58() } },
-  ]);
+  const connection = getProgramConnection(program);
+  if (connection && typeof connection.getProgramAccounts === "function") {
+    const accounts = await connection.getProgramAccounts(program.programId);
 
-  return accounts.map((acc: any) =>
-    deserializeAgentMandate(acc.publicKey, acc.account),
+    return accounts
+      .filter(({ account }) => {
+        const data = account.data;
+        return (
+          data.length >= AGENT_MANDATE_AGENT_OFFSET + 32 &&
+          Buffer.from(AGENT_MANDATE_DISCRIMINATOR).equals(
+            data.subarray(0, 8),
+          ) &&
+          authority.equals(
+            new PublicKey(
+              data.subarray(
+                AGENT_MANDATE_AUTHORITY_OFFSET,
+                AGENT_MANDATE_AUTHORITY_OFFSET + 32,
+              ),
+            ),
+          )
+        );
+      })
+      .map(({ pubkey, account }) =>
+        readAgentMandateAccount(pubkey, account.data),
+      );
+  }
+
+  const legacyLister = getLegacyAgentMandateLister(program);
+  if (legacyLister) {
+    const accounts = await legacyLister.all([
+      { memcmp: { offset: 8, bytes: authority.toBase58() } },
+    ]);
+    return accounts.map((acc) =>
+      deserializeAgentMandate(acc.publicKey, acc.account),
+    );
+  }
+
+  throw new Error("Program provider does not expose a connection");
+}
+
+export async function getAgentMandate(
+  program: Program,
+  authority: PublicKey,
+  agent: PublicKey,
+): Promise<AgentMandate> {
+  return getAgentMandateAccount(
+    program,
+    getProgramConnection(program) ?? ({} as Connection),
+    authority,
+    agent,
   );
 }
 
@@ -103,6 +303,7 @@ export async function checkAgentBudget(
   const now = resolveNow(params.now);
   const mandate = await getAgentMandateAccount(
     program,
+    connection,
     params.authority,
     params.agent,
   );
@@ -114,7 +315,10 @@ export async function checkAgentBudget(
     mandate.address,
     wrappedUsdcMint,
   );
-  const mandateBalance = await getMandateBalance(connection, mandateWrappedAccount);
+  const mandateBalance = await getMandateBalance(
+    connection,
+    mandateWrappedAccount,
+  );
   const dailyWindow = computeResetWindow(
     mandate.dailySpent,
     mandate.dailyLastReset,
@@ -123,12 +327,17 @@ export async function checkAgentBudget(
   const serviceLimit =
     params.service == null
       ? null
-      : mandate.services.find((entry) => entry.service.equals(params.service!)) ??
-        null;
+      : (mandate.services.find((entry) =>
+          entry.service.equals(params.service!),
+        ) ?? null);
   const serviceWindow =
     serviceLimit == null
       ? null
-      : computeResetWindow(serviceLimit.dailySpent, serviceLimit.lastReset, now);
+      : computeResetWindow(
+          serviceLimit.dailySpent,
+          serviceLimit.lastReset,
+          now,
+        );
 
   return {
     mandate,

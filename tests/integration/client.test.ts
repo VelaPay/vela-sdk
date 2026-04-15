@@ -30,10 +30,7 @@ import {
   buildExecutePullInstruction,
   buildSubscribeInstruction,
   buildWrapAndSubscribeInstructions,
-  deriveCredentialMintAddress,
-  deriveMandateAddress,
   deriveMerchantStateAddress,
-  derivePlanAddress,
   deserializeMandate,
   deserializePlan,
   PROGRAM_ID,
@@ -45,6 +42,8 @@ import {
 } from "../../src/index";
 import type { VelaMandate, VelaPlan } from "../../src/types";
 import {
+  bootstrapMerchantCredential,
+  bootstrapTokenConfig,
   createToken2022Ata,
   findHookSo,
   installPhase7AdminState,
@@ -180,6 +179,8 @@ describe("SDK Client Integration", () => {
   let usdcMint: PublicKey;
   let subscriberTokenAccount: PublicKey;
   let merchantTokenAccount: PublicKey;
+  let wrappedUsdcMint: PublicKey;
+  let wrappingVault: PublicKey;
 
   // Plan + mandate addresses
   let planAddress: PublicKey;
@@ -226,6 +227,31 @@ describe("SDK Client Integration", () => {
       usdcMint,
     );
 
+    const phase7State = await installPhase7AdminState({
+      provider,
+      svm,
+      admin: merchant,
+      splUsdcMint: usdcMint,
+    });
+    wrappedUsdcMint = phase7State.wrappedUsdcMint;
+    wrappingVault = phase7State.wrappingVault;
+
+    const merchantBootstrap = await bootstrapMerchantCredential(
+      provider,
+      program,
+      merchant,
+    );
+    credentialMintAddress = merchantBootstrap.credentialMintAddress;
+
+    await bootstrapTokenConfig(
+      provider,
+      program,
+      merchant,
+      wrappedUsdcMint,
+      "hook",
+      DECIMALS,
+    );
+
     // Mint USDC to subscriber (enough for all pulls + extra)
     await mintUsdc(
       provider,
@@ -247,7 +273,6 @@ describe("SDK Client Integration", () => {
     });
 
     planAddress = result.planAddress;
-    credentialMintAddress = result.credentialMintAddress;
 
     // Send the instruction via LiteSVM
     svm.expireBlockhash();
@@ -265,6 +290,7 @@ describe("SDK Client Integration", () => {
     expect(plan.merchant.equals(merchant.publicKey)).toBe(true);
     expect(plan.status).toBe("active");
     expect(plan.planId).toBe(PLAN_ID);
+    expect(plan.credentialMint.equals(credentialMintAddress)).toBe(true);
     expect(plan.address.equals(planAddress)).toBe(true);
 
     // Verify all numeric fields are bigint (not BN)
@@ -398,28 +424,18 @@ describe("SDK Client Integration", () => {
     const ataInstruction = result.instructions[1];
     const wrapInstruction = result.instructions[2];
 
-    expect(ataInstruction.keys.some((k) => k.pubkey.equals(expectedBillingAta))).toBe(
-      true,
-    );
-    expect(wrapInstruction.keys.some((k) => k.pubkey.equals(expectedBillingAta))).toBe(
-      true,
-    );
+    expect(
+      ataInstruction.keys.some((k) => k.pubkey.equals(expectedBillingAta)),
+    ).toBe(true);
+    expect(
+      wrapInstruction.keys.some((k) => k.pubkey.equals(expectedBillingAta)),
+    ).toBe(true);
     expect(
       wrapInstruction.keys.some((k) => k.pubkey.equals(result.mandateAddress)),
     ).toBe(true);
   });
 
   test("pullPayment succeeds when timing is valid and transfers wrapped USDC", async () => {
-    const {
-      wrappedUsdcMint,
-      wrappingVault,
-    } = await installPhase7AdminState({
-      provider,
-      svm,
-      admin: merchant,
-      splUsdcMint: usdcMint,
-    });
-
     const merchantWrappedAccount = await createToken2022Ata(
       provider,
       merchant.publicKey,
@@ -429,7 +445,9 @@ describe("SDK Client Integration", () => {
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
     const subscriberProgram = new Program(idl as any, subscriberProvider);
 
-    const [merchantStateAddress] = deriveMerchantStateAddress(merchant.publicKey);
+    const [merchantStateAddress] = deriveMerchantStateAddress(
+      merchant.publicKey,
+    );
     const rawMerchantState = await (program.account as any).merchantState.fetch(
       merchantStateAddress,
     );
@@ -454,7 +472,7 @@ describe("SDK Client Integration", () => {
         wrappedUsdcMint,
         wrappingVault,
         amount: PLAN_AMOUNT * 2n,
-        credentialMintAddress: wrappedPlan.credentialMintAddress,
+        credentialMintAddress,
       },
     );
     await sendInstructions(subscriberProvider, wrapAndSubscribe.instructions);
@@ -475,14 +493,19 @@ describe("SDK Client Integration", () => {
     });
     advanceClock(svm, BigInt(wrappedMandate.nextPaymentDue));
 
-    const result = await buildExecutePullInstruction(program, provider.connection, {
-      payer: merchant.publicKey,
-      subscriberAddress: subscriber.publicKey,
-      merchantAddress: merchant.publicKey,
-      planAddress: wrappedPlan.planAddress,
-      wrappedUsdcMint,
-      wrappingVault,
-    });
+    const result = await buildExecutePullInstruction(
+      program,
+      provider.connection,
+      {
+        payer: merchant.publicKey,
+        subscriberAddress: subscriber.publicKey,
+        merchantAddress: merchant.publicKey,
+        planAddress: wrappedPlan.planAddress,
+        wrappedUsdcMint,
+        wrappingVault,
+        mandateAddress: wrappedMandateAddress,
+      },
+    );
     await sendInstructions(provider, [result.instruction]);
 
     const pulledMandateRaw = await (program.account as any).velaMandate.fetch(
@@ -506,22 +529,14 @@ describe("SDK Client Integration", () => {
   });
 
   test("pullPayment throws PullTooEarlyError when called before next_payment_due", async () => {
-    const {
-      wrappedUsdcMint,
-      wrappingVault,
-    } = await installPhase7AdminState({
-      provider,
-      svm,
-      admin: merchant,
-      splUsdcMint: usdcMint,
-    });
-
     await createToken2022Ata(provider, merchant.publicKey, wrappedUsdcMint);
 
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
     const subscriberProgram = new Program(idl as any, subscriberProvider);
 
-    const [merchantStateAddress] = deriveMerchantStateAddress(merchant.publicKey);
+    const [merchantStateAddress] = deriveMerchantStateAddress(
+      merchant.publicKey,
+    );
     const rawMerchantState = await (program.account as any).merchantState.fetch(
       merchantStateAddress,
     );
@@ -546,7 +561,7 @@ describe("SDK Client Integration", () => {
         wrappedUsdcMint,
         wrappingVault,
         amount: PLAN_AMOUNT * 2n,
-        credentialMintAddress: wrappedPlan.credentialMintAddress,
+        credentialMintAddress,
       },
     );
     await sendInstructions(subscriberProvider, wrapAndSubscribe.instructions);
@@ -567,14 +582,19 @@ describe("SDK Client Integration", () => {
     });
     advanceClock(svm, BigInt(wrappedMandate.nextPaymentDue) - 1n);
 
-    const pull = await buildExecutePullInstruction(program, provider.connection, {
-      payer: merchant.publicKey,
-      subscriberAddress: subscriber.publicKey,
-      merchantAddress: merchant.publicKey,
-      planAddress: wrappedPlan.planAddress,
-      wrappedUsdcMint,
-      wrappingVault,
-    });
+    const pull = await buildExecutePullInstruction(
+      program,
+      provider.connection,
+      {
+        payer: merchant.publicKey,
+        subscriberAddress: subscriber.publicKey,
+        merchantAddress: merchant.publicKey,
+        planAddress: wrappedPlan.planAddress,
+        wrappedUsdcMint,
+        wrappingVault,
+        mandateAddress: wrappedMandateAddress,
+      },
+    );
 
     try {
       await sendInstructions(provider, [pull.instruction]);
@@ -613,7 +633,9 @@ describe("SDK Client Integration", () => {
 
   test("multiple subscriptions can be fetched individually by address", async () => {
     // Create a second plan + subscription for the same subscriber so we have data
-    const [merchantStateAddress] = deriveMerchantStateAddress(merchant.publicKey);
+    const [merchantStateAddress] = deriveMerchantStateAddress(
+      merchant.publicKey,
+    );
     const rawMerchantState = await (program.account as any).merchantState.fetch(
       merchantStateAddress,
     );
@@ -632,7 +654,6 @@ describe("SDK Client Integration", () => {
     await provider.sendAndConfirm!(createTx, []);
 
     secondaryPlanAddress = result2.planAddress;
-    const credMint2 = result2.credentialMintAddress;
 
     // Subscribe as subscriber
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
@@ -643,7 +664,7 @@ describe("SDK Client Integration", () => {
       planAddress: secondaryPlanAddress,
       merchantAddress: merchant.publicKey,
       usdcMintAddress: usdcMint,
-      credentialMintAddress: credMint2,
+      credentialMintAddress,
     });
 
     svm.expireBlockhash();

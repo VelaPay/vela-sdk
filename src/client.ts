@@ -8,12 +8,12 @@ import type {
 import idl from "../idl/vela_protocol.json";
 import {
   checkAgentBudget,
-  deserializeAgentMandate,
   deserializeMandate,
   PDAFactory,
   deriveAgentMandateAddress,
   deriveAgentMandateWrappedAta,
   deserializePlan,
+  fetchAgentMandate,
   getActiveSubscriptions,
   listAgentMandates,
   getMerchantState,
@@ -137,9 +137,7 @@ export interface VelaClient {
   topUpAgentMandate: (
     params: VelaTopUpAgentMandateParams,
   ) => Promise<AgentMandateMethodResult>;
-  agentPull: (
-    params: VelaAgentPullParams,
-  ) => Promise<AgentMandateMethodResult>;
+  agentPull: (params: VelaAgentPullParams) => Promise<AgentMandateMethodResult>;
   adjustAgentMandate: (
     params: VelaAdjustAgentMandateParams,
   ) => Promise<AgentMandateMethodResult>;
@@ -164,7 +162,9 @@ export interface VelaClient {
   ) => Promise<AgentMandateVerificationResult>;
   validateAgentPull: (
     params: ValidateAgentPullParams,
-  ) => Promise<ReturnType<typeof validateAgentPull> extends Promise<infer T> ? T : never>;
+  ) => Promise<
+    ReturnType<typeof validateAgentPull> extends Promise<infer T> ? T : never
+  >;
   createSubscription: (
     params: VelaSubscribeParams,
   ) => Promise<VelaMethodResult<VelaMandate>>;
@@ -214,7 +214,9 @@ export interface VelaClient {
     params: VelaSubmitUsageReportParams,
   ) => Promise<{ usageReportAddress: PublicKey; txSignature: string }>;
   getUsagePlan: (usagePlanAddress: PublicKey) => Promise<UsagePlanAccount>;
-  getUsageReport: (usageReportAddress: PublicKey) => Promise<UsageReportAccount>;
+  getUsageReport: (
+    usageReportAddress: PublicKey,
+  ) => Promise<UsageReportAccount>;
   checkoutSessions: CheckoutSessionsNamespace;
   portalSessions: PortalSessionsNamespace;
 
@@ -269,8 +271,12 @@ export interface VelaClient {
     updateKeeperConfig: (
       params: UpdateKeeperConfigParams,
     ) => ReturnType<typeof buildUpdateKeeperConfigInstruction>;
-    pauseProtocol: (params?: { authority?: PublicKey }) => ReturnType<typeof buildPauseProtocolInstruction>;
-    unpauseProtocol: (params?: { authority?: PublicKey }) => ReturnType<typeof buildUnpauseProtocolInstruction>;
+    pauseProtocol: (params?: {
+      authority?: PublicKey;
+    }) => ReturnType<typeof buildPauseProtocolInstruction>;
+    unpauseProtocol: (params?: {
+      authority?: PublicKey;
+    }) => ReturnType<typeof buildUnpauseProtocolInstruction>;
     adminCancel: (
       params: VelaAdminCancelParams,
     ) => ReturnType<typeof buildAdminCancelInstruction>;
@@ -280,7 +286,9 @@ export interface VelaClient {
   validate: {
     agentPull: (
       params: ValidateAgentPullParams,
-    ) => Promise<ReturnType<typeof validateAgentPull> extends Promise<infer T> ? T : never>;
+    ) => Promise<
+      ReturnType<typeof validateAgentPull> extends Promise<infer T> ? T : never
+    >;
     pullPayment: (mandateAddress: PublicKey) => Promise<ValidationResult>;
     subscribe: (planAddress: PublicKey) => Promise<SubscribeValidationResult>;
     cancel: (mandateAddress: PublicKey) => Promise<CancelValidationResult>;
@@ -392,7 +400,9 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
   async function loadProtocolConfig(): Promise<ProtocolConfig> {
     const [configAddress] = PDAFactory.config(program.programId);
-    const raw = await (program.account as any).protocolConfig.fetch(configAddress);
+    const raw = await (program.account as any).protocolConfig.fetch(
+      configAddress,
+    );
     const configAccount = deserializeProtocolConfig(raw);
     protocolConfigCache = configAccount;
     return configAccount;
@@ -497,16 +507,16 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     const configAccount = await getProtocolConfigCached();
 
     return {
-      wrappedUsdcMint: overrides.wrappedUsdcMint ?? configAccount.wrappedUsdcMint,
+      wrappedUsdcMint:
+        overrides.wrappedUsdcMint ?? configAccount.wrappedUsdcMint,
       wrappingVault: overrides.wrappingVault ?? configAccount.wrappingVault,
     };
   }
 
-  async function fetchAgentMandate(
+  async function fetchConnectedAgentMandate(
     mandateAddress: PublicKey,
   ): Promise<AgentMandate> {
-    const raw = await (program.account as any).agentMandate.fetch(mandateAddress);
-    return deserializeAgentMandate(mandateAddress, raw);
+    return fetchAgentMandate(connection, mandateAddress, program);
   }
 
   async function getAgentMandateWrappedBalance(
@@ -536,14 +546,18 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       });
 
     const signature = await sendV0Transaction([instruction]);
-    const mandate = await fetchAgentMandate(mandateAddress);
+    const mandate = await fetchConnectedAgentMandate(mandateAddress);
     await ensureAgentWebhookRegistered();
 
     return { signature, address: mandateAddress, data: mandate };
   }
 
   async function ensureAgentWebhookRegistered(): Promise<void> {
-    if (!config.heliusApiKey || !config.agentWebhook || agentWebhookId != null) {
+    if (
+      !config.heliusApiKey ||
+      !config.agentWebhook ||
+      agentWebhookId != null
+    ) {
       return;
     }
 
@@ -600,7 +614,9 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     return Object.keys(merged).length > 0 ? merged : undefined;
   }
 
-  async function resolveKeeperOptionsForLifecycleSync(): Promise<KeeperScheduleOptions | undefined> {
+  async function resolveKeeperOptionsForLifecycleSync(): Promise<
+    KeeperScheduleOptions | undefined
+  > {
     const merged = mergeKeeperOptions();
     if (merged?.keeperEndpoint) {
       return merged;
@@ -617,7 +633,9 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     }
   }
 
-  async function registerScheduleForMandate(mandate: VelaMandate): Promise<void> {
+  async function registerScheduleForMandate(
+    mandate: VelaMandate,
+  ): Promise<void> {
     if (!mandate.plan) {
       throw new Error(
         `Mandate ${mandate.address.toBase58()} is missing a plan reference required for keeper schedule registration.`,
@@ -653,13 +671,19 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     }
   }
 
-  async function cancelScheduleForMandate(mandateAddress: PublicKey): Promise<void> {
+  async function cancelScheduleForMandate(
+    mandateAddress: PublicKey,
+  ): Promise<void> {
     const options = await resolveKeeperOptionsForLifecycleSync();
     if (!options?.keeperEndpoint) {
       return;
     }
 
-    const result = await cancelBillingSchedule(program, mandateAddress, options);
+    const result = await cancelBillingSchedule(
+      program,
+      mandateAddress,
+      options,
+    );
     if (!result.success) {
       throw new Error(
         `Subscription cancelled on-chain, but keeper schedule cancellation failed for mandate ${mandateAddress.toBase58()}: ${result.error ?? "unknown error"}`,
@@ -667,12 +691,15 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     }
   }
 
-  function requireDashboardConfig(): { apiKey: string; dashboardApiUrl: string } {
+  function requireDashboardConfig(namespace = "dashboard API namespaces"): {
+    apiKey: string;
+    dashboardApiUrl: string;
+  } {
     if (!dashboardApiUrl) {
-      throw new Error("dashboardApiUrl required for dashboard API namespaces");
+      throw new Error(`dashboardApiUrl required for ${namespace}`);
     }
     if (!apiKey) {
-      throw new Error("apiKey required for dashboard API namespaces");
+      throw new Error(`apiKey required for ${namespace}`);
     }
     return { apiKey, dashboardApiUrl };
   }
@@ -682,7 +709,10 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     fallback: string,
   ): Promise<Error> {
     try {
-      const payload = (await response.json()) as { error?: string; message?: string };
+      const payload = (await response.json()) as {
+        error?: string;
+        message?: string;
+      };
       if (typeof payload.error === "string" && payload.error.length > 0) {
         return new Error(payload.error);
       }
@@ -700,8 +730,10 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
   async function fetchDashboardApi<T>(
     path: string,
     init?: RequestInit,
+    namespace?: string,
   ): Promise<T> {
-    const { apiKey: token, dashboardApiUrl: baseUrl } = requireDashboardConfig();
+    const { apiKey: token, dashboardApiUrl: baseUrl } =
+      requireDashboardConfig(namespace);
     const response = await fetch(`${baseUrl}${path}`, {
       ...init,
       headers: {
@@ -710,30 +742,42 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       },
     });
     if (!response.ok) {
-      throw await extractDashboardError(response, `Dashboard API request failed: HTTP ${response.status}`);
+      throw await extractDashboardError(
+        response,
+        `Dashboard API request failed: HTTP ${response.status}`,
+      );
     }
     return (await response.json()) as T;
   }
 
   const checkoutSessions: CheckoutSessionsNamespace = {
-    async create(params: CreateCheckoutSessionParams): Promise<CheckoutSession> {
-      return fetchDashboardApi<CheckoutSession>("/api/checkout-sessions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    async create(
+      params: CreateCheckoutSessionParams,
+    ): Promise<CheckoutSession> {
+      return fetchDashboardApi<CheckoutSession>(
+        "/api/checkout-sessions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(params),
         },
-        body: JSON.stringify(params),
-      });
+        "checkout sessions",
+      );
     },
 
     async get(sessionId: string): Promise<CheckoutSession> {
       return fetchDashboardApi<CheckoutSession>(
         `/api/checkout-sessions/${sessionId}`,
+        undefined,
+        "checkout sessions",
       );
     },
 
     async expire(sessionId: string): Promise<void> {
-      const { apiKey: token, dashboardApiUrl: baseUrl } = requireDashboardConfig();
+      const { apiKey: token, dashboardApiUrl: baseUrl } =
+        requireDashboardConfig("checkout sessions");
       const response = await fetch(
         `${baseUrl}/api/checkout-sessions/${sessionId}/expire`,
         {
@@ -754,13 +798,17 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
   const portalSessions: PortalSessionsNamespace = {
     async create(params: CreatePortalSessionParams): Promise<PortalSession> {
-      return fetchDashboardApi<PortalSession>("/api/portal-sessions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      return fetchDashboardApi<PortalSession>(
+        "/api/portal-sessions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(params),
         },
-        body: JSON.stringify(params),
-      });
+        "portal sessions",
+      );
     },
   };
 
@@ -798,16 +846,14 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       ),
 
     createAgentMandate: (params: VelaCreateAgentMandateParams) =>
-      wrapWithErrorTranslation(
-        () => createAgentMandateFlow(params),
-        { method: "createAgentMandate" },
-      ),
+      wrapWithErrorTranslation(() => createAgentMandateFlow(params), {
+        method: "createAgentMandate",
+      }),
 
     wrapAndCreateAgentMandate: (params: VelaCreateAgentMandateParams) =>
-      wrapWithErrorTranslation(
-        () => createAgentMandateFlow(params),
-        { method: "wrapAndCreateAgentMandate" },
-      ),
+      wrapWithErrorTranslation(() => createAgentMandateFlow(params), {
+        method: "wrapAndCreateAgentMandate",
+      }),
 
     topUpAgentMandate: (params: VelaTopUpAgentMandateParams) =>
       wrapWithErrorTranslation(
@@ -834,7 +880,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           });
 
           const signature = await sendV0Transaction([instruction]);
-          const mandate = await fetchAgentMandate(mandateAddress);
+          const mandate = await fetchConnectedAgentMandate(mandateAddress);
 
           return { signature, address: mandateAddress, data: mandate };
         },
@@ -844,17 +890,15 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     agentPull: (params: VelaAgentPullParams) =>
       wrapWithErrorTranslation(
         async () => {
-          const { instruction, mandateAddress } = await buildAgentPullInstruction(
-            program,
-            {
+          const { instruction, mandateAddress } =
+            await buildAgentPullInstruction(program, {
               ...params,
               payer: wallet.publicKey,
               agent: wallet.publicKey,
-            },
-          );
+            });
 
           const signature = await sendV0Transaction([instruction]);
-          const mandate = await fetchAgentMandate(mandateAddress);
+          const mandate = await fetchConnectedAgentMandate(mandateAddress);
 
           return { signature, address: mandateAddress, data: mandate };
         },
@@ -871,7 +915,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
             });
 
           const signature = await sendV0Transaction([instruction]);
-          const mandate = await fetchAgentMandate(mandateAddress);
+          const mandate = await fetchConnectedAgentMandate(mandateAddress);
 
           return { signature, address: mandateAddress, data: mandate };
         },
@@ -888,7 +932,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
             });
 
           const signature = await sendV0Transaction([instruction]);
-          const mandate = await fetchAgentMandate(mandateAddress);
+          const mandate = await fetchConnectedAgentMandate(mandateAddress);
 
           return { signature, address: mandateAddress, data: mandate };
         },
@@ -905,7 +949,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
             });
 
           const signature = await sendV0Transaction([instruction]);
-          const mandate = await fetchAgentMandate(mandateAddress);
+          const mandate = await fetchConnectedAgentMandate(mandateAddress);
 
           return { signature, address: mandateAddress, data: mandate };
         },
@@ -915,7 +959,8 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     revokeAgentMandate: (params: VelaRevokeAgentMandateParams) =>
       wrapWithErrorTranslation(
         async () => {
-          const { wrappedUsdcMint } = await resolveAgentProtocolAccounts(params);
+          const { wrappedUsdcMint } =
+            await resolveAgentProtocolAccounts(params);
           const [mandateAddress] = deriveAgentMandateAddress(
             wallet.publicKey,
             params.agent,
@@ -935,7 +980,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           );
 
           const signature = await sendV0Transaction([instruction]);
-          const mandate = await fetchAgentMandate(mandateAddress);
+          const mandate = await fetchConnectedAgentMandate(mandateAddress);
 
           return {
             signature,
@@ -950,7 +995,8 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     drainAgentMandate: (params: VelaDrainAgentMandateParams) =>
       wrapWithErrorTranslation(
         async () => {
-          const { wrappedUsdcMint } = await resolveAgentProtocolAccounts(params);
+          const { wrappedUsdcMint } =
+            await resolveAgentProtocolAccounts(params);
           const [mandateAddress] = deriveAgentMandateAddress(
             wallet.publicKey,
             params.agent,
@@ -970,7 +1016,7 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           );
 
           const signature = await sendV0Transaction([instruction]);
-          const mandate = await fetchAgentMandate(mandateAddress);
+          const mandate = await fetchConnectedAgentMandate(mandateAddress);
 
           return {
             signature,
@@ -986,13 +1032,19 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       ensureRuntimeReady().then(() => listAgentMandates(program, authority)),
 
     checkAgentBudget: (params: CheckAgentBudgetParams) =>
-      ensureRuntimeReady().then(() => checkAgentBudget(program, connection, params)),
+      ensureRuntimeReady().then(() =>
+        checkAgentBudget(program, connection, params),
+      ),
 
     verifyAgentMandate: (params) =>
-      ensureRuntimeReady().then(() => verifyAgentMandate(program, connection, params)),
+      ensureRuntimeReady().then(() =>
+        verifyAgentMandate(program, connection, params),
+      ),
 
     validateAgentPull: (params: ValidateAgentPullParams) =>
-      ensureRuntimeReady().then(() => validateAgentPull(program, connection, params)),
+      ensureRuntimeReady().then(() =>
+        validateAgentPull(program, connection, params),
+      ),
 
     createSubscription: (params: VelaSubscribeParams) =>
       wrapWithErrorTranslation(
@@ -1118,16 +1170,14 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       ensureRuntimeReady().then(() => getPlanDetails(program, planAddress)),
 
     getProtocolConfig: () =>
-      wrapWithErrorTranslation(
-        async () => getProtocolConfigCached(),
-        { method: "getProtocolConfig" },
-      ),
+      wrapWithErrorTranslation(async () => getProtocolConfigCached(), {
+        method: "getProtocolConfig",
+      }),
 
     refreshConfig: () =>
-      wrapWithErrorTranslation(
-        async () => refreshProtocolConfigCache(),
-        { method: "refreshConfig" },
-      ),
+      wrapWithErrorTranslation(async () => refreshProtocolConfigCache(), {
+        method: "refreshConfig",
+      }),
 
     registerBillingSchedule: (params, options) =>
       ensureRuntimeReady().then(() =>
@@ -1136,7 +1186,11 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
     cancelBillingSchedule: (mandateAddress, options) =>
       ensureRuntimeReady().then(() =>
-        cancelBillingSchedule(program, mandateAddress, mergeKeeperOptions(options)),
+        cancelBillingSchedule(
+          program,
+          mandateAddress,
+          mergeKeeperOptions(options),
+        ),
       ),
 
     initKeeperConfig: (params: InitKeeperConfigParams) =>
@@ -1178,10 +1232,10 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     pauseProtocol: () =>
       wrapWithErrorTranslation(
         async () => {
-          const { instruction, configAddress } = await buildPauseProtocolInstruction(
-            program,
-            { authority: wallet.publicKey },
-          );
+          const { instruction, configAddress } =
+            await buildPauseProtocolInstruction(program, {
+              authority: wallet.publicKey,
+            });
 
           const signature = await sendV0Transaction([instruction]);
 
@@ -1193,10 +1247,10 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     unpauseProtocol: () =>
       wrapWithErrorTranslation(
         async () => {
-          const { instruction, configAddress } = await buildUnpauseProtocolInstruction(
-            program,
-            { authority: wallet.publicKey },
-          );
+          const { instruction, configAddress } =
+            await buildUnpauseProtocolInstruction(program, {
+              authority: wallet.publicKey,
+            });
 
           const signature = await sendV0Transaction([instruction]);
 
@@ -1208,10 +1262,11 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     adminCancel: (params: VelaAdminCancelParams) =>
       wrapWithErrorTranslation(
         async () => {
-          const { instruction, mandateAddress } = await buildAdminCancelInstruction(
-            program,
-            { ...params, authority: wallet.publicKey },
-          );
+          const { instruction, mandateAddress } =
+            await buildAdminCancelInstruction(program, {
+              ...params,
+              authority: wallet.publicKey,
+            });
 
           const signature = await sendV0Transaction([instruction]);
 
@@ -1246,13 +1301,21 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         },
       ),
 
-    getUsagePlan: async (usagePlanAddress: PublicKey): Promise<UsagePlanAccount> => {
-      const raw = await (program.account as any).usagePlan.fetch(usagePlanAddress);
+    getUsagePlan: async (
+      usagePlanAddress: PublicKey,
+    ): Promise<UsagePlanAccount> => {
+      const raw = await (program.account as any).usagePlan.fetch(
+        usagePlanAddress,
+      );
       return raw as UsagePlanAccount;
     },
 
-    getUsageReport: async (usageReportAddress: PublicKey): Promise<UsageReportAccount> => {
-      const raw = await (program.account as any).usageReport.fetch(usageReportAddress);
+    getUsageReport: async (
+      usageReportAddress: PublicKey,
+    ): Promise<UsageReportAccount> => {
+      const raw = await (program.account as any).usageReport.fetch(
+        usageReportAddress,
+      );
       return raw as UsageReportAccount;
     },
 
@@ -1342,7 +1405,9 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       wrap: (params) =>
         ensureRuntimeReady().then(() => buildWrapInstruction(program, params)),
       unwrap: (params) =>
-        ensureRuntimeReady().then(() => buildUnwrapInstruction(program, params)),
+        ensureRuntimeReady().then(() =>
+          buildUnwrapInstruction(program, params),
+        ),
       wrapAndSubscribe: (params) =>
         ensureRuntimeReady().then(() =>
           buildWrapAndSubscribeInstructions(program, {
@@ -1366,11 +1431,15 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         ),
       pauseProtocol: (_params?) =>
         ensureRuntimeReady().then(() =>
-          buildPauseProtocolInstruction(program, { authority: wallet.publicKey }),
+          buildPauseProtocolInstruction(program, {
+            authority: wallet.publicKey,
+          }),
         ),
       unpauseProtocol: (_params?) =>
         ensureRuntimeReady().then(() =>
-          buildUnpauseProtocolInstruction(program, { authority: wallet.publicKey }),
+          buildUnpauseProtocolInstruction(program, {
+            authority: wallet.publicKey,
+          }),
         ),
       adminCancel: (params) =>
         ensureRuntimeReady().then(() =>
@@ -1384,7 +1453,9 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
     // ── Validation Layer ───────────────────────────────────────────────
     validate: {
       agentPull: (params) =>
-        ensureRuntimeReady().then(() => validateAgentPull(program, connection, params)),
+        ensureRuntimeReady().then(() =>
+          validateAgentPull(program, connection, params),
+        ),
       pullPayment: (mandateAddress) =>
         ensureRuntimeReady().then(() =>
           validatePullPayment(program, connection, mandateAddress),

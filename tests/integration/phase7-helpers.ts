@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import type { Program } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
@@ -12,10 +13,15 @@ import {
   PublicKey,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
+  Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
 import type { LiteSVMProvider } from "anchor-litesvm";
 import type { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import {
+  buildInitMerchantCredentialInstruction,
+  buildInitTokenConfigInstruction,
+} from "../../src";
 import {
   APPROVAL_SEED,
   CONFIG_SEED,
@@ -28,9 +34,11 @@ import {
 } from "../../src/constants";
 
 const EMPTY_PUBKEY = new PublicKey(new Uint8Array(32));
-// ProtocolConfig layout: discriminator(8) + admin(32) + cluster_pubkey(32) + cluster_type(1) +
-//   cluster_offset(8) + wrapped_usdc_mint(32) + wrapping_vault(32) + paused(1) + paused_at(8) + bump(1) = 155
-const PROTOCOL_CONFIG_SIZE = 155;
+// ProtocolConfig layout:
+// discriminator(8) + admin(32) + cluster_pubkey(32) + cluster_type(1) +
+// cluster_offset(8) + wrapped_usdc_mint(32) + wrapping_vault(32) + paused(1) +
+// paused_at(8) + transfer_hook_program_id(32) + bump(1) + version(1) + reserved(32) = 220
+const PROTOCOL_CONFIG_SIZE = 220;
 // KeeperConfig layout: discriminator(8) + admin(32) + mode(1) + keeper_endpoint([u8;128]) +
 //   endpoint_len(1) + keeper_authority(32) + bump(1) = 203
 const KEEPER_CONFIG_SIZE = 203;
@@ -99,8 +107,8 @@ function serializeProtocolConfig(admin: PublicKey, bump: number): Uint8Array {
   EMPTY_PUBKEY.toBuffer().copy(data, 40);
   // offset 72: cluster_type (1 byte) -- 0 = Mainnet
   data.writeUInt8(0, 72);
-  // offset 73: cluster_offset (8 bytes) -- 0
-  data.writeBigUInt64LE(0n, 73);
+  // offset 73: cluster_offset (8 bytes) -- devnet fixture offset
+  data.writeBigUInt64LE(456n, 73);
   // offset 81: wrapped_usdc_mint (32 bytes) -- zero pubkey
   EMPTY_PUBKEY.toBuffer().copy(data, 81);
   // offset 113: wrapping_vault (32 bytes) -- zero pubkey
@@ -109,12 +117,21 @@ function serializeProtocolConfig(admin: PublicKey, bump: number): Uint8Array {
   data.writeUInt8(0, 145);
   // offset 146: paused_at (8 bytes) -- 0
   data.writeBigInt64LE(0n, 146);
-  // offset 154: bump (1 byte)
-  data.writeUInt8(bump, 154);
+  // offset 154: transfer_hook_program_id (32 bytes)
+  TRANSFER_HOOK_PROGRAM_ID.toBuffer().copy(data, 154);
+  // offset 186: bump (1 byte)
+  data.writeUInt8(bump, 186);
+  // offset 187: version (1 byte)
+  data.writeUInt8(1, 187);
+  // offset 188..219: reserved bytes already zeroed by Buffer.alloc
   return data;
 }
 
-function serializeKeeperConfig(admin: PublicKey, keeperAuthority: PublicKey, bump: number): Uint8Array {
+function serializeKeeperConfig(
+  admin: PublicKey,
+  keeperAuthority: PublicKey,
+  bump: number,
+): Uint8Array {
   const data = Buffer.alloc(KEEPER_CONFIG_SIZE);
   // offset 0: discriminator (8 bytes)
   discriminator("account", "KeeperConfig").copy(data, 0);
@@ -171,7 +188,11 @@ function buildInitWrappedMintInstruction(args: {
       { pubkey: args.wrappingVault, isSigner: false, isWritable: true },
       { pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      {
+        pubkey: ASSOCIATED_TOKEN_PROGRAM_ID,
+        isSigner: false,
+        isWritable: false,
+      },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
       { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
     ],
@@ -234,7 +255,9 @@ export async function installPhase7AdminState(args: {
   );
 
   svm.setAccount(config, {
-    lamports: Number(svm.minimumBalanceForRentExemption(BigInt(PROTOCOL_CONFIG_SIZE))),
+    lamports: Number(
+      svm.minimumBalanceForRentExemption(BigInt(PROTOCOL_CONFIG_SIZE)),
+    ),
     data: serializeProtocolConfig(admin.publicKey, configBump),
     owner: PROGRAM_ID,
     executable: false,
@@ -244,8 +267,14 @@ export async function installPhase7AdminState(args: {
   // Inject a minimal KeeperConfig so execute_pull can deserialize it.
   // In tests, the admin wallet also acts as the keeper authority (payer of execute_pull).
   svm.setAccount(keeperConfig, {
-    lamports: Number(svm.minimumBalanceForRentExemption(BigInt(KEEPER_CONFIG_SIZE))),
-    data: serializeKeeperConfig(admin.publicKey, admin.publicKey, keeperConfigBump),
+    lamports: Number(
+      svm.minimumBalanceForRentExemption(BigInt(KEEPER_CONFIG_SIZE)),
+    ),
+    data: serializeKeeperConfig(
+      admin.publicKey,
+      admin.publicKey,
+      keeperConfigBump,
+    ),
     owner: PROGRAM_ID,
     executable: false,
     rentEpoch: 0,
@@ -300,7 +329,9 @@ export function insertPullApproval(args: {
   const createdAt = args.createdAt ?? validUntil;
   const [approval, bump] = derivePullApprovalAddress(mandate);
   svm.setAccount(approval, {
-    lamports: Number(svm.minimumBalanceForRentExemption(BigInt(PULL_APPROVAL_SIZE))),
+    lamports: Number(
+      svm.minimumBalanceForRentExemption(BigInt(PULL_APPROVAL_SIZE)),
+    ),
     data: serializePullApproval({
       mandate,
       validUntil,
@@ -340,6 +371,43 @@ export async function createToken2022Ata(
     ),
   ]);
   return ata;
+}
+
+export async function bootstrapMerchantCredential(
+  provider: LiteSVMProvider,
+  program: Program,
+  merchant: Keypair,
+): Promise<{
+  credentialMintAddress: PublicKey;
+  merchantStateAddress: PublicKey;
+}> {
+  const { instruction, credentialMintAddress, merchantStateAddress } =
+    await buildInitMerchantCredentialInstruction(program, {
+      merchant: merchant.publicKey,
+    });
+  const tx = new Transaction().add(instruction);
+  await provider.sendAndConfirm!(tx, [merchant]);
+  return { credentialMintAddress, merchantStateAddress };
+}
+
+export async function bootstrapTokenConfig(
+  provider: LiteSVMProvider,
+  program: Program,
+  admin: Keypair,
+  mint: PublicKey,
+  billingRail: "hook" | "delegate",
+  decimals: number,
+): Promise<{ tokenConfigAddress: PublicKey }> {
+  const { instruction, tokenConfigAddress } =
+    await buildInitTokenConfigInstruction(program, {
+      admin: admin.publicKey,
+      mint,
+      billingRail,
+      decimals,
+    });
+  const tx = new Transaction().add(instruction);
+  await provider.sendAndConfirm!(tx, [admin]);
+  return { tokenConfigAddress };
 }
 
 export { USDC_DECIMALS };

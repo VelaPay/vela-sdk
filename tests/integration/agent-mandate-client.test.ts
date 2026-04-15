@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { Wallet } from "@coral-xyz/anchor";
+import { Program, Wallet } from "@coral-xyz/anchor";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createInitializeMint2Instruction,
@@ -22,6 +22,7 @@ import {
 } from "@solana/web3.js";
 import { LiteSVMProvider } from "anchor-litesvm";
 import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import idl from "../../idl/vela_protocol.json";
 import {
   ALTManager,
   createVelaClient,
@@ -32,6 +33,7 @@ import {
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
 import {
+  bootstrapTokenConfig,
   createToken2022Ata,
   findHookSo,
   installPhase7AdminState,
@@ -53,7 +55,9 @@ function findProgramSo(): string {
     if (existsSync(path)) return path;
   }
 
-  throw new Error(`vela_protocol.so not found. Tried: ${candidates.join(", ")}`);
+  throw new Error(
+    `vela_protocol.so not found. Tried: ${candidates.join(", ")}`,
+  );
 }
 
 function airdropSol(
@@ -173,6 +177,7 @@ describe("agent mandate VelaClient integration", () => {
   let authorityUsdcAccount: PublicKey;
   let wrappedUsdcMint: PublicKey;
   let wrappingVault: PublicKey;
+  let adminProgram: Program;
   let clientConnection: any;
   let authorityClient: ReturnType<typeof createVelaClient>;
   let originalGetOrCreateALT: typeof ALTManager.prototype.getOrCreateALT;
@@ -187,6 +192,7 @@ describe("agent mandate VelaClient integration", () => {
     airdropSol(svm, authority.publicKey, 20n * BigInt(LAMPORTS_PER_SOL));
 
     provider = new LiteSVMProvider(svm, new Wallet(authority));
+    adminProgram = new Program(idl as any, provider);
     usdcMint = await createUsdcMint(provider);
     authorityUsdcAccount = await createSplTokenAccount(
       provider,
@@ -203,6 +209,14 @@ describe("agent mandate VelaClient integration", () => {
     });
     wrappedUsdcMint = protocolAccounts.wrappedUsdcMint;
     wrappingVault = protocolAccounts.wrappingVault;
+    await bootstrapTokenConfig(
+      provider,
+      adminProgram,
+      authority,
+      wrappedUsdcMint,
+      "hook",
+      DECIMALS,
+    );
 
     originalGetOrCreateALT = ALTManager.prototype.getOrCreateALT;
     originalBuildV0Transaction = ALTManager.prototype.buildV0Transaction;
@@ -234,7 +248,9 @@ describe("agent mandate VelaClient integration", () => {
     };
 
     clientConnection = {
-      getAccountInfo: provider.connection.getAccountInfo.bind(provider.connection),
+      getAccountInfo: provider.connection.getAccountInfo.bind(
+        provider.connection,
+      ),
       getAccountInfoAndContext:
         provider.connection.getAccountInfoAndContext.bind(provider.connection),
       getMinimumBalanceForRentExemption:
@@ -252,7 +268,14 @@ describe("agent mandate VelaClient integration", () => {
       }),
       sendRawTransaction: async (raw: Buffer | Uint8Array) => {
         const tx = VersionedTransaction.deserialize(Buffer.from(raw));
-        provider.client.sendTransaction(tx);
+        const result = provider.client.sendTransaction(tx);
+        const meta =
+          result && typeof (result as { meta?: () => any }).meta === "function"
+            ? (result as { meta: () => { err?: unknown } }).meta()
+            : null;
+        if (meta?.err != null) {
+          throw new Error(JSON.stringify(meta.err));
+        }
         return bs58.encode(tx.signatures[0]!);
       },
       confirmTransaction: async () => ({
@@ -493,14 +516,23 @@ describe("agent mandate VelaClient integration", () => {
       lifetimeCap: 5_000_000n,
       minPullAmount: 10_000n,
       minPullInterval: 0n,
-      services: [{ service: Keypair.generate().publicKey, dailyLimit: 900_000n }],
+      services: [
+        { service: Keypair.generate().publicKey, dailyLimit: 900_000n },
+      ],
       fundedAmount: 500_000n,
     });
 
     expect(built.mandateAddress.toBase58()).toBe(
-      deriveAgentMandateAddress(authority.publicKey, builderAgent.publicKey)[0].toBase58(),
+      deriveAgentMandateAddress(
+        authority.publicKey,
+        builderAgent.publicKey,
+      )[0].toBase58(),
     );
-    expect(typeof authorityClient.instructions.pauseAgentMandate).toBe("function");
-    expect(typeof authorityClient.instructions.revokeAgentMandate).toBe("function");
+    expect(typeof authorityClient.instructions.pauseAgentMandate).toBe(
+      "function",
+    );
+    expect(typeof authorityClient.instructions.revokeAgentMandate).toBe(
+      "function",
+    );
   });
 });
