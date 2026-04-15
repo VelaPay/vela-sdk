@@ -162,6 +162,15 @@ function makeConnection(streamMandateCounter = 7n) {
   };
 }
 
+function assertMeta(
+  meta: { pubkey: PublicKey; isSigner: boolean; isWritable: boolean } | undefined,
+  expected: { pubkey: PublicKey; isSigner: boolean; isWritable: boolean },
+) {
+  expect(meta?.pubkey.toBase58()).toBe(expected.pubkey.toBase58());
+  expect(meta?.isSigner).toBe(expected.isSigner);
+  expect(meta?.isWritable).toBe(expected.isWritable);
+}
+
 describe("stream instruction builders", () => {
   test("buildCreateStreamMandateInstruction derives the mandate PDA and encodes args", async () => {
     const { connection } = makeConnection();
@@ -202,22 +211,49 @@ describe("stream instruction builders", () => {
       mandate,
       payer,
     });
+    const subscriberWrappedAccount = getAssociatedTokenAddressSync(
+      mint,
+      mandate,
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
+    const merchantWrappedAccount = getAssociatedTokenAddressSync(
+      mint,
+      merchant,
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
 
     expect(instruction.programId.toBase58()).toBe(PROGRAM_ID.toBase58());
     expect(instruction.keys).toHaveLength(17);
-    expect(instruction.keys[3]?.pubkey.toBase58()).toBe(
-      PDAFactory.keeperConfig(PROGRAM_ID)[0].toBase58(),
-    );
-    expect(instruction.keys[4]?.pubkey.toBase58()).toBe(mandate.toBase58());
-    expect(instruction.keys[5]?.pubkey.toBase58()).toBe(
-      getAssociatedTokenAddressSync(mint, mandate, true, TOKEN_2022_PROGRAM_ID).toBase58(),
-    );
-    expect(instruction.keys[6]?.pubkey.toBase58()).toBe(
-      getAssociatedTokenAddressSync(mint, merchant, true, TOKEN_2022_PROGRAM_ID).toBase58(),
-    );
-    expect(instruction.keys[8]?.pubkey.toBase58()).toBe(
-      PDAFactory.approval(mandate, PROGRAM_ID)[0].toBase58(),
-    );
+    assertMeta(instruction.keys[0], { pubkey: payer, isSigner: true, isWritable: true });
+    assertMeta(instruction.keys[3], {
+      pubkey: PDAFactory.keeperConfig(PROGRAM_ID)[0],
+      isSigner: false,
+      isWritable: false,
+    });
+    assertMeta(instruction.keys[4], { pubkey: mandate, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[5], {
+      pubkey: subscriberWrappedAccount,
+      isSigner: false,
+      isWritable: true,
+    });
+    assertMeta(instruction.keys[6], {
+      pubkey: merchantWrappedAccount,
+      isSigner: false,
+      isWritable: true,
+    });
+    assertMeta(instruction.keys[7], { pubkey: mint, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[8], {
+      pubkey: PDAFactory.approval(mandate, PROGRAM_ID)[0],
+      isSigner: false,
+      isWritable: true,
+    });
+    assertMeta(instruction.keys[11], {
+      pubkey: wrappingVault,
+      isSigner: false,
+      isWritable: true,
+    });
     expect(Buffer.from(instruction.data)).toEqual(ixDiscriminator("execute_stream"));
   });
 
@@ -228,10 +264,42 @@ describe("stream instruction builders", () => {
       mandate,
       authority: subscriber,
     });
+    const subscriberWrappedAccount = getAssociatedTokenAddressSync(
+      mint,
+      mandate,
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
+    const merchantWrappedAccount = getAssociatedTokenAddressSync(
+      mint,
+      merchant,
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
 
     expect(instruction.keys).toHaveLength(14);
-    expect(instruction.keys[1]?.pubkey.toBase58()).toBe(mandate.toBase58());
-    expect(instruction.keys[4]?.pubkey.toBase58()).toBe(mint.toBase58());
+    assertMeta(instruction.keys[1], { pubkey: mandate, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[2], {
+      pubkey: subscriberWrappedAccount,
+      isSigner: false,
+      isWritable: true,
+    });
+    assertMeta(instruction.keys[3], {
+      pubkey: merchantWrappedAccount,
+      isSigner: false,
+      isWritable: true,
+    });
+    assertMeta(instruction.keys[4], { pubkey: mint, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[5], {
+      pubkey: PDAFactory.approval(mandate, PROGRAM_ID)[0],
+      isSigner: false,
+      isWritable: true,
+    });
+    assertMeta(instruction.keys[11], {
+      pubkey: PROGRAM_ID,
+      isSigner: false,
+      isWritable: false,
+    });
     expect(Buffer.from(instruction.data)).toEqual(ixDiscriminator("pause_stream"));
   });
 
@@ -260,6 +328,16 @@ describe("stream instruction builders", () => {
     });
 
     expect(instruction.keys).toHaveLength(14);
+    assertMeta(instruction.keys[2], {
+      pubkey: getAssociatedTokenAddressSync(mint, mandate, true, TOKEN_2022_PROGRAM_ID),
+      isSigner: false,
+      isWritable: true,
+    });
+    assertMeta(instruction.keys[3], {
+      pubkey: getAssociatedTokenAddressSync(mint, merchant, true, TOKEN_2022_PROGRAM_ID),
+      isSigner: false,
+      isWritable: true,
+    });
     expect(Buffer.from(instruction.data.subarray(0, 8)).equals(ixDiscriminator("update_stream_rate"))).toBe(true);
     expect(instruction.data.length).toBe(26);
   });
@@ -273,7 +351,12 @@ describe("stream instruction builders", () => {
     });
 
     expect(instruction.keys).toHaveLength(14);
-    expect(instruction.keys[1]?.pubkey.toBase58()).toBe(mandate.toBase58());
+    assertMeta(instruction.keys[1], { pubkey: mandate, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[2], {
+      pubkey: getAssociatedTokenAddressSync(mint, mandate, true, TOKEN_2022_PROGRAM_ID),
+      isSigner: false,
+      isWritable: true,
+    });
     expect(Buffer.from(instruction.data)).toEqual(ixDiscriminator("cancel_stream"));
   });
 

@@ -1,5 +1,5 @@
 import { sha256 } from "@noble/hashes/sha2.js";
-import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { type Connection, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
 import { fetchStreamMandate } from "../accounts/deserialize";
 import { PDAFactory } from "../accounts/pda";
@@ -39,12 +39,23 @@ export async function buildPauseStreamInstruction(args: {
   const streamMandate = await fetchStreamMandate(connection, mandate);
   const [tokenConfig] = PDAFactory.tokenConfig(streamMandate.mint, programId);
   const [protocolConfig] = PDAFactory.config(programId);
-  const [keeperConfig] = PDAFactory.keeperConfig(programId);
   const [pullApproval] = PDAFactory.approval(mandate, programId);
   const protocolConfigValues = await fetchProtocolConfigValues(connection, programId);
   const [extraAccountMetaList] = PDAFactory.extraAccountMetas(
     streamMandate.mint,
     protocolConfigValues.hookProgramId,
+  );
+  const subscriberWrappedAccount = getAssociatedTokenAddressSync(
+    streamMandate.mint,
+    mandate,
+    true,
+    TOKEN_2022_PROGRAM_ID,
+  );
+  const merchantWrappedAccount = getAssociatedTokenAddressSync(
+    streamMandate.mint,
+    streamMandate.merchant,
+    true,
+    TOKEN_2022_PROGRAM_ID,
   );
 
   return new TransactionInstruction({
@@ -52,16 +63,16 @@ export async function buildPauseStreamInstruction(args: {
     keys: [
       { pubkey: authority, isSigner: true, isWritable: true },
       { pubkey: mandate, isSigner: false, isWritable: true },
-      { pubkey: streamMandate.subscriber, isSigner: false, isWritable: false },
-      { pubkey: streamMandate.merchant, isSigner: false, isWritable: false },
-      { pubkey: streamMandate.mint, isSigner: false, isWritable: false },
+      { pubkey: subscriberWrappedAccount, isSigner: false, isWritable: true },
+      { pubkey: merchantWrappedAccount, isSigner: false, isWritable: true },
+      { pubkey: streamMandate.mint, isSigner: false, isWritable: true },
+      { pubkey: pullApproval, isSigner: false, isWritable: true },
       { pubkey: tokenConfig, isSigner: false, isWritable: false },
       { pubkey: protocolConfig, isSigner: false, isWritable: false },
-      { pubkey: keeperConfig, isSigner: false, isWritable: false },
-      { pubkey: pullApproval, isSigner: false, isWritable: false },
-      { pubkey: protocolConfigValues.wrappingVault, isSigner: false, isWritable: false },
+      { pubkey: protocolConfigValues.wrappingVault, isSigner: false, isWritable: true },
       { pubkey: protocolConfigValues.hookProgramId, isSigner: false, isWritable: false },
       { pubkey: extraAccountMetaList, isSigner: false, isWritable: false },
+      { pubkey: programId, isSigner: false, isWritable: false },
       { pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
