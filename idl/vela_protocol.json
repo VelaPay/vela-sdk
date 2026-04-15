@@ -2,23 +2,14 @@
   "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC",
   "metadata": {
     "name": "vela_protocol",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "spec": "0.1.0",
     "description": "Created with Anchor"
   },
   "instructions": [
     {
       "name": "adjust_agent_mandate",
-      "discriminator": [
-        82,
-        10,
-        134,
-        90,
-        75,
-        74,
-        196,
-        146
-      ],
+      "discriminator": [82, 10, 134, 90, 75, 74, 196, 146],
       "accounts": [
         {
           "name": "authority",
@@ -35,19 +26,7 @@
               {
                 "kind": "const",
                 "value": [
-                  97,
-                  103,
-                  101,
-                  110,
-                  116,
-                  45,
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
+                  97, 103, 101, 110, 116, 45, 109, 97, 110, 100, 97, 116, 101
                 ]
               },
               {
@@ -73,14 +52,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -131,16 +103,7 @@
     },
     {
       "name": "admin_cancel",
-      "discriminator": [
-        34,
-        225,
-        37,
-        131,
-        38,
-        121,
-        43,
-        237
-      ],
+      "discriminator": [34, 225, 37, 131, 38, 121, 43, 237],
       "accounts": [
         {
           "name": "admin",
@@ -153,14 +116,25 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "merchant"
+        },
+        {
+          "name": "merchant_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [109, 101, 114, 99, 104, 97, 110, 116]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
               }
             ]
           }
@@ -191,16 +165,7 @@
     },
     {
       "name": "agent_pull",
-      "discriminator": [
-        31,
-        192,
-        205,
-        47,
-        118,
-        20,
-        39,
-        217
-      ],
+      "discriminator": [31, 192, 205, 47, 118, 20, 39, 217],
       "accounts": [
         {
           "name": "payer",
@@ -222,19 +187,7 @@
               {
                 "kind": "const",
                 "value": [
-                  97,
-                  103,
-                  101,
-                  110,
-                  116,
-                  45,
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
+                  97, 103, 101, 110, 116, 45, 109, 97, 110, 100, 97, 116, 101
                 ]
               },
               {
@@ -263,16 +216,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  112,
-                  112,
-                  114,
-                  111,
-                  118,
-                  97,
-                  108
-                ]
+                "value": [97, 112, 112, 114, 111, 118, 97, 108]
               },
               {
                 "kind": "account",
@@ -280,6 +224,9 @@
               }
             ]
           }
+        },
+        {
+          "name": "token_config"
         },
         {
           "name": "wrapped_usdc_mint",
@@ -291,14 +238,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -308,8 +248,7 @@
           "writable": true
         },
         {
-          "name": "hook_program",
-          "address": "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX"
+          "name": "hook_program"
         },
         {
           "name": "extra_account_meta_list",
@@ -318,25 +257,8 @@
               {
                 "kind": "const",
                 "value": [
-                  101,
-                  120,
-                  116,
-                  114,
-                  97,
-                  45,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  45,
-                  109,
-                  101,
-                  116,
-                  97,
-                  115
+                  101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116,
+                  45, 109, 101, 116, 97, 115
                 ]
               },
               {
@@ -372,16 +294,7 @@
     },
     {
       "name": "cancel",
-      "discriminator": [
-        232,
-        219,
-        223,
-        41,
-        219,
-        236,
-        220,
-        190
-      ],
+      "discriminator": [232, 219, 223, 41, 219, 236, 220, 190],
       "accounts": [
         {
           "name": "authority",
@@ -390,6 +303,24 @@
         },
         {
           "name": "subscriber"
+        },
+        {
+          "name": "merchant"
+        },
+        {
+          "name": "merchant_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [109, 101, 114, 99, 104, 97, 110, 116]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              }
+            ]
+          }
         },
         {
           "name": "plan"
@@ -421,17 +352,28 @@
       "args": []
     },
     {
-      "name": "create_agent_mandate",
-      "discriminator": [
-        18,
-        127,
-        239,
-        152,
-        115,
-        110,
-        62,
-        225
+      "name": "close_mandate",
+      "discriminator": [117, 87, 189, 5, 254, 125, 248, 180],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "subscriber",
+          "writable": true
+        },
+        {
+          "name": "mandate",
+          "writable": true
+        }
       ],
+      "args": []
+    },
+    {
+      "name": "create_agent_mandate",
+      "discriminator": [18, 127, 239, 152, 115, 110, 62, 225],
       "accounts": [
         {
           "name": "authority",
@@ -449,19 +391,7 @@
               {
                 "kind": "const",
                 "value": [
-                  97,
-                  103,
-                  101,
-                  110,
-                  116,
-                  45,
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
+                  97, 103, 101, 110, 116, 45, 109, 97, 110, 100, 97, 116, 101
                 ]
               },
               {
@@ -500,38 +430,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -546,23 +447,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
         },
         {
           "name": "spl_usdc_mint",
-          "docs": [
-            "The SPL USDC mint backing the protocol wrapping vault."
-          ]
+          "docs": ["The SPL USDC mint backing the protocol wrapping vault."]
         },
         {
           "name": "wrapping_vault",
@@ -575,19 +467,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  105,
-                  110,
-                  116,
-                  45,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
+                  109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116,
                   121
                 ]
               }
@@ -646,16 +526,7 @@
     },
     {
       "name": "create_plan",
-      "discriminator": [
-        77,
-        43,
-        141,
-        254,
-        212,
-        118,
-        41,
-        186
-      ],
+      "discriminator": [77, 43, 141, 254, 212, 118, 41, 186],
       "accounts": [
         {
           "name": "merchant",
@@ -669,16 +540,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  109,
-                  101,
-                  114,
-                  99,
-                  104,
-                  97,
-                  110,
-                  116
-                ]
+                "value": [109, 101, 114, 99, 104, 97, 110, 116]
               },
               {
                 "kind": "account",
@@ -689,61 +551,11 @@
         },
         {
           "name": "plan",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "merchant"
-              },
-              {
-                "kind": "account",
-                "path": "merchant_state.plan_count",
-                "account": "MerchantState"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "credential_mint",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  114,
-                  101,
-                  100,
-                  101,
-                  110,
-                  116,
-                  105,
-                  97,
-                  108
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "merchant"
-              },
-              {
-                "kind": "account",
-                "path": "merchant_state.plan_count",
-                "account": "MerchantState"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "system_program",
@@ -778,21 +590,28 @@
     },
     {
       "name": "create_usage_plan",
-      "discriminator": [
-        108,
-        182,
-        134,
-        12,
-        3,
-        137,
-        243,
-        205
-      ],
+      "discriminator": [108, 182, 134, 12, 3, 137, 243, 205],
       "accounts": [
         {
           "name": "merchant",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "merchant_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [109, 101, 114, 99, 104, 97, 110, 116]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              }
+            ]
+          }
         },
         {
           "name": "usage_plan",
@@ -801,18 +620,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  97,
-                  103,
-                  101,
-                  95,
-                  112,
-                  108,
-                  97,
-                  110
-                ]
+                "value": [117, 115, 97, 103, 101, 95, 112, 108, 97, 110]
               },
               {
                 "kind": "account",
@@ -833,22 +641,8 @@
               {
                 "kind": "const",
                 "value": [
-                  117,
-                  115,
-                  97,
-                  103,
-                  101,
-                  95,
-                  99,
-                  114,
-                  101,
-                  100,
-                  101,
-                  110,
-                  116,
-                  105,
-                  97,
-                  108
+                  117, 115, 97, 103, 101, 95, 99, 114, 101, 100, 101, 110, 116,
+                  105, 97, 108
                 ]
               },
               {
@@ -882,10 +676,7 @@
         {
           "name": "unit_name",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -910,16 +701,7 @@
     },
     {
       "name": "drain_agent_mandate",
-      "discriminator": [
-        223,
-        191,
-        76,
-        198,
-        252,
-        144,
-        205,
-        47
-      ],
+      "discriminator": [223, 191, 76, 198, 252, 144, 205, 47],
       "accounts": [
         {
           "name": "authority",
@@ -936,19 +718,7 @@
               {
                 "kind": "const",
                 "value": [
-                  97,
-                  103,
-                  101,
-                  110,
-                  116,
-                  45,
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
+                  97, 103, 101, 110, 116, 45, 109, 97, 110, 100, 97, 116, 101
                 ]
               },
               {
@@ -980,14 +750,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1006,19 +769,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  105,
-                  110,
-                  116,
-                  45,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
+                  109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116,
                   121
                 ]
               }
@@ -1038,16 +789,7 @@
     },
     {
       "name": "execute_pull",
-      "discriminator": [
-        182,
-        53,
-        53,
-        245,
-        142,
-        155,
-        240,
-        154
-      ],
+      "discriminator": [182, 53, 53, 245, 142, 155, 240, 154],
       "accounts": [
         {
           "name": "payer",
@@ -1067,19 +809,7 @@
               {
                 "kind": "const",
                 "value": [
-                  107,
-                  101,
-                  101,
-                  112,
-                  101,
-                  114,
-                  45,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  107, 101, 101, 112, 101, 114, 45, 99, 111, 110, 102, 105, 103
                 ]
               }
             ]
@@ -1090,31 +820,7 @@
         },
         {
           "name": "mandate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "subscriber"
-              },
-              {
-                "kind": "account",
-                "path": "plan"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "subscriber_wrapped_account",
@@ -1142,19 +848,15 @@
           "writable": true
         },
         {
+          "name": "token_config"
+        },
+        {
           "name": "protocol_config",
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1164,8 +866,7 @@
           "writable": true
         },
         {
-          "name": "hook_program",
-          "address": "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX"
+          "name": "hook_program"
         },
         {
           "name": "extra_account_meta_list",
@@ -1174,25 +875,8 @@
               {
                 "kind": "const",
                 "value": [
-                  101,
-                  120,
-                  116,
-                  114,
-                  97,
-                  45,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  45,
-                  109,
-                  101,
-                  116,
-                  97,
-                  115
+                  101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116,
+                  45, 109, 101, 116, 97, 115
                 ]
               },
               {
@@ -1213,22 +897,17 @@
         {
           "name": "token_2022_program",
           "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
       "name": "init_config",
-      "discriminator": [
-        23,
-        235,
-        115,
-        232,
-        168,
-        96,
-        1,
-        231
-      ],
+      "discriminator": [23, 235, 115, 232, 168, 96, 1, 231],
       "accounts": [
         {
           "name": "admin",
@@ -1242,14 +921,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1272,16 +944,7 @@
     },
     {
       "name": "init_keeper_config",
-      "discriminator": [
-        36,
-        203,
-        29,
-        158,
-        95,
-        76,
-        228,
-        97
-      ],
+      "discriminator": [36, 203, 29, 158, 95, 76, 228, 97],
       "accounts": [
         {
           "name": "admin",
@@ -1294,14 +957,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1314,19 +970,7 @@
               {
                 "kind": "const",
                 "value": [
-                  107,
-                  101,
-                  101,
-                  112,
-                  101,
-                  114,
-                  45,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  107, 101, 101, 112, 101, 114, 45, 99, 111, 110, 102, 105, 103
                 ]
               }
             ]
@@ -1357,17 +1001,51 @@
       ]
     },
     {
-      "name": "init_record_billing_comp_def",
-      "discriminator": [
-        120,
-        250,
-        131,
-        143,
-        58,
-        168,
-        233,
-        103
+      "name": "init_merchant_credential",
+      "discriminator": [172, 233, 208, 91, 108, 225, 249, 238],
+      "accounts": [
+        {
+          "name": "merchant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "merchant_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [109, 101, 114, 99, 104, 97, 110, 116]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "credential_mint",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_2022_program"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
       ],
+      "args": []
+    },
+    {
+      "name": "init_record_billing_comp_def",
+      "discriminator": [120, 250, 131, 143, 58, 168, 233, 103],
       "accounts": [
         {
           "name": "payer",
@@ -1402,17 +1080,66 @@
       "args": []
     },
     {
-      "name": "init_validate_mandate_comp_def",
-      "discriminator": [
-        121,
-        127,
-        132,
-        6,
-        132,
-        253,
-        11,
-        108
+      "name": "init_token_config",
+      "discriminator": [146, 87, 111, 57, 151, 147, 98, 12],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "docs": ["The token mint to register."]
+        },
+        {
+          "name": "token_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116, 111, 107, 101, 110, 95, 99, 111, 110, 102, 105, 103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
+      "args": [
+        {
+          "name": "ix",
+          "type": {
+            "defined": {
+              "name": "InitTokenConfigIx"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "init_validate_mandate_comp_def",
+      "discriminator": [121, 127, 132, 6, 132, 253, 11, 108],
       "accounts": [
         {
           "name": "payer",
@@ -1448,24 +1175,12 @@
     },
     {
       "name": "init_wrapped_mint",
-      "discriminator": [
-        130,
-        249,
-        176,
-        48,
-        101,
-        223,
-        71,
-        226
-      ],
+      "discriminator": [130, 249, 176, 48, 101, 223, 71, 226],
       "accounts": [
         {
           "name": "admin",
           "writable": true,
-          "signer": true,
-          "relations": [
-            "config"
-          ]
+          "signer": true
         },
         {
           "name": "config",
@@ -1474,14 +1189,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1496,19 +1204,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  105,
-                  110,
-                  116,
-                  45,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
+                  109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116,
                   121
                 ]
               }
@@ -1517,9 +1213,7 @@
         },
         {
           "name": "wrapped_usdc_mint",
-          "docs": [
-            "The Token-2022 wrapped USDC mint account to create."
-          ],
+          "docs": ["The Token-2022 wrapped USDC mint account to create."],
           "writable": true,
           "signer": true
         },
@@ -1554,38 +1248,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -1614,17 +1279,96 @@
       "args": []
     },
     {
-      "name": "pause_agent_mandate",
-      "discriminator": [
-        147,
-        96,
-        235,
-        182,
-        14,
-        27,
-        248,
-        164
+      "name": "migrate_mandate",
+      "discriminator": [222, 92, 229, 107, 20, 64, 88, 78],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "merchant_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [109, 101, 114, 99, 104, 97, 110, 116]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "subscriber"
+        },
+        {
+          "name": "merchant"
+        },
+        {
+          "name": "plan"
+        },
+        {
+          "name": "legacy_mandate",
+          "writable": true
+        },
+        {
+          "name": "migrated_mandate",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
       ],
+      "args": []
+    },
+    {
+      "name": "migrate_plan",
+      "discriminator": [85, 92, 235, 97, 211, 22, 108, 188],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "plan",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "pause_agent_mandate",
+      "discriminator": [147, 96, 235, 182, 14, 27, 248, 164],
       "accounts": [
         {
           "name": "authority",
@@ -1641,19 +1385,7 @@
               {
                 "kind": "const",
                 "value": [
-                  97,
-                  103,
-                  101,
-                  110,
-                  116,
-                  45,
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
+                  97, 103, 101, 110, 116, 45, 109, 97, 110, 100, 97, 116, 101
                 ]
               },
               {
@@ -1672,16 +1404,7 @@
     },
     {
       "name": "pause_protocol",
-      "discriminator": [
-        144,
-        95,
-        0,
-        107,
-        119,
-        39,
-        248,
-        141
-      ],
+      "discriminator": [144, 95, 0, 107, 119, 39, 248, 141],
       "accounts": [
         {
           "name": "admin",
@@ -1694,33 +1417,21 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
       "name": "record_billing_event_callback",
-      "discriminator": [
-        123,
-        164,
-        16,
-        122,
-        130,
-        206,
-        223,
-        55
-      ],
+      "discriminator": [123, 164, 16, 122, 130, 206, 223, 55],
       "accounts": [
         {
           "name": "arcium_program",
@@ -1749,15 +1460,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  105,
-                  108,
-                  108,
-                  105,
-                  110,
-                  103
-                ]
+                "value": [98, 105, 108, 108, 105, 110, 103]
               },
               {
                 "kind": "account",
@@ -1777,14 +1480,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1820,16 +1516,7 @@
     },
     {
       "name": "request_billing_record",
-      "discriminator": [
-        215,
-        54,
-        132,
-        206,
-        233,
-        54,
-        78,
-        167
-      ],
+      "discriminator": [215, 54, 132, 206, 233, 54, 78, 167],
       "accounts": [
         {
           "name": "payer",
@@ -1842,14 +1529,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1865,25 +1545,8 @@
               {
                 "kind": "const",
                 "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
+                  65, 114, 99, 105, 117, 109, 83, 105, 103, 110, 101, 114, 65,
+                  99, 99, 111, 117, 110, 116
                 ]
               }
             ]
@@ -1922,12 +1585,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  110
-                ]
+                "value": [112, 108, 97, 110]
               },
               {
                 "kind": "account",
@@ -1944,32 +1602,7 @@
         },
         {
           "name": "mandate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mandate.subscriber",
-                "account": "VelaMandate"
-              },
-              {
-                "kind": "account",
-                "path": "plan"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "billing_event",
@@ -1978,24 +1611,15 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  105,
-                  108,
-                  108,
-                  105,
-                  110,
-                  103
-                ]
+                "value": [98, 105, 108, 108, 105, 110, 103]
               },
               {
                 "kind": "account",
                 "path": "mandate"
               },
               {
-                "kind": "account",
-                "path": "mandate.pulls_executed",
-                "account": "VelaMandate"
+                "kind": "arg",
+                "path": "pulls_executed_seed"
               }
             ]
           }
@@ -2013,21 +1637,16 @@
         {
           "name": "computation_offset",
           "type": "u64"
+        },
+        {
+          "name": "pulls_executed_seed",
+          "type": "u64"
         }
       ]
     },
     {
       "name": "request_usage_computation",
-      "discriminator": [
-        242,
-        181,
-        163,
-        40,
-        197,
-        61,
-        202,
-        32
-      ],
+      "discriminator": [242, 181, 163, 40, 197, 61, 202, 32],
       "accounts": [
         {
           "name": "payer",
@@ -2040,14 +1659,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -2063,25 +1675,8 @@
               {
                 "kind": "const",
                 "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
+                  65, 114, 99, 105, 117, 109, 83, 105, 103, 110, 101, 114, 65,
+                  99, 99, 111, 117, 110, 116
                 ]
               }
             ]
@@ -2120,18 +1715,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  97,
-                  103,
-                  101,
-                  95,
-                  112,
-                  108,
-                  97,
-                  110
-                ]
+                "value": [117, 115, 97, 103, 101, 95, 112, 108, 97, 110]
               },
               {
                 "kind": "account",
@@ -2148,33 +1732,7 @@
         },
         {
           "name": "mandate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mandate.subscriber",
-                "account": "VelaMandate"
-              },
-              {
-                "kind": "account",
-                "path": "mandate.plan",
-                "account": "VelaMandate"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "usage_report",
@@ -2184,18 +1742,7 @@
               {
                 "kind": "const",
                 "value": [
-                  117,
-                  115,
-                  97,
-                  103,
-                  101,
-                  95,
-                  114,
-                  101,
-                  112,
-                  111,
-                  114,
-                  116
+                  117, 115, 97, 103, 101, 95, 114, 101, 112, 111, 114, 116
                 ]
               },
               {
@@ -2217,16 +1764,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  112,
-                  112,
-                  114,
-                  111,
-                  118,
-                  97,
-                  108
-                ]
+                "value": [97, 112, 112, 114, 111, 118, 97, 108]
               },
               {
                 "kind": "account",
@@ -2253,20 +1791,14 @@
           "name": "ciphertext",
           "type": {
             "vec": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           }
         },
         {
           "name": "pub_key",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -2277,16 +1809,7 @@
     },
     {
       "name": "request_validation",
-      "discriminator": [
-        72,
-        26,
-        53,
-        67,
-        228,
-        30,
-        144,
-        53
-      ],
+      "discriminator": [72, 26, 53, 67, 228, 30, 144, 53],
       "accounts": [
         {
           "name": "payer",
@@ -2299,14 +1822,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -2322,25 +1838,8 @@
               {
                 "kind": "const",
                 "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
+                  65, 114, 99, 105, 117, 109, 83, 105, 103, 110, 101, 114, 65,
+                  99, 99, 111, 117, 110, 116
                 ]
               }
             ]
@@ -2379,12 +1878,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  110
-                ]
+                "value": [112, 108, 97, 110]
               },
               {
                 "kind": "account",
@@ -2406,15 +1900,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
-                ]
+                "value": [109, 97, 110, 100, 97, 116, 101]
               },
               {
                 "kind": "account",
@@ -2435,16 +1921,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  112,
-                  112,
-                  114,
-                  111,
-                  118,
-                  97,
-                  108
-                ]
+                "value": [97, 112, 112, 114, 111, 118, 97, 108]
               },
               {
                 "kind": "account",
@@ -2471,20 +1948,14 @@
           "name": "ciphertext",
           "type": {
             "vec": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           }
         },
         {
           "name": "pub_key",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -2495,16 +1966,7 @@
     },
     {
       "name": "resume_agent_mandate",
-      "discriminator": [
-        253,
-        65,
-        131,
-        117,
-        206,
-        163,
-        79,
-        110
-      ],
+      "discriminator": [253, 65, 131, 117, 206, 163, 79, 110],
       "accounts": [
         {
           "name": "authority",
@@ -2521,19 +1983,7 @@
               {
                 "kind": "const",
                 "value": [
-                  97,
-                  103,
-                  101,
-                  110,
-                  116,
-                  45,
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
+                  97, 103, 101, 110, 116, 45, 109, 97, 110, 100, 97, 116, 101
                 ]
               },
               {
@@ -2552,16 +2002,7 @@
     },
     {
       "name": "revoke_agent_mandate",
-      "discriminator": [
-        209,
-        86,
-        165,
-        121,
-        56,
-        132,
-        131,
-        60
-      ],
+      "discriminator": [209, 86, 165, 121, 56, 132, 131, 60],
       "accounts": [
         {
           "name": "authority",
@@ -2578,19 +2019,7 @@
               {
                 "kind": "const",
                 "value": [
-                  97,
-                  103,
-                  101,
-                  110,
-                  116,
-                  45,
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
+                  97, 103, 101, 110, 116, 45, 109, 97, 110, 100, 97, 116, 101
                 ]
               },
               {
@@ -2622,14 +2051,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -2648,19 +2070,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  105,
-                  110,
-                  116,
-                  45,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
+                  109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116,
                   121
                 ]
               }
@@ -2680,16 +2090,7 @@
     },
     {
       "name": "submit_usage_report",
-      "discriminator": [
-        133,
-        85,
-        63,
-        196,
-        114,
-        157,
-        244,
-        112
-      ],
+      "discriminator": [133, 85, 63, 196, 114, 157, 244, 112],
       "accounts": [
         {
           "name": "merchant",
@@ -2697,33 +2098,7 @@
           "signer": true
         },
         {
-          "name": "mandate",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mandate.subscriber",
-                "account": "VelaMandate"
-              },
-              {
-                "kind": "account",
-                "path": "mandate.plan",
-                "account": "VelaMandate"
-              }
-            ]
-          }
+          "name": "mandate"
         },
         {
           "name": "usage_report",
@@ -2733,18 +2108,7 @@
               {
                 "kind": "const",
                 "value": [
-                  117,
-                  115,
-                  97,
-                  103,
-                  101,
-                  95,
-                  114,
-                  101,
-                  112,
-                  111,
-                  114,
-                  116
+                  117, 115, 97, 103, 101, 95, 114, 101, 112, 111, 114, 116
                 ]
               },
               {
@@ -2777,10 +2141,7 @@
           "type": {
             "array": [
               {
-                "array": [
-                  "u8",
-                  32
-                ]
+                "array": ["u8", 32]
               },
               4
             ]
@@ -2793,26 +2154,14 @@
         {
           "name": "pub_key",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         }
       ]
     },
     {
       "name": "subscribe",
-      "discriminator": [
-        254,
-        28,
-        191,
-        138,
-        156,
-        179,
-        183,
-        53
-      ],
+      "discriminator": [254, 28, 191, 138, 156, 179, 183, 53],
       "accounts": [
         {
           "name": "subscriber",
@@ -2823,38 +2172,28 @@
           "name": "merchant"
         },
         {
-          "name": "plan",
-          "docs": [
-            "either a flat `VelaPlan` PDA or a usage `UsagePlan` PDA."
-          ]
-        },
-        {
-          "name": "mandate",
+          "name": "merchant_state",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
-                ]
+                "value": [109, 101, 114, 99, 104, 97, 110, 116]
               },
               {
                 "kind": "account",
-                "path": "subscriber"
-              },
-              {
-                "kind": "account",
-                "path": "plan"
+                "path": "merchant"
               }
             ]
           }
+        },
+        {
+          "name": "plan",
+          "docs": ["either a flat `VelaPlan` PDA or a usage `UsagePlan` PDA."]
+        },
+        {
+          "name": "mandate",
+          "writable": true
         },
         {
           "name": "credential_mint",
@@ -2888,16 +2227,7 @@
     },
     {
       "name": "unpause_protocol",
-      "discriminator": [
-        183,
-        154,
-        5,
-        183,
-        105,
-        76,
-        87,
-        18
-      ],
+      "discriminator": [183, 154, 5, 183, 105, 76, 87, 18],
       "accounts": [
         {
           "name": "admin",
@@ -2910,33 +2240,21 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
       "name": "unwrap_tokens",
-      "discriminator": [
-        17,
-        121,
-        3,
-        250,
-        67,
-        105,
-        232,
-        113
-      ],
+      "discriminator": [17, 121, 3, 250, 67, 105, 232, 113],
       "accounts": [
         {
           "name": "user",
@@ -2948,23 +2266,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
         },
         {
           "name": "spl_usdc_mint",
-          "docs": [
-            "The SPL USDC mint (Token program, not Token-2022)."
-          ]
+          "docs": ["The SPL USDC mint (Token program, not Token-2022)."]
         },
         {
           "name": "wrapped_usdc_mint",
@@ -2982,9 +2291,7 @@
         },
         {
           "name": "user_usdc_account",
-          "docs": [
-            "User's SPL USDC account (destination for released USDC)."
-          ],
+          "docs": ["User's SPL USDC account (destination for released USDC)."],
           "writable": true
         },
         {
@@ -3001,19 +2308,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  105,
-                  110,
-                  116,
-                  45,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
+                  109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116,
                   121
                 ]
               }
@@ -3038,16 +2333,7 @@
     },
     {
       "name": "update_config",
-      "discriminator": [
-        29,
-        158,
-        252,
-        191,
-        10,
-        83,
-        219,
-        99
-      ],
+      "discriminator": [29, 158, 252, 191, 10, 83, 219, 99],
       "accounts": [
         {
           "name": "admin",
@@ -3060,17 +2346,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -3086,16 +2369,7 @@
     },
     {
       "name": "update_keeper_config",
-      "discriminator": [
-        7,
-        38,
-        156,
-        247,
-        29,
-        196,
-        148,
-        76
-      ],
+      "discriminator": [7, 38, 156, 247, 29, 196, 148, 76],
       "accounts": [
         {
           "name": "admin",
@@ -3107,14 +2381,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -3127,23 +2394,15 @@
               {
                 "kind": "const",
                 "value": [
-                  107,
-                  101,
-                  101,
-                  112,
-                  101,
-                  114,
-                  45,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  107, 101, 101, 112, 101, 114, 45, 99, 111, 110, 102, 105, 103
                 ]
               }
             ]
           }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -3172,17 +2431,207 @@
       ]
     },
     {
-      "name": "usage_charge_callback",
-      "discriminator": [
-        201,
-        76,
-        6,
-        25,
-        189,
-        59,
-        96,
-        63
+      "name": "update_mandate",
+      "discriminator": [69, 131, 248, 29, 105, 50, 139, 30],
+      "accounts": [
+        {
+          "name": "merchant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "plan"
+        },
+        {
+          "name": "mandate",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
+      "args": [
+        {
+          "name": "amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "frequency",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "max_pulls",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "billing_type",
+          "type": {
+            "option": {
+              "defined": {
+                "name": "BillingType"
+              }
+            }
+          }
+        },
+        {
+          "name": "plan",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_plan",
+      "discriminator": [119, 112, 58, 60, 76, 205, 1, 100],
+      "accounts": [
+        {
+          "name": "merchant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "plan",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "frequency",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "trial_period",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "max_pulls",
+          "type": {
+            "option": "u64"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_token_config",
+      "discriminator": [231, 122, 181, 79, 255, 79, 144, 167],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protocol_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116, 111, 107, 101, 110, 95, 99, 111, 110, 102, 105, 103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_config.mint",
+                "account": "TokenConfig"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "ix",
+          "type": {
+            "defined": {
+              "name": "UpdateTokenConfigIx"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_usage_plan",
+      "discriminator": [58, 144, 20, 24, 160, 214, 240, 91],
+      "accounts": [
+        {
+          "name": "merchant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "usage_plan",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "tiers",
+          "type": {
+            "option": {
+              "vec": {
+                "defined": {
+                  "name": "PricingTier"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "max_charge_per_period",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "settlement_frequency",
+          "type": {
+            "option": "u64"
+          }
+        }
+      ]
+    },
+    {
+      "name": "usage_charge_callback",
+      "discriminator": [201, 76, 6, 25, 189, 59, 96, 63],
       "accounts": [
         {
           "name": "arcium_program",
@@ -3211,16 +2660,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  112,
-                  112,
-                  114,
-                  111,
-                  118,
-                  97,
-                  108
-                ]
+                "value": [97, 112, 112, 114, 111, 118, 97, 108]
               },
               {
                 "kind": "account",
@@ -3235,14 +2675,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -3278,16 +2711,7 @@
     },
     {
       "name": "validate_mandate_callback",
-      "discriminator": [
-        18,
-        21,
-        173,
-        122,
-        11,
-        126,
-        79,
-        200
-      ],
+      "discriminator": [18, 21, 173, 122, 11, 126, 79, 200],
       "accounts": [
         {
           "name": "arcium_program",
@@ -3316,16 +2740,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  112,
-                  112,
-                  114,
-                  111,
-                  118,
-                  97,
-                  108
-                ]
+                "value": [97, 112, 112, 114, 111, 118, 97, 108]
               },
               {
                 "kind": "account",
@@ -3340,14 +2755,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -3379,16 +2787,7 @@
     },
     {
       "name": "wrap",
-      "discriminator": [
-        178,
-        40,
-        10,
-        189,
-        228,
-        129,
-        186,
-        140
-      ],
+      "discriminator": [178, 40, 10, 189, 228, 129, 186, 140],
       "accounts": [
         {
           "name": "subscriber",
@@ -3400,23 +2799,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
         },
         {
           "name": "spl_usdc_mint",
-          "docs": [
-            "The SPL USDC mint (Token program, not Token-2022)."
-          ]
+          "docs": ["The SPL USDC mint (Token program, not Token-2022)."]
         },
         {
           "name": "wrapped_usdc_mint",
@@ -3456,19 +2846,7 @@
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  105,
-                  110,
-                  116,
-                  45,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
+                  109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116,
                   121
                 ]
               }
@@ -3494,318 +2872,114 @@
   ],
   "accounts": [
     {
-      "name": "AgentMandate",
-      "discriminator": [
-        31,
-        231,
-        224,
-        237,
-        201,
-        149,
-        38,
-        235
-      ]
-    },
-    {
       "name": "ArciumSignerAccount",
-      "discriminator": [
-        214,
-        157,
-        122,
-        114,
-        117,
-        44,
-        214,
-        74
-      ]
+      "discriminator": [214, 157, 122, 114, 117, 44, 214, 74]
     },
     {
       "name": "BillingEvent",
-      "discriminator": [
-        250,
-        107,
-        147,
-        56,
-        61,
-        68,
-        173,
-        91
-      ]
-    },
-    {
-      "name": "KeeperConfig",
-      "discriminator": [
-        77,
-        240,
-        250,
-        22,
-        132,
-        135,
-        162,
-        101
-      ]
+      "discriminator": [250, 107, 147, 56, 61, 68, 173, 91]
     },
     {
       "name": "MerchantState",
-      "discriminator": [
-        122,
-        123,
-        114,
-        132,
-        232,
-        201,
-        233,
-        199
-      ]
+      "discriminator": [122, 123, 114, 132, 232, 201, 233, 199]
     },
     {
       "name": "ProtocolConfig",
-      "discriminator": [
-        207,
-        91,
-        250,
-        28,
-        152,
-        179,
-        215,
-        209
-      ]
+      "discriminator": [207, 91, 250, 28, 152, 179, 215, 209]
     },
     {
       "name": "PullApproval",
-      "discriminator": [
-        34,
-        113,
-        33,
-        28,
-        209,
-        134,
-        64,
-        93
-      ]
+      "discriminator": [34, 113, 33, 28, 209, 134, 64, 93]
+    },
+    {
+      "name": "TokenConfig",
+      "discriminator": [92, 73, 255, 43, 107, 51, 117, 101]
     },
     {
       "name": "UsagePlan",
-      "discriminator": [
-        207,
-        158,
-        202,
-        192,
-        217,
-        13,
-        235,
-        214
-      ]
+      "discriminator": [207, 158, 202, 192, 217, 13, 235, 214]
     },
     {
       "name": "UsageReport",
-      "discriminator": [
-        134,
-        41,
-        8,
-        129,
-        151,
-        233,
-        78,
-        124
-      ]
+      "discriminator": [134, 41, 8, 129, 151, 233, 78, 124]
     },
     {
       "name": "VelaMandate",
-      "discriminator": [
-        254,
-        125,
-        146,
-        195,
-        217,
-        231,
-        108,
-        200
-      ]
+      "discriminator": [254, 125, 146, 195, 217, 231, 108, 200]
     },
     {
       "name": "VelaPlan",
-      "discriminator": [
-        141,
-        112,
-        118,
-        132,
-        18,
-        188,
-        112,
-        68
-      ]
+      "discriminator": [141, 112, 118, 132, 18, 188, 112, 68]
     }
   ],
   "events": [
     {
       "name": "AgentMandateAdjusted",
-      "discriminator": [
-        144,
-        224,
-        235,
-        32,
-        74,
-        66,
-        88,
-        128
-      ]
+      "discriminator": [144, 224, 235, 32, 74, 66, 88, 128]
     },
     {
       "name": "AgentMandateCreated",
-      "discriminator": [
-        149,
-        186,
-        93,
-        120,
-        45,
-        8,
-        141,
-        216
-      ]
+      "discriminator": [149, 186, 93, 120, 45, 8, 141, 216]
     },
     {
       "name": "AgentMandateDrained",
-      "discriminator": [
-        40,
-        43,
-        200,
-        100,
-        95,
-        69,
-        125,
-        109
-      ]
+      "discriminator": [40, 43, 200, 100, 95, 69, 125, 109]
     },
     {
       "name": "AgentMandatePaused",
-      "discriminator": [
-        213,
-        24,
-        230,
-        24,
-        61,
-        87,
-        229,
-        134
-      ]
+      "discriminator": [213, 24, 230, 24, 61, 87, 229, 134]
     },
     {
       "name": "AgentMandateResumed",
-      "discriminator": [
-        29,
-        186,
-        56,
-        103,
-        247,
-        195,
-        74,
-        237
-      ]
+      "discriminator": [29, 186, 56, 103, 247, 195, 74, 237]
     },
     {
       "name": "AgentMandateRevoked",
-      "discriminator": [
-        103,
-        125,
-        249,
-        134,
-        2,
-        139,
-        248,
-        205
-      ]
+      "discriminator": [103, 125, 249, 134, 2, 139, 248, 205]
     },
     {
       "name": "AgentPullExecuted",
-      "discriminator": [
-        237,
-        59,
-        171,
-        122,
-        206,
-        115,
-        189,
-        17
-      ]
+      "discriminator": [237, 59, 171, 122, 206, 115, 189, 17]
     },
     {
       "name": "ArciumUnavailableEvent",
-      "discriminator": [
-        95,
-        48,
-        170,
-        86,
-        232,
-        183,
-        168,
-        143
-      ]
+      "discriminator": [95, 48, 170, 86, 232, 183, 168, 143]
     },
     {
       "name": "BillingEventCreatedEvent",
-      "discriminator": [
-        254,
-        187,
-        238,
-        203,
-        158,
-        67,
-        237,
-        251
-      ]
+      "discriminator": [254, 187, 238, 203, 158, 67, 237, 251]
     },
     {
       "name": "KeeperConfigInitialized",
-      "discriminator": [
-        16,
-        210,
-        101,
-        114,
-        97,
-        54,
-        45,
-        69
-      ]
+      "discriminator": [16, 210, 101, 114, 97, 54, 45, 69]
     },
     {
       "name": "KeeperConfigUpdated",
-      "discriminator": [
-        2,
-        153,
-        180,
-        2,
-        42,
-        208,
-        128,
-        248
-      ]
+      "discriminator": [2, 153, 180, 2, 42, 208, 128, 248]
+    },
+    {
+      "name": "PlanUpdated",
+      "discriminator": [49, 51, 198, 31, 170, 70, 253, 195]
+    },
+    {
+      "name": "TokenConfigCreated",
+      "discriminator": [123, 54, 18, 175, 151, 0, 26, 237]
+    },
+    {
+      "name": "TokenConfigUpdated",
+      "discriminator": [64, 189, 195, 27, 63, 187, 96, 68]
     },
     {
       "name": "UsageComputationCompleteEvent",
-      "discriminator": [
-        41,
-        144,
-        6,
-        232,
-        192,
-        175,
-        134,
-        9
-      ]
+      "discriminator": [41, 144, 6, 232, 192, 175, 134, 9]
+    },
+    {
+      "name": "UsagePlanUpdated",
+      "discriminator": [133, 224, 100, 168, 234, 9, 191, 121]
     },
     {
       "name": "ValidationCompleteEvent",
-      "discriminator": [
-        145,
-        238,
-        184,
-        133,
-        204,
-        131,
-        38,
-        180
-      ]
+      "discriminator": [145, 238, 184, 133, 204, 131, 38, 180]
     }
   ],
   "errors": [
@@ -4118,79 +3292,54 @@
       "code": 6061,
       "name": "UsageReportAlreadySettled",
       "msg": "Usage report has already been settled"
+    },
+    {
+      "code": 6100,
+      "name": "MandateVersionUnsupported",
+      "msg": "Mandate version is unsupported by this instruction"
+    },
+    {
+      "code": 6200,
+      "name": "PlanVersionUnsupported",
+      "msg": "Plan version is unsupported by this instruction"
+    },
+    {
+      "code": 6300,
+      "name": "MigrationPreconditionFailed",
+      "msg": "Migration preconditions are not satisfied"
+    },
+    {
+      "code": 6400,
+      "name": "AgentMandateVersionUnsupported",
+      "msg": "Agent mandate version is unsupported by this instruction"
+    },
+    {
+      "code": 12500,
+      "name": "TokenNotRegistered",
+      "msg": "Token mint is not registered in the token registry"
+    },
+    {
+      "code": 12501,
+      "name": "TokenAlreadyRegistered",
+      "msg": "Token mint is already registered in the token registry"
+    },
+    {
+      "code": 12502,
+      "name": "TokenDisabled",
+      "msg": "Token is disabled in the registry"
+    },
+    {
+      "code": 12503,
+      "name": "InvalidBillingRail",
+      "msg": "Invalid billing rail for this operation"
+    },
+    {
+      "code": 12600,
+      "name": "MetaListAlreadyInitialized",
+      "msg": "ExtraAccountMetaList already initialized for this mint"
     }
   ],
   "types": [
-    {
-      "name": "AgentMandate",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "authority",
-            "type": "pubkey"
-          },
-          {
-            "name": "agent",
-            "type": "pubkey"
-          },
-          {
-            "name": "daily_limit",
-            "type": "u64"
-          },
-          {
-            "name": "daily_spent",
-            "type": "u64"
-          },
-          {
-            "name": "daily_last_reset",
-            "type": "i64"
-          },
-          {
-            "name": "lifetime_cap",
-            "type": "u64"
-          },
-          {
-            "name": "total_spent",
-            "type": "u64"
-          },
-          {
-            "name": "min_pull_amount",
-            "type": "u64"
-          },
-          {
-            "name": "min_pull_interval",
-            "type": "i64"
-          },
-          {
-            "name": "last_pull_at",
-            "type": "i64"
-          },
-          {
-            "name": "status",
-            "type": {
-              "defined": {
-                "name": "AgentMandateStatus"
-              }
-            }
-          },
-          {
-            "name": "services",
-            "type": {
-              "vec": {
-                "defined": {
-                  "name": "ServiceLimit"
-                }
-              }
-            }
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
     {
       "name": "AgentMandateAdjusted",
       "type": {
@@ -4518,10 +3667,7 @@
             "type": {
               "array": [
                 {
-                  "array": [
-                    "u8",
-                    32
-                  ]
+                  "array": ["u8", 32]
                 },
                 10
               ]
@@ -4566,6 +3712,20 @@
           {
             "name": "timestamp",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BillingRail",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "TransferHook"
+          },
+          {
+            "name": "TokenDelegate"
           }
         ]
       }
@@ -4623,41 +3783,20 @@
       }
     },
     {
-      "name": "KeeperConfig",
+      "name": "InitTokenConfigIx",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "admin",
-            "type": "pubkey"
-          },
-          {
-            "name": "mode",
+            "name": "billing_rail",
             "type": {
               "defined": {
-                "name": "KeeperMode"
+                "name": "BillingRail"
               }
             }
           },
           {
-            "name": "keeper_endpoint",
-            "type": {
-              "array": [
-                "u8",
-                128
-              ]
-            }
-          },
-          {
-            "name": "endpoint_len",
-            "type": "u8"
-          },
-          {
-            "name": "keeper_authority",
-            "type": "pubkey"
-          },
-          {
-            "name": "bump",
+            "name": "decimals",
             "type": "u8"
           }
         ]
@@ -4746,10 +3885,7 @@
             "type": {
               "array": [
                 {
-                  "array": [
-                    "u8",
-                    32
-                  ]
+                  "array": ["u8", 32]
                 },
                 {
                   "generic": "LEN"
@@ -4793,6 +3929,24 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "credential_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "mandate_counter",
+            "type": "u64"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": ["u8", 64]
+            }
           }
         ]
       }
@@ -4807,6 +3961,58 @@
           },
           {
             "name": "Inactive"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlanUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan_id",
+            "type": "u64"
+          },
+          {
+            "name": "old_amount",
+            "type": "u64"
+          },
+          {
+            "name": "new_amount",
+            "type": "u64"
+          },
+          {
+            "name": "old_frequency",
+            "type": "u64"
+          },
+          {
+            "name": "new_frequency",
+            "type": "u64"
+          },
+          {
+            "name": "old_trial_period",
+            "type": "u64"
+          },
+          {
+            "name": "new_trial_period",
+            "type": "u64"
+          },
+          {
+            "name": "old_max_pulls",
+            "type": "u64"
+          },
+          {
+            "name": "new_max_pulls",
+            "type": "u64"
           }
         ]
       }
@@ -4877,8 +4083,22 @@
             "type": "i64"
           },
           {
+            "name": "transfer_hook_program_id",
+            "type": "pubkey"
+          },
+          {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": ["u8", 32]
+            }
           }
         ]
       }
@@ -4938,30 +4158,6 @@
       }
     },
     {
-      "name": "ServiceLimit",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "service",
-            "type": "pubkey"
-          },
-          {
-            "name": "daily_limit",
-            "type": "u64"
-          },
-          {
-            "name": "daily_spent",
-            "type": "u64"
-          },
-          {
-            "name": "last_reset",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "ServiceLimitInput",
       "type": {
         "kind": "struct",
@@ -4995,10 +4191,7 @@
                 "generic": "O"
               },
               {
-                "array": [
-                  "u8",
-                  64
-                ]
+                "array": ["u8", 64]
               }
             ]
           },
@@ -5012,6 +4205,116 @@
                 "generic": "O"
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_program",
+            "type": "pubkey"
+          },
+          {
+            "name": "billing_rail",
+            "type": {
+              "defined": {
+                "name": "BillingRail"
+              }
+            }
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "enabled",
+            "type": "bool"
+          },
+          {
+            "name": "oracle_reference",
+            "type": "pubkey"
+          },
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": ["u8", 64]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenConfigCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "billing_rail",
+            "type": {
+              "defined": {
+                "name": "BillingRail"
+              }
+            }
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "admin",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenConfigUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "enabled",
+            "type": {
+              "option": "bool"
+            }
+          },
+          {
+            "name": "oracle_reference",
+            "type": {
+              "option": "pubkey"
+            }
           }
         ]
       }
@@ -5036,6 +4339,26 @@
           {
             "name": "cluster_offset",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateTokenConfigIx",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "enabled",
+            "type": {
+              "option": "bool"
+            }
+          },
+          {
+            "name": "oracle_reference",
+            "type": {
+              "option": "pubkey"
+            }
           }
         ]
       }
@@ -5082,7 +4405,7 @@
         "UsagePlan PDA — a merchant's usage-based pricing plan with up to 5 tiers.",
         "",
         "Seeds: [b\"usage_plan\", merchant.key().as_ref(), plan_id.to_le_bytes().as_ref()]",
-        "SIZE: 8 + 32 + 8 + 32 + (24 * 5) + 1 + 8 + 8 + 32 + 1 + 1 = 251 bytes"
+        "SIZE: 8 + 32 + 8 + 32 + (24 * 5) + 1 + 8 + 8 + 32 + 1 + 1 + 1 + 64 = 317 bytes"
       ],
       "type": {
         "kind": "struct",
@@ -5098,10 +4421,7 @@
           {
             "name": "unit_name",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -5144,6 +4464,60 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": ["u8", 64]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UsagePlanUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan_id",
+            "type": "u64"
+          },
+          {
+            "name": "old_max_charge_per_period",
+            "type": "u64"
+          },
+          {
+            "name": "new_max_charge_per_period",
+            "type": "u64"
+          },
+          {
+            "name": "old_settlement_frequency",
+            "type": "u64"
+          },
+          {
+            "name": "new_settlement_frequency",
+            "type": "u64"
+          },
+          {
+            "name": "old_tier_count",
+            "type": "u8"
+          },
+          {
+            "name": "new_tier_count",
+            "type": "u8"
           }
         ]
       }
@@ -5180,10 +4554,7 @@
             "type": {
               "array": [
                 {
-                  "array": [
-                    "u8",
-                    32
-                  ]
+                  "array": ["u8", 32]
                 },
                 4
               ]
@@ -5196,10 +4567,7 @@
           {
             "name": "pub_key",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -5329,6 +4697,20 @@
                 "name": "BillingType"
               }
             }
+          },
+          {
+            "name": "mandate_index",
+            "type": "u64"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": ["u8", 64]
+            }
           }
         ]
       }
@@ -5377,6 +4759,16 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": ["u8", 64]
+            }
           }
         ]
       }
