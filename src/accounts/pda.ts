@@ -40,6 +40,23 @@ export class PDAFactory {
     );
   }
 
+  static stream(
+    subscriber: PublicKey,
+    merchant: PublicKey,
+    mandateIndex: bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("stream"),
+        subscriber.toBuffer(),
+        merchant.toBuffer(),
+        toLe8(mandateIndex),
+      ],
+      programId,
+    );
+  }
+
   /**
    * @deprecated Use PDAFactory.mandate() with V2 seed scheme.
    */

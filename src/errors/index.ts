@@ -32,4 +32,10 @@ export {
   ServiceDailyLimitExceededError,
   TooManyServicesError,
 } from "./program-errors";
+export {
+  StreamInsufficientBalanceError,
+  StreamMinIntervalError,
+  StreamTerminalStatusError,
+  WrongAccountTypeError,
+} from "./stream-errors";
 export { translateError } from "./translate";

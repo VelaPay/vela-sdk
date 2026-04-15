@@ -72,9 +72,13 @@ export {
   PullTooEarlyError,
   PullAmountTooSmallError,
   PullCooldownActiveError,
+  StreamInsufficientBalanceError,
+  StreamMinIntervalError,
+  StreamTerminalStatusError,
   ServiceDailyLimitExceededError,
   TooManyServicesError,
   VelaError,
+  WrongAccountTypeError,
   translateError,
   UnauthorizedAgentError,
   UnauthorizedAgentMandateAuthorityError,
@@ -83,6 +87,7 @@ export {
   UnauthorizedServiceError,
   ProtocolPausedError,
 } from "./errors";
+export { accruedNow } from "./accrued";
 // Helius provider (opt-in)
 export {
   createHelius,
@@ -241,6 +246,7 @@ export type {
   VerifyAgentMandateParams,
   TokenConfig,
 } from "./types";
+export type { StreamMandate, StreamStatus } from "./types/stream-mandate";
 // Usage seed constants
 export {
   USAGE_CREDENTIAL_SEED,
