@@ -1,5 +1,3 @@
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
 import { Program, Wallet } from "@coral-xyz/anchor";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
@@ -39,26 +37,12 @@ import {
   installPhase7AdminState,
   sendInstructions,
 } from "./phase7-helpers";
+import {
+  hasProtocolBuildArtifacts,
+  requireProtocolProgramSo,
+} from "../helpers/protocol-artifacts";
 
 const DECIMALS = 6;
-
-function findProgramSo(): string {
-  const candidates = [
-    resolve(
-      __dirname,
-      "../../../../vela-protocol/target/deploy/vela_protocol.so",
-    ),
-    "/Users/laitsky/Developments/vela-labs/vela-protocol/target/deploy/vela_protocol.so",
-  ];
-
-  for (const path of candidates) {
-    if (existsSync(path)) return path;
-  }
-
-  throw new Error(
-    `vela_protocol.so not found. Tried: ${candidates.join(", ")}`,
-  );
-}
 
 function airdropSol(
   svm: LiteSVM,
@@ -169,7 +153,9 @@ async function mintUsdc(
   ]);
 }
 
-describe("agent mandate VelaClient integration", () => {
+describe.skipIf(!hasProtocolBuildArtifacts())(
+  "agent mandate VelaClient integration",
+  () => {
   let svm: LiteSVM;
   let provider: LiteSVMProvider;
   let authority: Keypair;
@@ -185,7 +171,7 @@ describe("agent mandate VelaClient integration", () => {
 
   beforeAll(async () => {
     svm = new LiteSVM().withDefaultPrograms().withTransactionHistory(0n);
-    svm.addProgramFromFile(PROGRAM_ID, findProgramSo());
+    svm.addProgramFromFile(PROGRAM_ID, requireProtocolProgramSo());
     svm.addProgramFromFile(TRANSFER_HOOK_PROGRAM_ID, findHookSo());
 
     authority = Keypair.generate();
@@ -535,4 +521,5 @@ describe("agent mandate VelaClient integration", () => {
       "function",
     );
   });
-});
+  },
+);

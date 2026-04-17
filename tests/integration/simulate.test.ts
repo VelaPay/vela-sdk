@@ -1,6 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
 import { BN, Program, Wallet } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -41,26 +39,14 @@ import {
   installPhase7AdminState,
   insertPullApproval,
 } from "./phase7-helpers";
+import {
+  hasProtocolBuildArtifacts,
+  requireProtocolProgramSo,
+} from "../helpers/protocol-artifacts";
 
 // ── Test helpers (same as client.test.ts) ─────────────────────────────────────
 
 const DECIMALS = 6;
-
-function findProgramSo(): string {
-  const candidates = [
-    resolve(
-      __dirname,
-      "../../../../vela-protocol/target/deploy/vela_protocol.so",
-    ),
-    "/Users/laitsky/Developments/vela-labs/vela-protocol/target/deploy/vela_protocol.so",
-  ];
-  for (const path of candidates) {
-    if (existsSync(path)) return path;
-  }
-  throw new Error(
-    `vela_protocol.so not found. Tried: ${candidates.join(", ")}`,
-  );
-}
 
 function airdropSol(
   svm: LiteSVM,
@@ -189,10 +175,12 @@ async function mintUsdc(
 
 // ── Full Billing Cycle Simulation ─────────────────────────────────────────────
 
-describe("Full Billing Cycle Simulation", () => {
+describe.skipIf(!hasProtocolBuildArtifacts())(
+  "Full Billing Cycle Simulation",
+  () => {
   test("full billing cycle completes on LiteSVM: create -> wrapAndSubscribe -> pull x 3 -> cancel", async () => {
     // ── Setup ──
-    const soPath = findProgramSo();
+    const soPath = requireProtocolProgramSo();
     const hookSoPath = findHookSo();
     const svm = new LiteSVM().withDefaultPrograms().withTransactionHistory(0n);
     svm.addProgramFromFile(PROGRAM_ID, soPath);
@@ -380,4 +368,5 @@ describe("Full Billing Cycle Simulation", () => {
     expect(mandate.pullsExecuted).toBe(3n);
     expect(mandate.status).toBe("cancelled");
   });
-});
+  },
+);

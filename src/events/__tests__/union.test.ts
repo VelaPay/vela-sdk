@@ -4,7 +4,13 @@ import { BASE_EVENT, VALID_EVENT_FIXTURES } from "./fixtures";
 
 describe("VelaEventSchema", () => {
   test("parses every supported discriminator", () => {
-    for (const [eventType, fixture] of Object.entries(VALID_EVENT_FIXTURES)) {
+    const fixtures = Object.entries(VALID_EVENT_FIXTURES) as Array<
+      [
+        keyof typeof VALID_EVENT_FIXTURES,
+        (typeof VALID_EVENT_FIXTURES)[keyof typeof VALID_EVENT_FIXTURES],
+      ]
+    >;
+    for (const [eventType, fixture] of fixtures) {
       const parsed = VelaEventSchema.parse(fixture);
       expect(parsed.event_type).toBe(eventType);
     }
@@ -20,8 +26,8 @@ describe("VelaEventSchema", () => {
   });
 
   test("requires upgrade finalized fields", () => {
-    const invalid = { ...VALID_EVENT_FIXTURES["mandate.upgrade_finalized"] };
-    delete invalid.old_plan;
+    const { old_plan: _oldPlan, ...invalid } =
+      VALID_EVENT_FIXTURES["mandate.upgrade_finalized"];
 
     expect(() => VelaEventSchema.parse(invalid)).toThrow();
   });

@@ -1,6 +1,4 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
 import { BN, Program, Wallet } from "@coral-xyz/anchor";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
@@ -37,26 +35,14 @@ import {
   insertPullApproval,
   sendInstructions as helperSendInstructions,
 } from "./phase7-helpers";
+import {
+  hasProtocolBuildArtifacts,
+  requireProtocolProgramSo,
+} from "../helpers/protocol-artifacts";
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
 
 const DECIMALS = 6;
-
-function findProgramSo(): string {
-  const candidates = [
-    resolve(
-      __dirname,
-      "../../../../vela-protocol/target/deploy/vela_protocol.so",
-    ),
-    "/Users/laitsky/Developments/vela-labs/vela-protocol/target/deploy/vela_protocol.so",
-  ];
-  for (const path of candidates) {
-    if (existsSync(path)) return path;
-  }
-  throw new Error(
-    `vela_protocol.so not found. Tried: ${candidates.join(", ")}`,
-  );
-}
 
 function airdropSol(
   svm: LiteSVM,
@@ -84,7 +70,7 @@ async function sendInstructions(
 
 // ── Emergency Instructions Integration Tests ──────────────────────────────────
 
-describe("emergency instructions", () => {
+describe.skipIf(!hasProtocolBuildArtifacts())("emergency instructions", () => {
   let svm: LiteSVM;
 
   // Admin (protocol admin) keypair -- must match the admin in installPhase7AdminState
@@ -110,7 +96,7 @@ describe("emergency instructions", () => {
   const PLAN_MAX_PULLS = 5n;
 
   beforeAll(async () => {
-    const soPath = findProgramSo();
+    const soPath = requireProtocolProgramSo();
     const hookSoPath = findHookSo();
     svm = new LiteSVM().withDefaultPrograms().withTransactionHistory(0n);
     svm.addProgramFromFile(PROGRAM_ID, soPath);

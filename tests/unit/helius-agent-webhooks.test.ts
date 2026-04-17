@@ -30,12 +30,9 @@ const heliusState = {
 };
 
 mock.module("helius-sdk", () => ({
-  Helius: class MockHelius {
-    connection = heliusState.connection;
-    rpc = {
-      sendSmartTransaction: mock(async () => "helius-signature"),
-    };
-    webhooks = {
+  createHelius: mock(() => ({
+    connection: heliusState.connection,
+    webhooks: {
       getAll: mock(async () => heliusState.webhooks),
       create: mock(async (request: any) => {
         heliusState.createCalls.push(request);
@@ -50,9 +47,8 @@ mock.module("helius-sdk", () => ({
         heliusState.webhooks.push(created);
         return { webhookID: created.webhookID };
       }),
-    };
-    constructor(_apiKey: string, _cluster?: string) {}
-  },
+    },
+  })),
 }));
 
 const originalParseLogs = EventParser.prototype.parseLogs;

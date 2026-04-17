@@ -60,6 +60,7 @@ export { createUsagePlan, submitUsageReport } from "./usage";
 export {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   BILLING_SEED,
+  DEVNET_USDC_MINT,
   EURC_MINT,
   KEEPER_CONFIG_SEED,
   PROGRAM_ID,

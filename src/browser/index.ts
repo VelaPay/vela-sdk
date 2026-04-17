@@ -26,6 +26,7 @@ export type {
   BuildWrapAndSubscribeResult,
 } from "./instructions";
 export {
+  DEVNET_USDC_MINT,
   EURC_MINT,
   PROGRAM_ID,
   PYUSD_MINT,

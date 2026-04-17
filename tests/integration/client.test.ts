@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { BN, Program, Wallet } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -49,27 +48,14 @@ import {
   installPhase7AdminState,
   insertPullApproval,
 } from "./phase7-helpers";
+import {
+  hasProtocolBuildArtifacts,
+  requireProtocolProgramSo,
+} from "../helpers/protocol-artifacts";
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
 
 const DECIMALS = 6;
-
-// Locate the program .so file (try relative path from project root, then absolute)
-function findProgramSo(): string {
-  const candidates = [
-    resolve(
-      __dirname,
-      "../../../../vela-protocol/target/deploy/vela_protocol.so",
-    ),
-    "/Users/laitsky/Developments/vela-labs/vela-protocol/target/deploy/vela_protocol.so",
-  ];
-  for (const path of candidates) {
-    if (existsSync(path)) return path;
-  }
-  throw new Error(
-    `vela_protocol.so not found. Tried: ${candidates.join(", ")}`,
-  );
-}
 
 function airdropSol(
   svm: LiteSVM,
@@ -170,7 +156,7 @@ async function mintUsdc(
 
 // ── Integration Tests ─────────────────────────────────────────────────────────
 
-describe("SDK Client Integration", () => {
+describe.skipIf(!hasProtocolBuildArtifacts())("SDK Client Integration", () => {
   let svm: LiteSVM;
   let provider: LiteSVMProvider;
   let program: Program;
@@ -196,7 +182,7 @@ describe("SDK Client Integration", () => {
 
   beforeAll(async () => {
     // Setup LiteSVM
-    const soPath = findProgramSo();
+    const soPath = requireProtocolProgramSo();
     const hookSoPath = findHookSo();
     svm = new LiteSVM().withDefaultPrograms().withTransactionHistory(0n);
     svm.addProgramFromFile(PROGRAM_ID, soPath);

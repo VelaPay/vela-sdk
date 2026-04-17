@@ -2,6 +2,8 @@
 
 TypeScript SDK for the [Vela](https://velapay.com) subscription billing protocol on Solana. Provides instruction builders, a high-level client, pre-flight validators, and a CLI — all built on Token-2022 transfer hooks.
 
+Examples in this README assume the current **devnet** deployment.
+
 ## Installation
 
 ```bash
@@ -17,10 +19,11 @@ bun add helius-sdk
 ## Quick Start
 
 ```ts
-import { createVelaClient } from "@vela/sdk";
+import { DEVNET_USDC_MINT, createVelaClient } from "@vela/sdk";
 import { Connection } from "@solana/web3.js";
 
-const connection = new Connection("https://api.mainnet-beta.solana.com");
+const connection = new Connection("https://api.devnet.solana.com");
+const splUsdcMint = DEVNET_USDC_MINT;
 
 const vela = createVelaClient({
   connection,

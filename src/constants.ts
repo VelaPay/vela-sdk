@@ -31,6 +31,9 @@ export const TOKEN_CONFIG_SEED = seedBytes("token_config");
 
 // Token constants
 export const USDC_DECIMALS = 6;
+export const DEVNET_USDC_MINT = new PublicKey(
+  "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+);
 export const USDC_MINT = new PublicKey(
   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 );

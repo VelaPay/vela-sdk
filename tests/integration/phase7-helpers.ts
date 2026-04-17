@@ -1,6 +1,4 @@
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
 import type { Program } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -32,6 +30,7 @@ import {
   TRANSFER_HOOK_PROGRAM_ID,
   USDC_DECIMALS,
 } from "../../src/constants";
+import { requireProtocolHookSo } from "../helpers/protocol-artifacts";
 
 const EMPTY_PUBKEY = new PublicKey(new Uint8Array(32));
 // ProtocolConfig layout:
@@ -52,19 +51,7 @@ function discriminator(namespace: "global" | "account", name: string): Buffer {
 }
 
 export function findHookSo(): string {
-  const candidates = [
-    resolve(
-      __dirname,
-      "../../../../vela-protocol/target/deploy/vela_transfer_hook.so",
-    ),
-    "/Users/laitsky/Developments/vela-labs/vela-protocol/target/deploy/vela_transfer_hook.so",
-  ];
-  for (const path of candidates) {
-    if (existsSync(path)) return path;
-  }
-  throw new Error(
-    `vela_transfer_hook.so not found. Tried: ${candidates.join(", ")}`,
-  );
+  return requireProtocolHookSo();
 }
 
 export function deriveConfigAddress(): [PublicKey, number] {

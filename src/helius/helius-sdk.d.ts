@@ -1,3 +1,5 @@
+import type { Connection } from "@solana/web3.js";
+
 /**
  * Minimal type declarations for helius-sdk dynamic import.
  *
@@ -9,6 +11,7 @@ declare module "helius-sdk" {
   export type HeliusNetwork = "mainnet" | "devnet";
 
   export interface HeliusClient {
+    connection?: Connection;
     webhooks: {
       getAll(): Promise<
         Array<{
