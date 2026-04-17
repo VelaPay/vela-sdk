@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import idl from "../../idl/vela_protocol.json";
 import { PDAFactory } from "../../src/accounts/pda";
+import { VELA_MANDATE_DISCRIMINATOR } from "../../src/accounts/deserialize";
 import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../../src/constants";
+import { velaProgramIdl } from "../../src/idl";
 import { buildExecutePullInstruction } from "../../src/instructions/execute-pull";
 
 /**
@@ -26,7 +27,7 @@ function createReadOnlyProgramWithConfigStub(configStub: {
     } as any,
     { commitment: "confirmed" },
   );
-  const program = new Program(idl as any, provider);
+  const program = new Program(velaProgramIdl as any, provider);
   // Monkey-patch the protocolConfig account fetcher to return our stub.
   (program.account as any).protocolConfig = {
     fetch: async () => ({
@@ -59,6 +60,83 @@ function fixedParams() {
   };
 }
 
+function serializeMandate(args: {
+  subscriber: PublicKey;
+  merchant: PublicKey;
+  plan: PublicKey;
+}): Buffer {
+  const data = Buffer.alloc(268);
+  let offset = 0;
+  data.set(VELA_MANDATE_DISCRIMINATOR, offset);
+  offset += 8;
+  args.subscriber.toBuffer().copy(data, offset);
+  offset += 32;
+  args.plan.toBuffer().copy(data, offset);
+  offset += 32;
+  args.merchant.toBuffer().copy(data, offset);
+  offset += 32;
+  data.writeBigUInt64LE(1_000_000n, offset);
+  offset += 8;
+  data.writeBigUInt64LE(30n * 86_400n, offset);
+  offset += 8;
+  data.writeBigInt64LE(1_700_000_000n, offset);
+  offset += 8;
+  data.writeBigInt64LE(0n, offset);
+  offset += 8;
+  data.writeBigUInt64LE(12n, offset);
+  offset += 8;
+  data.writeBigUInt64LE(0n, offset);
+  offset += 8;
+  data.writeBigInt64LE(1_700_100_000n, offset);
+  offset += 8;
+  data.writeBigInt64LE(0n, offset);
+  offset += 8;
+  data.writeBigUInt64LE(0n, offset);
+  offset += 8;
+  data.writeBigUInt64LE(0n, offset);
+  offset += 8;
+  data.writeBigUInt64LE(0n, offset);
+  offset += 8;
+  data.writeUInt8(0, offset);
+  offset += 1;
+  data.writeUInt8(255, offset);
+  offset += 1;
+  data.writeUInt8(0, offset);
+  offset += 1;
+  data.writeBigUInt64LE(1n, offset);
+  offset += 8;
+  data.writeUInt8(3, offset);
+  offset += 1;
+  data.writeBigUInt64LE(0n, offset);
+  offset += 8;
+  PublicKey.default.toBuffer().copy(data, offset);
+  offset += 32;
+  data.writeBigInt64LE(0n, offset);
+  offset += 8;
+  data.writeUInt8(0, offset);
+  return data;
+}
+
+function createConnectionStub(params: ReturnType<typeof fixedParams>) {
+  const mandateData = serializeMandate({
+    subscriber: params.subscriberAddress,
+    merchant: params.merchantAddress,
+    plan: params.planAddress,
+  });
+  return {
+    getAccountInfo: async (key: PublicKey) =>
+      key.equals(params.mandateAddress)
+        ? {
+            data: mandateData,
+            executable: false,
+            lamports: 1,
+            owner: PROGRAM_ID,
+            rentEpoch: 0,
+          }
+        : null,
+  } as any;
+}
+
 function findKey(
   ix: { keys: { pubkey: PublicKey }[] },
   target: PublicKey,
@@ -76,9 +154,10 @@ describe("buildExecutePullInstruction — dynamic hook program ID resolution", (
     });
 
     const params = fixedParams();
+    const connection = createConnectionStub(params);
     const { instruction } = await buildExecutePullInstruction(
       program,
-      {} as any,
+      connection,
       { ...params, hookProgramId: overrideHook },
     );
 
@@ -102,9 +181,10 @@ describe("buildExecutePullInstruction — dynamic hook program ID resolution", (
     });
 
     const params = fixedParams();
+    const connection = createConnectionStub(params);
     const { instruction } = await buildExecutePullInstruction(
       program,
-      {} as any,
+      connection,
       params,
     );
 
@@ -128,9 +208,10 @@ describe("buildExecutePullInstruction — dynamic hook program ID resolution", (
     });
 
     const params = fixedParams();
+    const connection = createConnectionStub(params);
     const { instruction } = await buildExecutePullInstruction(
       program,
-      {} as any,
+      connection,
       params,
     );
 
@@ -148,9 +229,10 @@ describe("buildExecutePullInstruction — dynamic hook program ID resolution", (
       transferHookProgramId: TRANSFER_HOOK_PROGRAM_ID,
     });
     const params = fixedParams();
+    const connection = createConnectionStub(params);
     const { instruction, mandateAddress } = await buildExecutePullInstruction(
       program,
-      {} as any,
+      connection,
       params,
     );
 

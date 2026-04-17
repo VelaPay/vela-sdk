@@ -1,5 +1,14 @@
 import type { Program } from "@coral-xyz/anchor";
 import { PublicKey, type Connection } from "@solana/web3.js";
+import {
+  asBytes,
+  type BufferLike,
+  readI64LE,
+  readU32LE,
+  readU64LE,
+  readU8,
+  sliceEquals,
+} from "../browser/bytes";
 import type {
   AgentBudgetSummary,
   AgentMandate,
@@ -46,13 +55,13 @@ function mapAgentMandateStatus(status: number): AgentMandate["status"] {
 
 function readAgentMandateAccount(
   address: PublicKey,
-  raw: Buffer | Uint8Array,
+  raw: BufferLike,
 ): AgentMandate {
-  const data = Buffer.from(raw);
+  const data = asBytes(raw);
   if (data.length < 170) {
     throw new Error(`AgentMandate account ${address.toBase58()} is truncated`);
   }
-  if (!Buffer.from(AGENT_MANDATE_DISCRIMINATOR).equals(data.subarray(0, 8))) {
+  if (!sliceEquals(data, AGENT_MANDATE_DISCRIMINATOR)) {
     throw new Error(
       `Account ${address.toBase58()} does not contain an AgentMandate`,
     );
@@ -63,42 +72,42 @@ function readAgentMandateAccount(
   offset += 32;
   const agent = new PublicKey(data.subarray(offset, offset + 32));
   offset += 32;
-  const dailyLimit = data.readBigUInt64LE(offset);
+  const dailyLimit = readU64LE(data, offset);
   offset += 8;
-  const dailySpent = data.readBigUInt64LE(offset);
+  const dailySpent = readU64LE(data, offset);
   offset += 8;
-  const dailyLastReset = data.readBigInt64LE(offset);
+  const dailyLastReset = readI64LE(data, offset);
   offset += 8;
-  const lifetimeCap = data.readBigUInt64LE(offset);
+  const lifetimeCap = readU64LE(data, offset);
   offset += 8;
-  const totalSpent = data.readBigUInt64LE(offset);
+  const totalSpent = readU64LE(data, offset);
   offset += 8;
-  const minPullAmount = data.readBigUInt64LE(offset);
+  const minPullAmount = readU64LE(data, offset);
   offset += 8;
-  const minPullInterval = data.readBigInt64LE(offset);
+  const minPullInterval = readI64LE(data, offset);
   offset += 8;
-  const lastPullAt = data.readBigInt64LE(offset);
+  const lastPullAt = readI64LE(data, offset);
   offset += 8;
-  const status = mapAgentMandateStatus(data.readUInt8(offset));
+  const status = mapAgentMandateStatus(readU8(data, offset));
   offset += 1;
 
-  const servicesLen = data.readUInt32LE(offset);
+  const servicesLen = readU32LE(data, offset);
   offset += 4;
   const services = Array.from({ length: servicesLen }, () => {
     const service = new PublicKey(data.subarray(offset, offset + 32));
     offset += 32;
-    const dailyLimit = data.readBigUInt64LE(offset);
+    const dailyLimit = readU64LE(data, offset);
     offset += 8;
-    const dailySpent = data.readBigUInt64LE(offset);
+    const dailySpent = readU64LE(data, offset);
     offset += 8;
-    const lastReset = data.readBigInt64LE(offset);
+    const lastReset = readI64LE(data, offset);
     offset += 8;
     return { service, dailyLimit, dailySpent, lastReset };
   });
 
-  const bump = data.readUInt8(offset);
+  const bump = readU8(data, offset);
   offset += 1;
-  const version = data.readUInt8(offset);
+  const version = readU8(data, offset);
   offset += 1;
   const reserved = Array.from(
     data.subarray(offset, offset + AGENT_MANDATE_RESERVED_BYTES),
@@ -251,9 +260,7 @@ export async function listAgentMandates(
         const data = account.data;
         return (
           data.length >= AGENT_MANDATE_AGENT_OFFSET + 32 &&
-          Buffer.from(AGENT_MANDATE_DISCRIMINATOR).equals(
-            data.subarray(0, 8),
-          ) &&
+          sliceEquals(data, AGENT_MANDATE_DISCRIMINATOR) &&
           authority.equals(
             new PublicKey(
               data.subarray(

@@ -1,7 +1,8 @@
-import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
+import { u64LE } from "../browser/bytes";
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   APPROVAL_SEED,
   BILLING_SEED,
   CONFIG_SEED,
@@ -11,6 +12,7 @@ import {
   PROGRAM_ID,
   SEED_PREFIXES,
   TOKEN_CONFIG_SEED,
+  TOKEN_2022_PROGRAM_ID,
 } from "../constants";
 import {
   USAGE_CREDENTIAL_SEED,
@@ -18,8 +20,24 @@ import {
   USAGE_REPORT_SEED,
 } from "../types";
 
-function toLe8(value: BN | bigint | number): Buffer {
-  return new BN(value.toString()).toArrayLike(Buffer, "le", 8);
+function toLe8(value: BN | bigint | number): Uint8Array {
+  return u64LE(typeof value === "object" ? BigInt(value.toString()) : value);
+}
+
+export function getAssociatedTokenAddress(
+  mint: PublicKey,
+  owner: PublicKey,
+  allowOwnerOffCurve = false,
+  tokenProgramId: PublicKey = TOKEN_2022_PROGRAM_ID,
+): PublicKey {
+  if (!allowOwnerOffCurve && !PublicKey.isOnCurve(owner.toBytes())) {
+    throw new Error("Owner is off curve");
+  }
+
+  return PublicKey.findProgramAddressSync(
+    [owner.toBytes(), tokenProgramId.toBytes(), mint.toBytes()],
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  )[0];
 }
 
 export class PDAFactory {
@@ -32,8 +50,8 @@ export class PDAFactory {
     return PublicKey.findProgramAddressSync(
       [
         SEED_PREFIXES.MANDATE,
-        subscriber.toBuffer(),
-        merchant.toBuffer(),
+        subscriber.toBytes(),
+        merchant.toBytes(),
         toLe8(mandateIndex),
       ],
       programId,
@@ -48,9 +66,9 @@ export class PDAFactory {
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [
-        Buffer.from("stream"),
-        subscriber.toBuffer(),
-        merchant.toBuffer(),
+        SEED_PREFIXES.STREAM,
+        subscriber.toBytes(),
+        merchant.toBytes(),
         toLe8(mandateIndex),
       ],
       programId,
@@ -66,7 +84,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [SEED_PREFIXES.MANDATE, subscriber.toBuffer(), plan.toBuffer()],
+      [SEED_PREFIXES.MANDATE, subscriber.toBytes(), plan.toBytes()],
       programId,
     );
   }
@@ -76,7 +94,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [SEED_PREFIXES.MERCHANT_CREDENTIAL, merchant.toBuffer()],
+      [SEED_PREFIXES.MERCHANT_CREDENTIAL, merchant.toBytes()],
       programId,
     );
   }
@@ -90,7 +108,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [SEED_PREFIXES.CREDENTIAL, merchant.toBuffer(), toLe8(planId)],
+      [SEED_PREFIXES.CREDENTIAL, merchant.toBytes(), toLe8(planId)],
       programId,
     );
   }
@@ -100,7 +118,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [TOKEN_CONFIG_SEED, mint.toBuffer()],
+      [TOKEN_CONFIG_SEED, mint.toBytes()],
       programId,
     );
   }
@@ -118,7 +136,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [SEED_PREFIXES.MERCHANT, merchant.toBuffer()],
+      [SEED_PREFIXES.MERCHANT, merchant.toBytes()],
       programId,
     );
   }
@@ -129,7 +147,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [SEED_PREFIXES.PLAN, merchant.toBuffer(), toLe8(planId)],
+      [SEED_PREFIXES.PLAN, merchant.toBytes(), toLe8(planId)],
       programId,
     );
   }
@@ -140,7 +158,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [USAGE_PLAN_SEED, merchant.toBuffer(), toLe8(planId)],
+      [USAGE_PLAN_SEED, merchant.toBytes(), toLe8(planId)],
       programId,
     );
   }
@@ -151,7 +169,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [USAGE_CREDENTIAL_SEED, merchant.toBuffer(), toLe8(planId)],
+      [USAGE_CREDENTIAL_SEED, merchant.toBytes(), toLe8(planId)],
       programId,
     );
   }
@@ -162,7 +180,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [USAGE_REPORT_SEED, mandate.toBuffer(), toLe8(periodStart)],
+      [USAGE_REPORT_SEED, mandate.toBytes(), toLe8(periodStart)],
       programId,
     );
   }
@@ -173,7 +191,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [SEED_PREFIXES.AGENT_MANDATE, authority.toBuffer(), agent.toBuffer()],
+      [SEED_PREFIXES.AGENT_MANDATE, authority.toBytes(), agent.toBytes()],
       programId,
     );
   }
@@ -183,7 +201,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [APPROVAL_SEED, mandate.toBuffer()],
+      [APPROVAL_SEED, mandate.toBytes()],
       programId,
     );
   }
@@ -194,7 +212,7 @@ export class PDAFactory {
     programId: PublicKey = PROGRAM_ID,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [BILLING_SEED, mandate.toBuffer(), toLe8(pullsExecuted)],
+      [BILLING_SEED, mandate.toBytes(), toLe8(pullsExecuted)],
       programId,
     );
   }
@@ -204,7 +222,7 @@ export class PDAFactory {
     hookProgramId: PublicKey,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
-      [EXTRA_ACCOUNT_METAS_SEED, mint.toBuffer()],
+      [EXTRA_ACCOUNT_METAS_SEED, mint.toBytes()],
       hookProgramId,
     );
   }
@@ -217,7 +235,7 @@ export class PDAFactory {
     agentMandateAddress: PublicKey,
     wrappedUsdcMint: PublicKey,
   ): PublicKey {
-    return getAssociatedTokenAddressSync(
+    return getAssociatedTokenAddress(
       wrappedUsdcMint,
       agentMandateAddress,
       true,

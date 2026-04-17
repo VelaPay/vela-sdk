@@ -23,7 +23,6 @@ import {
 } from "@solana/web3.js";
 import { LiteSVMProvider } from "anchor-litesvm";
 import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
-import idl from "../../idl/vela_protocol.json";
 import {
   buildCancelInstruction,
   buildCreatePlanInstruction,
@@ -33,6 +32,7 @@ import {
   PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
+import { velaProgramIdl } from "../../src/idl";
 import {
   bootstrapMerchantCredential,
   bootstrapTokenConfig,
@@ -205,10 +205,13 @@ describe("Full Billing Cycle Simulation", () => {
     airdropSol(svm, subscriber.publicKey, 5n * BigInt(LAMPORTS_PER_SOL));
 
     const merchantProvider = new LiteSVMProvider(svm, new Wallet(merchant));
-    const merchantProgram = new Program(idl as any, merchantProvider);
+    const merchantProgram = new Program(velaProgramIdl as any, merchantProvider);
 
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
-    const subscriberProgram = new Program(idl as any, subscriberProvider);
+    const subscriberProgram = new Program(
+      velaProgramIdl as any,
+      subscriberProvider,
+    );
 
     // Create USDC
     const usdcMint = await createUsdcMint(merchantProvider);

@@ -1,10 +1,27 @@
 #!/usr/bin/env node
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
-const require = createRequire(import.meta.url);
-const { runCli } = require("../dist/cjs/cli/index.cjs");
+async function main() {
+  const require = createRequire(import.meta.url);
+  const { runCli } = require("../dist/cjs/cli/index.cjs");
+  await runCli();
+}
 
-void Promise.resolve(runCli()).catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+function isCliEntry() {
+  return (
+    typeof import.meta.url === "string" &&
+    import.meta.url.startsWith("file:") &&
+    typeof process !== "undefined" &&
+    Array.isArray(process.argv) &&
+    typeof process.argv[1] === "string" &&
+    fileURLToPath(import.meta.url) === process.argv[1]
+  );
+}
+
+if (isCliEntry()) {
+  void main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

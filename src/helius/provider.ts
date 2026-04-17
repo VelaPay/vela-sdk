@@ -1,4 +1,5 @@
 import type { Connection, VersionedTransaction } from "@solana/web3.js";
+import { Connection as Web3Connection } from "@solana/web3.js";
 
 async function loadHeliusSdk() {
   try {
@@ -17,9 +18,34 @@ async function loadHeliusSdk() {
   }
 }
 
+function normalizeHeliusNetwork(cluster?: string): "mainnet" | "devnet" {
+  switch (cluster) {
+    case undefined:
+    case "devnet":
+      return "devnet";
+    case "mainnet":
+    case "mainnet-beta":
+      return "mainnet";
+    default:
+      throw new Error(
+        `Unsupported Helius cluster "${cluster}". Expected "devnet" or "mainnet-beta".`,
+      );
+  }
+}
+
+function buildHeliusRpcUrl(apiKey: string, cluster?: string): string {
+  const network = normalizeHeliusNetwork(cluster);
+  return network === "mainnet"
+    ? `https://mainnet.helius-rpc.com/?api-key=${apiKey}`
+    : `https://devnet.helius-rpc.com/?api-key=${apiKey}`;
+}
+
 export async function createHelius(apiKey: string, cluster?: string) {
-  const { Helius } = await loadHeliusSdk();
-  return new Helius(apiKey, cluster as any);
+  const { createHelius: createHeliusClient } = await loadHeliusSdk();
+  return createHeliusClient({
+    apiKey,
+    network: normalizeHeliusNetwork(cluster),
+  });
 }
 
 /**
@@ -32,8 +58,7 @@ export async function createHeliusConnection(
   apiKey: string,
   cluster: string = "devnet",
 ): Promise<Connection> {
-  const helius = await createHelius(apiKey, cluster);
-  return helius.connection;
+  return new Web3Connection(buildHeliusRpcUrl(apiKey, cluster), "confirmed");
 }
 
 /**
@@ -47,16 +72,6 @@ export async function sendWithPriorityFee(
   connection: Connection,
   transaction: VersionedTransaction,
 ): Promise<string> {
-  try {
-    const helius = await createHelius(heliusApiKey);
-    // Helius sendSmartTransaction handles priority fee estimation
-    const signature = await helius.rpc.sendSmartTransaction(
-      transaction.serialize() as any,
-    );
-    return signature;
-  } catch {
-    // Fallback to standard send
-    const signature = await connection.sendTransaction(transaction);
-    return signature;
-  }
+  await createHelius(heliusApiKey);
+  return connection.sendTransaction(transaction);
 }

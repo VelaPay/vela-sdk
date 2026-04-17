@@ -1,9 +1,11 @@
 async function build() {
-  const entrypoints = [
+  const nodeEntrypoints = [
     "./src/index.ts",
+    "./src/events/index.ts",
     "./src/x402/index.ts",
     "./cli/index.ts",
   ];
+  const browserEntrypoints = ["./src/browser/index.ts"];
   const external = [
     "@x402/core",
     "@x402/fetch",
@@ -15,6 +17,7 @@ async function build() {
     "commander",
     "hono",
     "helius-sdk",
+    "zod",
     "bn.js",
     "anchor-litesvm",
     "anchor-litesvm/node_modules/litesvm",
@@ -25,30 +28,51 @@ async function build() {
   rmSync("./dist", { recursive: true, force: true });
 
   // ESM build
-  const esmResult = await Bun.build({
-    entrypoints,
+  const esmNodeResult = await Bun.build({
+    entrypoints: nodeEntrypoints,
     outdir: "./dist/esm",
     format: "esm",
     target: "node",
     external,
   });
+  const esmBrowserResult = await Bun.build({
+    entrypoints: browserEntrypoints,
+    outdir: "./dist/esm",
+    format: "esm",
+    target: "browser",
+    external,
+  });
 
   // CJS build
-  const cjsResult = await Bun.build({
-    entrypoints,
+  const cjsNodeResult = await Bun.build({
+    entrypoints: nodeEntrypoints,
     outdir: "./dist/cjs",
     format: "cjs",
     target: "node",
     naming: "[dir]/[name].cjs",
     external,
   });
+  const cjsBrowserResult = await Bun.build({
+    entrypoints: browserEntrypoints,
+    outdir: "./dist/cjs",
+    format: "cjs",
+    target: "browser",
+    naming: "[dir]/[name].cjs",
+    external,
+  });
 
-  if (!esmResult.success) {
-    console.error("ESM build failed:", esmResult.logs);
+  if (!esmNodeResult.success || !esmBrowserResult.success) {
+    console.error("ESM build failed:", [
+      ...esmNodeResult.logs,
+      ...esmBrowserResult.logs,
+    ]);
     process.exit(1);
   }
-  if (!cjsResult.success) {
-    console.error("CJS build failed:", cjsResult.logs);
+  if (!cjsNodeResult.success || !cjsBrowserResult.success) {
+    console.error("CJS build failed:", [
+      ...cjsNodeResult.logs,
+      ...cjsBrowserResult.logs,
+    ]);
     process.exit(1);
   }
 

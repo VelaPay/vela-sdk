@@ -254,7 +254,9 @@ describe("stream instruction builders", () => {
       isSigner: false,
       isWritable: true,
     });
-    expect(Buffer.from(instruction.data)).toEqual(ixDiscriminator("execute_stream"));
+    expect(Buffer.from(instruction.data).toString("hex")).toBe(
+      ixDiscriminator("execute_stream").toString("hex"),
+    );
   });
 
   test("buildPauseStreamInstruction encodes pause_stream", async () => {
@@ -300,7 +302,9 @@ describe("stream instruction builders", () => {
       isSigner: false,
       isWritable: false,
     });
-    expect(Buffer.from(instruction.data)).toEqual(ixDiscriminator("pause_stream"));
+    expect(Buffer.from(instruction.data).toString("hex")).toBe(
+      ixDiscriminator("pause_stream").toString("hex"),
+    );
   });
 
   test("buildResumeStreamInstruction encodes resume_stream", async () => {
@@ -314,7 +318,9 @@ describe("stream instruction builders", () => {
     expect(instruction.keys).toHaveLength(2);
     expect(instruction.keys[0]?.pubkey.toBase58()).toBe(merchant.toBase58());
     expect(instruction.keys[1]?.pubkey.toBase58()).toBe(mandate.toBase58());
-    expect(Buffer.from(instruction.data)).toEqual(ixDiscriminator("resume_stream"));
+    expect(Buffer.from(instruction.data).toString("hex")).toBe(
+      ixDiscriminator("resume_stream").toString("hex"),
+    );
   });
 
   test("buildUpdateStreamRateInstruction encodes optional rate fields", async () => {
@@ -357,7 +363,9 @@ describe("stream instruction builders", () => {
       isSigner: false,
       isWritable: true,
     });
-    expect(Buffer.from(instruction.data)).toEqual(ixDiscriminator("cancel_stream"));
+    expect(Buffer.from(instruction.data).toString("hex")).toBe(
+      ixDiscriminator("cancel_stream").toString("hex"),
+    );
   });
 
   test("instruction and root barrels publish all six stream builders", () => {

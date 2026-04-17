@@ -23,7 +23,6 @@ import {
 } from "@solana/web3.js";
 import { LiteSVMProvider } from "anchor-litesvm";
 import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
-import idl from "../../idl/vela_protocol.json";
 import {
   buildCancelInstruction,
   buildCreatePlanInstruction,
@@ -40,6 +39,7 @@ import {
   validateCancel,
   validatePullPayment,
 } from "../../src/index";
+import { velaProgramIdl } from "../../src/idl";
 import type { VelaMandate, VelaPlan } from "../../src/types";
 import {
   bootstrapMerchantCredential,
@@ -212,7 +212,7 @@ describe("SDK Client Integration", () => {
 
     // Create provider and program (merchant as signer)
     provider = new LiteSVMProvider(svm, new Wallet(merchant));
-    program = new Program(idl as any, provider);
+    program = new Program(velaProgramIdl as any, provider);
 
     // Create USDC mint and token accounts
     usdcMint = await createUsdcMint(provider);
@@ -304,7 +304,10 @@ describe("SDK Client Integration", () => {
   test("createSubscription creates mandate with correct fields", async () => {
     // Build subscribe instruction (as subscriber)
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
-    const subscriberProgram = new Program(idl as any, subscriberProvider);
+    const subscriberProgram = new Program(
+      velaProgramIdl as any,
+      subscriberProvider,
+    );
 
     const result = await buildSubscribeInstruction(subscriberProgram, {
       subscriber: subscriber.publicKey,
@@ -443,7 +446,10 @@ describe("SDK Client Integration", () => {
     );
 
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
-    const subscriberProgram = new Program(idl as any, subscriberProvider);
+    const subscriberProgram = new Program(
+      velaProgramIdl as any,
+      subscriberProvider,
+    );
 
     const [merchantStateAddress] = deriveMerchantStateAddress(
       merchant.publicKey,
@@ -532,7 +538,10 @@ describe("SDK Client Integration", () => {
     await createToken2022Ata(provider, merchant.publicKey, wrappedUsdcMint);
 
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
-    const subscriberProgram = new Program(idl as any, subscriberProvider);
+    const subscriberProgram = new Program(
+      velaProgramIdl as any,
+      subscriberProvider,
+    );
 
     const [merchantStateAddress] = deriveMerchantStateAddress(
       merchant.publicKey,
@@ -608,7 +617,10 @@ describe("SDK Client Integration", () => {
   test("cancelSubscription sets mandate to cancelled", async () => {
     // Cancel as subscriber
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
-    const subscriberProgram = new Program(idl as any, subscriberProvider);
+    const subscriberProgram = new Program(
+      velaProgramIdl as any,
+      subscriberProvider,
+    );
 
     const cancelResult = await buildCancelInstruction(subscriberProgram, {
       authority: subscriber.publicKey,
@@ -657,7 +669,10 @@ describe("SDK Client Integration", () => {
 
     // Subscribe as subscriber
     const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
-    const subscriberProgram = new Program(idl as any, subscriberProvider);
+    const subscriberProgram = new Program(
+      velaProgramIdl as any,
+      subscriberProvider,
+    );
 
     const subResult = await buildSubscribeInstruction(subscriberProgram, {
       subscriber: subscriber.publicKey,

@@ -18,4 +18,9 @@ export interface StreamMandate {
   status: StreamStatus;
   mandateIndex: bigint;
   bump: number;
+  pendingNewRatePerSecond: bigint;
+  pendingNewAuthorizedMaxRate: bigint;
+  pendingEffectiveAt: bigint;
+  pendingChangeType: number;
+  pendingNonceShort: number[];
 }

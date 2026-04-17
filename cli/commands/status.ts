@@ -1,10 +1,10 @@
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import type { Command } from "commander";
-import idl from "../../idl/vela_protocol.json";
 import { deserializeMandate } from "../../src/accounts/deserialize";
 import { PROGRAM_ID } from "../../src/constants";
 import { VelaError } from "../../src/errors/base";
+import { velaProgramIdl } from "../../src/idl";
 import { createConnection } from "../utils/connection";
 import { formatMandateStatus } from "../utils/formatting";
 
@@ -33,7 +33,7 @@ export function registerStatus(parent: Command): void {
           } as any,
           { commitment: "confirmed" },
         );
-        const program = new Program(idl as any, provider);
+        const program = new Program(velaProgramIdl as any, provider);
 
         const mandateAddress = new PublicKey(mandateAddressStr);
 

@@ -37,12 +37,12 @@ function optionI64(value: bigint | null): Buffer {
   return bytes;
 }
 
-function serializeStreamMandate(): Buffer {
+function serializeStreamMandate(version = 1): Buffer {
   const data = Buffer.alloc(225);
   let offset = 0;
-  STREAM_MANDATE_DISCRIMINATOR.copy(data, offset);
+  data.set(STREAM_MANDATE_DISCRIMINATOR, offset);
   offset += 8;
-  data.writeUInt8(1, offset);
+  data.writeUInt8(version, offset);
   offset += 1;
   subscriber.toBuffer().copy(data, offset);
   offset += 32;
@@ -69,6 +69,18 @@ function serializeStreamMandate(): Buffer {
   data.writeBigUInt64LE(7n, offset);
   offset += 8;
   data.writeUInt8(254, offset);
+  offset += 1;
+  if (version >= 2) {
+    data.writeBigUInt64LE(9n, offset);
+    offset += 8;
+    data.writeBigUInt64LE(12n, offset);
+    offset += 8;
+    data.writeBigInt64LE(1_700_000_120n, offset);
+    offset += 8;
+    data.writeUInt8(2, offset);
+    offset += 1;
+    Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]).copy(data, offset);
+  }
   return data;
 }
 
@@ -91,6 +103,18 @@ describe("deserializeStreamMandate", () => {
     expect(result.status).toBe("active");
     expect(result.mandateIndex).toBe(7n);
     expect(result.bump).toBe(254);
+    expect(result.pendingChangeType).toBe(0);
+  });
+
+  test("decodes a V2 stream mandate buffer with pending change fields", () => {
+    const result = deserializeStreamMandate(address, serializeStreamMandate(2));
+
+    expect(result.version).toBe(2);
+    expect(result.pendingNewRatePerSecond).toBe(9n);
+    expect(result.pendingNewAuthorizedMaxRate).toBe(12n);
+    expect(result.pendingEffectiveAt).toBe(1_700_000_120n);
+    expect(result.pendingChangeType).toBe(2);
+    expect(result.pendingNonceShort).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 });
 

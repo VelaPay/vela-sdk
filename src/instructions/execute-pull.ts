@@ -7,8 +7,9 @@ import {
   type Connection,
   type PublicKey,
   SystemProgram,
-  type TransactionInstruction,
+  TransactionInstruction,
 } from "@solana/web3.js";
+import { fetchMandate } from "../accounts/deserialize";
 import { PDAFactory } from "../accounts/pda";
 import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../constants";
 import type { VelaPullParams } from "../types";
@@ -65,6 +66,7 @@ export async function buildExecutePullInstruction(
     );
   }
   const mandateAddress = explicitMandateAddress;
+  const mandate = await fetchMandate(_connection, mandateAddress);
 
   const [pullApproval] = PDAFactory.approval(mandateAddress, programId);
   const [tokenConfigAddress] = PDAFactory.tokenConfig(
@@ -125,6 +127,29 @@ export async function buildExecutePullInstruction(
       systemProgram: SystemProgram.programId,
     })
     .instruction();
+
+  if (
+    mandate.pendingChangeType === 2 &&
+    mandate.pendingNewPlan &&
+    mandate.pendingEffectiveAt !== undefined &&
+    BigInt(Math.floor(Date.now() / 1000)) >= mandate.pendingEffectiveAt
+  ) {
+    return {
+      instruction: new TransactionInstruction({
+        programId: baseInstruction.programId,
+        keys: [
+          ...baseInstruction.keys,
+          {
+            pubkey: mandate.pendingNewPlan,
+            isSigner: false,
+            isWritable: false,
+          },
+        ],
+        data: baseInstruction.data,
+      }),
+      mandateAddress,
+    };
+  }
 
   return { instruction: baseInstruction, mandateAddress };
 }

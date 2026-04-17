@@ -31,6 +31,11 @@ function makeMandate(
     status: "active",
     mandateIndex: 7n,
     bump: 255,
+    pendingNewRatePerSecond: 0n,
+    pendingNewAuthorizedMaxRate: 0n,
+    pendingEffectiveAt: 0n,
+    pendingChangeType: 0,
+    pendingNonceShort: [],
     ...overrides,
   };
 }

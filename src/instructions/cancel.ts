@@ -1,7 +1,6 @@
 import type { Program } from "@coral-xyz/anchor";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { PDAFactory } from "../accounts/pda";
+import { getAssociatedTokenAddress, PDAFactory } from "../accounts/pda";
 import {
   getSubscribablePlan,
   resolvePlanContext,
@@ -73,14 +72,14 @@ export async function buildCancelInstruction(
   }
 
   // Derive subscriber's credential ATA and USDC ATA
-  const subscriberCredentialAccount = getAssociatedTokenAddressSync(
+  const subscriberCredentialAccount = getAssociatedTokenAddress(
     credentialMint,
     subscriberAddress,
     false,
     TOKEN_2022_PROGRAM_ID,
   );
 
-  const subscriberTokenAccount = getAssociatedTokenAddressSync(
+  const subscriberTokenAccount = getAssociatedTokenAddress(
     usdcMintAddress,
     subscriberAddress,
     false,

@@ -1,12 +1,18 @@
 export {
   STREAM_MANDATE_DISCRIMINATOR,
+  TOKEN_CONFIG_DISCRIMINATOR,
+  VELA_MANDATE_DISCRIMINATOR,
   deserializeAgentMandate,
   deserializeMandate,
+  deserializeMandateAccount,
   deserializeMerchantState,
   deserializePlan,
   deserializeStreamMandate,
+  deserializeTokenConfigAccount,
   deserializeUsagePlan,
+  fetchMandate,
   fetchStreamMandate,
+  fetchTokenConfig,
 } from "./deserialize";
 export {
   getSubscribablePlan,

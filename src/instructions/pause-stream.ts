@@ -1,13 +1,8 @@
-import { sha256 } from "@noble/hashes/sha2.js";
-import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { type Connection, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
 import { fetchStreamMandate } from "../accounts/deserialize";
-import { PDAFactory } from "../accounts/pda";
-import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../constants";
-
-function instructionDiscriminator(name: string): Buffer {
-  return Buffer.from(sha256(new TextEncoder().encode(`global:${name}`)).slice(0, 8));
-}
+import { getAssociatedTokenAddress, PDAFactory } from "../accounts/pda";
+import { asBytes, asInstructionData, instructionDiscriminator } from "../browser/bytes";
+import { PROGRAM_ID, TOKEN_2022_PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../constants";
 
 async function fetchProtocolConfigValues(
   connection: Connection,
@@ -19,7 +14,7 @@ async function fetchProtocolConfigValues(
     throw new Error(`ProtocolConfig account not found: ${protocolConfig.toBase58()}`);
   }
 
-  const data = Buffer.from(info.data);
+  const data = asBytes(info.data);
   const wrappingVault = new PublicKey(data.subarray(113, 145));
   const hookProgramId = new PublicKey(data.subarray(154, 186));
   return {
@@ -45,13 +40,13 @@ export async function buildPauseStreamInstruction(args: {
     streamMandate.mint,
     protocolConfigValues.hookProgramId,
   );
-  const subscriberWrappedAccount = getAssociatedTokenAddressSync(
+  const subscriberWrappedAccount = getAssociatedTokenAddress(
     streamMandate.mint,
     mandate,
     true,
     TOKEN_2022_PROGRAM_ID,
   );
-  const merchantWrappedAccount = getAssociatedTokenAddressSync(
+  const merchantWrappedAccount = getAssociatedTokenAddress(
     streamMandate.mint,
     streamMandate.merchant,
     true,
@@ -76,6 +71,6 @@ export async function buildPauseStreamInstruction(args: {
       { pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
-    data: instructionDiscriminator("pause_stream"),
+    data: asInstructionData(instructionDiscriminator("pause_stream")),
   });
 }

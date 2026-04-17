@@ -3,6 +3,12 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@vela/sdk": ["./src/index.ts"],
+      "@vela/sdk/browser": ["./src/browser/index.ts"],
+      "@vela/sdk/*": ["./src/*"]
+    },
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,

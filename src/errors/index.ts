@@ -38,4 +38,10 @@ export {
   StreamTerminalStatusError,
   WrongAccountTypeError,
 } from "./stream-errors";
+export {
+  AmountPrecisionExceeded,
+  TokenChangeNotSupported,
+  TokenConfigDisabled,
+  TokenConfigNotFound,
+} from "./upgrade-errors";
 export { translateError } from "./translate";

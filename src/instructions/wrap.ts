@@ -1,17 +1,12 @@
 import type { Program } from "@coral-xyz/anchor";
 import {
-  TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-} from "@solana/spl-token";
-import {
   PublicKey,
   SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
 import BN from "bn.js";
-import { PDAFactory } from "../accounts/pda";
-import { PROGRAM_ID } from "../constants";
+import { getAssociatedTokenAddress, PDAFactory } from "../accounts/pda";
+import { PROGRAM_ID, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "../constants";
 import type { VelaWrapParams } from "../types";
 
 export interface BuildWrapResult {
@@ -46,7 +41,7 @@ export async function buildWrapInstruction(
   const [mintAuthority] = PDAFactory.mintAuthority(programId);
 
   // Subscriber's SPL USDC ATA (Token program)
-  const subscriberUsdcAccount = getAssociatedTokenAddressSync(
+  const subscriberUsdcAccount = getAssociatedTokenAddress(
     splUsdcMint,
     subscriber,
     false,
@@ -55,7 +50,7 @@ export async function buildWrapInstruction(
 
   const resolvedDestinationWrappedAccount =
     destinationWrappedAccount ??
-    getAssociatedTokenAddressSync(
+    getAssociatedTokenAddress(
       wrappedUsdcMint,
       destinationOwner,
       true,

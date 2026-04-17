@@ -1,5 +1,16 @@
-import { sha256 } from "@noble/hashes/sha2.js";
 import { type Connection, PublicKey } from "@solana/web3.js";
+import {
+  accountDiscriminator,
+  asBytes,
+  type BufferLike,
+  hexFromBytes,
+  readI64LE,
+  readU32LE,
+  readU64LE,
+  readU8,
+  sliceEquals,
+  utf8FromFixedBytes,
+} from "../browser/bytes";
 import type {
   AgentMandate,
   AgentMandateStatus,
@@ -11,6 +22,7 @@ import type {
   PlanStatus,
   ProtocolConfig,
   TokenConfig,
+  TokenConfigAccount,
   VelaMandate,
   VelaPlan,
   VelaUsagePlan,
@@ -61,10 +73,7 @@ function deserializeAgentServiceLimit(raw: any): AgentServiceLimit {
 }
 
 function decodeUnitName(raw: number[] | Uint8Array): string {
-  const bytes = Uint8Array.from(raw);
-  const terminator = bytes.indexOf(0);
-  const slice = terminator >= 0 ? bytes.subarray(0, terminator) : bytes;
-  return Buffer.from(slice).toString("utf-8");
+  return utf8FromFixedBytes(raw);
 }
 
 function toBigInt(raw: { toString(): string } | bigint | number): bigint {
@@ -84,6 +93,17 @@ function mapBillingRail(raw: any): BillingRail {
   throw new Error(`Unknown BillingRail variant: ${JSON.stringify(raw)}`);
 }
 
+function mapBillingRailByte(raw: number): BillingRail {
+  switch (raw) {
+    case 0:
+      return "transferHook";
+    case 1:
+      return "tokenDelegate";
+    default:
+      throw new Error(`Unknown BillingRail variant: ${raw}`);
+  }
+}
+
 function mapStreamStatus(raw: number): StreamStatus {
   switch (raw) {
     case 0:
@@ -98,51 +118,51 @@ function mapStreamStatus(raw: number): StreamStatus {
 }
 
 function readOptionU64(
-  data: Buffer,
+  data: BufferLike,
   offset: number,
 ): { value: bigint | null; nextOffset: number } {
-  const tag = data.readUInt8(offset);
+  const tag = readU8(data, offset);
   if (tag === 0) {
     return { value: null, nextOffset: offset + 9 };
   }
   return {
-    value: data.readBigUInt64LE(offset + 1),
+    value: readU64LE(data, offset + 1),
     nextOffset: offset + 9,
   };
 }
 
 function readOptionI64(
-  data: Buffer,
+  data: BufferLike,
   offset: number,
 ): { value: bigint | null; nextOffset: number } {
-  const tag = data.readUInt8(offset);
+  const tag = readU8(data, offset);
   if (tag === 0) {
     return { value: null, nextOffset: offset + 9 };
   }
   return {
-    value: data.readBigInt64LE(offset + 1),
+    value: readI64LE(data, offset + 1),
     nextOffset: offset + 9,
   };
 }
 
-function discriminatorHex(data: Buffer | Uint8Array): string {
-  return Buffer.from(data).toString("hex");
+function discriminatorHex(data: BufferLike): string {
+  return hexFromBytes(data);
 }
 
-export const STREAM_MANDATE_DISCRIMINATOR = Buffer.from(
-  sha256(new TextEncoder().encode("account:StreamMandate")).slice(0, 8),
-);
+export const STREAM_MANDATE_DISCRIMINATOR = accountDiscriminator("StreamMandate");
+export const VELA_MANDATE_DISCRIMINATOR = accountDiscriminator("VelaMandate");
+export const TOKEN_CONFIG_DISCRIMINATOR = accountDiscriminator("TokenConfig");
 
 export function deserializeStreamMandate(
   address: PublicKey,
-  raw: Buffer | Uint8Array,
+  raw: BufferLike,
 ): StreamMandate {
-  const data = Buffer.from(raw);
+  const data = asBytes(raw);
   if (data.length < 225) {
     throw new Error(`StreamMandate account ${address.toBase58()} is truncated`);
   }
   const gotDiscriminator = data.subarray(0, 8);
-  if (!Buffer.from(STREAM_MANDATE_DISCRIMINATOR).equals(gotDiscriminator)) {
+  if (!sliceEquals(gotDiscriminator, STREAM_MANDATE_DISCRIMINATOR)) {
     throw new WrongAccountTypeError(
       address,
       "StreamMandate",
@@ -150,14 +170,9 @@ export function deserializeStreamMandate(
     );
   }
 
-  const version = data.readUInt8(8);
-  switch (version) {
-    case 1:
-      break;
-    case 2:
-      throw new Error("StreamMandate version 2 deserializer not yet implemented");
-    default:
-      throw new Error(`Unsupported StreamMandate version: ${version}`);
+  const version = readU8(data, 8);
+  if (version !== 1 && version !== 2) {
+    throw new Error(`Unsupported StreamMandate version: ${version}`);
   }
 
   let offset = 9;
@@ -167,25 +182,43 @@ export function deserializeStreamMandate(
   offset += 32;
   const mint = new PublicKey(data.subarray(offset, offset + 32));
   offset += 32;
-  const ratePerSecond = data.readBigUInt64LE(offset);
+  const ratePerSecond = readU64LE(data, offset);
   offset += 8;
-  const authorizedMaxRate = data.readBigUInt64LE(offset);
+  const authorizedMaxRate = readU64LE(data, offset);
   offset += 8;
-  const lastSettledTs = data.readBigInt64LE(offset);
+  const lastSettledTs = readI64LE(data, offset);
   offset += 8;
-  const totalStreamed = data.readBigUInt64LE(offset);
+  const totalStreamed = readU64LE(data, offset);
   offset += 8;
   const maxStreamed = readOptionU64(data, offset);
   offset = maxStreamed.nextOffset;
   const pausedAt = readOptionI64(data, offset);
   offset = pausedAt.nextOffset;
-  const minSettleInterval = data.readUInt32LE(offset);
+  const minSettleInterval = readU32LE(data, offset);
   offset += 4;
-  const status = mapStreamStatus(data.readUInt8(offset));
+  const status = mapStreamStatus(readU8(data, offset));
   offset += 1;
-  const mandateIndex = data.readBigUInt64LE(offset);
+  const mandateIndex = readU64LE(data, offset);
   offset += 8;
-  const bump = data.readUInt8(offset);
+  const bump = readU8(data, offset);
+  offset += 1;
+
+  let pendingNewRatePerSecond = 0n;
+  let pendingNewAuthorizedMaxRate = 0n;
+  let pendingEffectiveAt = 0n;
+  let pendingChangeType = 0;
+  let pendingNonceShort: number[] = [];
+  if (version >= 2) {
+    pendingNewRatePerSecond = readU64LE(data, offset);
+    offset += 8;
+    pendingNewAuthorizedMaxRate = readU64LE(data, offset);
+    offset += 8;
+    pendingEffectiveAt = readI64LE(data, offset);
+    offset += 8;
+    pendingChangeType = readU8(data, offset);
+    offset += 1;
+    pendingNonceShort = Array.from(data.subarray(offset, offset + 8));
+  }
 
   return {
     address,
@@ -203,6 +236,11 @@ export function deserializeStreamMandate(
     status,
     mandateIndex,
     bump,
+    pendingNewRatePerSecond,
+    pendingNewAuthorizedMaxRate,
+    pendingEffectiveAt,
+    pendingChangeType,
+    pendingNonceShort,
   };
 }
 
@@ -215,12 +253,9 @@ export async function fetchStreamMandate(
     throw new Error(`StreamMandate account not found: ${address.toBase58()}`);
   }
 
-  const data = Buffer.from(info.data);
+  const data = asBytes(info.data);
   const gotDiscriminator = data.subarray(0, Math.min(8, data.length));
-  if (
-    data.length < 8 ||
-    !Buffer.from(STREAM_MANDATE_DISCRIMINATOR).equals(gotDiscriminator)
-  ) {
+  if (data.length < 8 || !sliceEquals(gotDiscriminator, STREAM_MANDATE_DISCRIMINATOR)) {
     throw new WrongAccountTypeError(
       address,
       "StreamMandate",
@@ -231,11 +266,152 @@ export async function fetchStreamMandate(
   return deserializeStreamMandate(address, data);
 }
 
+function mapMandateStatusByte(raw: number): MandateStatus {
+  switch (raw) {
+    case 0:
+      return "active";
+    case 1:
+      return "cancelled";
+    case 2:
+      return "expired";
+    default:
+      throw new Error(`Unknown MandateStatus discriminator: ${raw}`);
+  }
+}
+
+function mapBillingTypeByte(raw: number): BillingType {
+  switch (raw) {
+    case 0:
+      return "flat";
+    case 1:
+      return "usage";
+    default:
+      throw new Error(`Unknown BillingType discriminator: ${raw}`);
+  }
+}
+
+export function deserializeMandateAccount(
+  address: PublicKey,
+  raw: BufferLike,
+): VelaMandate {
+  const data = asBytes(raw);
+  if (data.length < 268) {
+    throw new Error(`VelaMandate account ${address.toBase58()} is truncated`);
+  }
+  const gotDiscriminator = data.subarray(0, 8);
+  if (!sliceEquals(gotDiscriminator, VELA_MANDATE_DISCRIMINATOR)) {
+    throw new WrongAccountTypeError(
+      address,
+      "VelaMandate",
+      discriminatorHex(gotDiscriminator),
+    );
+  }
+
+  let offset = 8;
+  const subscriber = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const plan = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const merchant = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const amount = readU64LE(data, offset);
+  offset += 8;
+  const frequency = readU64LE(data, offset);
+  offset += 8;
+  const startDate = readI64LE(data, offset);
+  offset += 8;
+  const expiry = readI64LE(data, offset);
+  offset += 8;
+  const maxPulls = readU64LE(data, offset);
+  offset += 8;
+  const pullsExecuted = readU64LE(data, offset);
+  offset += 8;
+  const nextPaymentDue = readI64LE(data, offset);
+  offset += 8;
+  const lastPullAt = readI64LE(data, offset);
+  offset += 8;
+  const lastBillingRecordedPull = readU64LE(data, offset);
+  offset += 8;
+  const validationRequestNonce = readU64LE(data, offset);
+  offset += 8;
+  const billingRequestNonce = readU64LE(data, offset);
+  offset += 8;
+  const status = mapMandateStatusByte(readU8(data, offset));
+  offset += 1;
+  const bump = readU8(data, offset);
+  offset += 1;
+  const billingType = mapBillingTypeByte(readU8(data, offset));
+  offset += 1;
+  const mandateIndex = readU64LE(data, offset);
+  offset += 8;
+  const version = readU8(data, offset);
+  offset += 1;
+  const creditBalance = readU64LE(data, offset);
+  offset += 8;
+  const pendingPlan = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const pendingEffectiveAt = readI64LE(data, offset);
+  offset += 8;
+  const pendingChangeType = readU8(data, offset);
+  offset += 1;
+  const pendingNonceShort = Array.from(data.subarray(offset, offset + 8));
+  offset += 8;
+  const reserved = Array.from(data.subarray(offset, offset + 7));
+
+  return {
+    address,
+    subscriber,
+    plan: plan.equals(PublicKey.default) ? undefined : plan,
+    merchant,
+    mandateIndex,
+    amount,
+    frequency,
+    startDate,
+    expiry,
+    maxPulls,
+    pullsExecuted,
+    nextPaymentDue,
+    status,
+    bump,
+    billingType,
+    version,
+    lastPullAt,
+    lastBillingRecordedPull,
+    validationRequestNonce,
+    billingRequestNonce,
+    creditBalance,
+    pendingNewPlan: pendingPlan.equals(PublicKey.default)
+      ? undefined
+      : pendingPlan,
+    pendingEffectiveAt,
+    pendingChangeType,
+    pendingNonceShort,
+    _reserved: reserved,
+  };
+}
+
+export async function fetchMandate(
+  connection: Connection,
+  address: PublicKey,
+): Promise<VelaMandate> {
+  const info = await connection.getAccountInfo(address);
+  if (!info) {
+    throw new Error(`VelaMandate account not found: ${address.toBase58()}`);
+  }
+  return deserializeMandateAccount(address, info.data);
+}
+
 /**
  * Converts an Anchor-deserialized VelaMandate account (BN fields) to SDK type (bigint fields).
  */
 export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
   const version = Number(raw.version ?? 0);
+  const pendingNewPlan =
+    raw.pendingNewPlan &&
+    raw.pendingNewPlan instanceof PublicKey &&
+    !raw.pendingNewPlan.equals(PublicKey.default)
+      ? raw.pendingNewPlan
+      : undefined;
   return {
     address,
     subscriber: raw.subscriber,
@@ -253,6 +429,32 @@ export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
     bump: raw.bump,
     billingType: mapBillingType(raw.billingType),
     version,
+    lastPullAt:
+      raw.lastPullAt !== undefined ? toBigInt(raw.lastPullAt) : undefined,
+    lastBillingRecordedPull:
+      raw.lastBillingRecordedPull !== undefined
+        ? toBigInt(raw.lastBillingRecordedPull)
+        : undefined,
+    validationRequestNonce:
+      raw.validationRequestNonce !== undefined
+        ? toBigInt(raw.validationRequestNonce)
+        : undefined,
+    billingRequestNonce:
+      raw.billingRequestNonce !== undefined
+        ? toBigInt(raw.billingRequestNonce)
+        : undefined,
+    creditBalance:
+      raw.creditBalance !== undefined ? toBigInt(raw.creditBalance) : undefined,
+    pendingNewPlan,
+    pendingEffectiveAt:
+      raw.pendingEffectiveAt !== undefined
+        ? toBigInt(raw.pendingEffectiveAt)
+        : undefined,
+    pendingChangeType:
+      raw.pendingChangeType !== undefined
+        ? Number(raw.pendingChangeType)
+        : undefined,
+    pendingNonceShort: toReserved(raw.pendingNonceShort),
     _reserved: toReserved(raw._reserved),
   };
 }
@@ -369,13 +571,87 @@ export function deserializeProtocolConfig(raw: any): ProtocolConfig {
   };
 }
 
-export function deserializeTokenConfig(raw: any): TokenConfig {
+export function deserializeTokenConfig(raw: any): TokenConfigAccount {
   return {
+    address: raw.address,
     mint: raw.mint,
     tokenProgram: raw.tokenProgram,
     billingRail: mapBillingRail(raw.billingRail),
     decimals: Number(raw.decimals ?? 0),
     enabled: Boolean(raw.enabled),
     oracleReference: raw.oracleReference,
+    admin: raw.admin,
+    createdAt:
+      raw.createdAt !== undefined ? toBigInt(raw.createdAt) : undefined,
+    bump: raw.bump !== undefined ? Number(raw.bump) : undefined,
+    version: raw.version !== undefined ? Number(raw.version) : undefined,
+    _reserved: toReserved(raw._reserved),
   };
+}
+
+export function deserializeTokenConfigAccount(
+  address: PublicKey,
+  raw: BufferLike,
+): TokenConfigAccount {
+  const data = asBytes(raw);
+  if (data.length < 213) {
+    throw new Error(`TokenConfig account ${address.toBase58()} is truncated`);
+  }
+  const gotDiscriminator = data.subarray(0, 8);
+  if (!sliceEquals(gotDiscriminator, TOKEN_CONFIG_DISCRIMINATOR)) {
+    throw new WrongAccountTypeError(
+      address,
+      "TokenConfig",
+      discriminatorHex(gotDiscriminator),
+    );
+  }
+
+  let offset = 8;
+  const mint = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const tokenProgram = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const billingRail = mapBillingRailByte(readU8(data, offset));
+  offset += 1;
+  const decimals = readU8(data, offset);
+  offset += 1;
+  const enabled = readU8(data, offset) === 1;
+  offset += 1;
+  const oracleReference = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const admin = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const createdAt = readI64LE(data, offset);
+  offset += 8;
+  const bump = readU8(data, offset);
+  offset += 1;
+  const version = readU8(data, offset);
+  offset += 1;
+  const reserved = Array.from(data.subarray(offset, offset + 64));
+
+  return {
+    address,
+    mint,
+    tokenProgram,
+    billingRail,
+    decimals,
+    enabled,
+    oracleReference,
+    admin,
+    createdAt,
+    bump,
+    version,
+    _reserved: reserved,
+  };
+}
+
+export async function fetchTokenConfig(
+  connection: Connection,
+  address: PublicKey,
+): Promise<TokenConfigAccount> {
+  const info = await connection.getAccountInfo(address);
+  if (!info) {
+    throw new Error(`TokenConfig account not found: ${address.toBase58()}`);
+  }
+  return deserializeTokenConfigAccount(address, info.data);
 }

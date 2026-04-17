@@ -22,11 +22,13 @@ import {
 import type { LiteSVMProvider } from "anchor-litesvm";
 import type { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
 import type { Command } from "commander";
-import idl from "../../idl/vela_protocol.json";
-import { PROGRAM_ID } from "../../src/constants";
+import { PROGRAM_ID, USDC_DECIMALS } from "../../src/constants";
+import { velaProgramIdl } from "../../src/idl";
+import { parseAmount } from "../../src/token/parse-amount";
 import { formatDuration, formatLamports } from "../utils/formatting";
 
 const DECIMALS = 6;
+const USDC_TOKEN = { decimals: USDC_DECIMALS } as const;
 
 /**
  * Registers the `vela simulate` command (CLI-05, D-07).
@@ -46,7 +48,7 @@ export function registerSimulate(parent: Command): void {
     .action(async (opts) => {
       const { LiteSVMProvider, LiteSVM } = await loadLiteSvm();
       const numPulls = parseInt(opts.pulls);
-      const amount = BigInt(Math.round(parseFloat(opts.amount) * 1_000_000));
+      const amount = parseAmount(opts.amount, USDC_TOKEN);
       const frequency = BigInt(opts.frequency);
 
       console.log("\n--- VelaPay Billing Simulation ---\n");
@@ -71,7 +73,7 @@ export function registerSimulate(parent: Command): void {
       // Create provider with merchant as default signer
       const merchantProvider = new LiteSVMProvider(svm, new Wallet(merchant));
       const program = new Program(
-        idl as never,
+        velaProgramIdl as never,
         merchantProvider,
       ) as Program<any>;
 
@@ -149,7 +151,7 @@ export function registerSimulate(parent: Command): void {
         new Wallet(subscriber),
       );
       const subscriberProgram = new Program(
-        idl as never,
+        velaProgramIdl as never,
         subscriberProvider,
       ) as Program<any>;
 
@@ -192,7 +194,7 @@ export function registerSimulate(parent: Command): void {
 
         // Use merchant provider for pull (permissionless -- any payer works)
         const pullProgram = new Program(
-          idl as never,
+          velaProgramIdl as never,
           merchantProvider,
         ) as Program<any>;
 

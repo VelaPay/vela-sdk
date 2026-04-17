@@ -1,10 +1,14 @@
 import { Wallet } from "@coral-xyz/anchor";
 import type { Command } from "commander";
 import { createVelaClient } from "../../src/client";
+import { USDC_DECIMALS } from "../../src/constants";
 import { VelaError } from "../../src/errors/base";
+import { parseAmount } from "../../src/token/parse-amount";
 import { createConnection } from "../utils/connection";
 import { formatPlanDetails } from "../utils/formatting";
 import { loadKeypair } from "../utils/keypair";
+
+const USDC_TOKEN = { decimals: USDC_DECIMALS } as const;
 
 /**
  * Registers the `vela create-plan` command (CLI-01).
@@ -35,8 +39,7 @@ export function registerCreatePlan(parent: Command): void {
 
         const vela = createVelaClient({ connection, wallet: wallet as any });
 
-        // Convert USDC amount to raw (6 decimals)
-        const amount = BigInt(Math.round(parseFloat(opts.amount) * 1_000_000));
+        const amount = parseAmount(opts.amount, USDC_TOKEN);
         const frequency = BigInt(opts.frequency);
         const trialPeriod = BigInt(opts.trialPeriod);
         const maxPulls = BigInt(opts.maxPulls);

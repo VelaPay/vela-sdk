@@ -5,7 +5,6 @@ import type {
   PublicKey,
   VersionedTransaction,
 } from "@solana/web3.js";
-import idl from "../idl/vela_protocol.json";
 import {
   checkAgentBudget,
   deserializeMandate,
@@ -22,14 +21,22 @@ import {
 } from "./accounts";
 import { deserializeProtocolConfig } from "./accounts/deserialize";
 import { ALTManager } from "./alt/lookup-table";
+import {
+  type PreviewPlanChangeResult,
+  type UpgradeBuilderArgs,
+  type UpgradePlanInput,
+  UpgradeBuilder,
+} from "./builders";
 import { PROGRAM_ID } from "./constants";
 import { translateError } from "./errors";
 import { createHeliusConnection } from "./helius/provider";
 import { ensureAgentWebhook } from "./helius/webhooks";
+import { rawVelaIdl, withProgramAddress } from "./idl";
 import {
   buildAdjustAgentMandateInstruction,
   buildAgentPullInstruction,
   buildAdminCancelInstruction,
+  buildCancelPlanChangeInstruction,
   buildCancelInstruction,
   buildCreateAgentMandateInstruction,
   buildCreatePlanInstruction,
@@ -39,11 +46,13 @@ import {
   buildPauseAgentMandateInstruction,
   buildPauseProtocolInstruction,
   buildResumeAgentMandateInstruction,
+  buildSchedulePlanChangeInstruction,
   buildSubscribeInstruction,
   buildRevokeAgentMandateInstruction,
   buildUnpauseProtocolInstruction,
   buildUnwrapInstruction,
   buildUpdateKeeperConfigInstruction,
+  buildUpdateMandatePlanInstruction,
   buildWrapAndSubscribeInstructions,
   buildWrapInstruction,
 } from "./instructions";
@@ -58,6 +67,10 @@ import type {
   PortalSessionsNamespace,
 } from "./portal-sessions";
 import type { KeeperScheduleOptions } from "./schedule";
+import { formatAmount } from "./token/format-amount";
+import { getEnabledTokens } from "./token/get-enabled-tokens";
+import { parseAmount } from "./token/parse-amount";
+import { resolveTokenConfig } from "./token/resolve-token-config";
 import type {
   AgentMandate,
   AgentBudgetSummary,
@@ -74,6 +87,7 @@ import type {
   InitKeeperConfigParams,
   KeeperConfig,
   ProtocolConfig,
+  TokenConfigAccount,
   ValidateAgentPullParams,
   VelaAdminCancelParams,
   VelaAdjustAgentMandateParams,
@@ -104,10 +118,7 @@ import type {
   UsageReportAccount,
   ValidationResult,
 } from "./types";
-import {
-  createUsagePlan as usageCreateUsagePlan,
-  submitUsageReport as usageSubmitUsageReport,
-} from "./usage";
+import type { StreamMandate } from "./types/stream-mandate";
 import {
   validateAgentPull,
   validateCancel,
@@ -179,6 +190,24 @@ export interface VelaClient {
   wrapAndSubscribe: (
     params: VelaWrapAndSubscribeParams,
   ) => Promise<VelaMethodResult<VelaMandate>>;
+  previewPlanChange: (
+    mandate: VelaMandate | StreamMandate,
+    newPlan: UpgradePlanInput,
+    tokenConfig: TokenConfigAccount,
+  ) => PreviewPlanChangeResult;
+  createUpgradeBuilder: (
+    args: Omit<UpgradeBuilderArgs, "connection" | "program">,
+  ) => UpgradeBuilder;
+  getEnabledTokens: () => Promise<TokenConfigAccount[]>;
+  resolveTokenConfig: (mint: PublicKey) => Promise<TokenConfigAccount>;
+  formatAmount: (
+    rawAmount: bigint,
+    tokenConfig: Pick<TokenConfigAccount, "decimals">,
+  ) => string;
+  parseAmount: (
+    displayAmount: string,
+    tokenConfig: Pick<TokenConfigAccount, "decimals">,
+  ) => bigint;
   getActiveSubscriptions: (filter: {
     subscriber?: PublicKey;
     merchant?: PublicKey;
@@ -258,6 +287,15 @@ export interface VelaClient {
         credentialMintAddress?: PublicKey;
       },
     ) => ReturnType<typeof buildCancelInstruction>;
+    cancelPlanChange: (
+      params: { mandate: PublicKey },
+    ) => ReturnType<typeof buildCancelPlanChangeInstruction>;
+    schedulePlanChange: (
+      params: { mandate: PublicKey; newPlan: PublicKey },
+    ) => ReturnType<typeof buildSchedulePlanChangeInstruction>;
+    updateMandatePlan: (
+      params: { mandate: PublicKey; newPlan: PublicKey },
+    ) => ReturnType<typeof buildUpdateMandatePlanInstruction>;
     wrap: (params: VelaWrapParams) => ReturnType<typeof buildWrapInstruction>;
     unwrap: (
       params: VelaUnwrapParams,
@@ -336,10 +374,10 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
   const apiKey = config.apiKey;
 
   let { connection } = config;
-  const programIdl = {
-    ...(idl as Record<string, unknown>),
-    address: programId.toBase58(),
-  };
+  const programIdl = withProgramAddress(
+    rawVelaIdl as Record<string, unknown>,
+    programId,
+  );
   let provider = new AnchorProvider(connection, wallet as any, {
     commitment,
   });
@@ -1163,6 +1201,32 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
         { method: "wrapAndSubscribe" },
       ),
 
+    previewPlanChange: (mandate, newPlan, tokenConfig) =>
+      UpgradeBuilder.previewPlanChange(mandate, newPlan, tokenConfig),
+
+    createUpgradeBuilder: (args) =>
+      new UpgradeBuilder({
+        ...args,
+        connection,
+        program,
+      }),
+
+    getEnabledTokens: () =>
+      ensureRuntimeReady().then(() =>
+        getEnabledTokens(connection, program.programId),
+      ),
+
+    resolveTokenConfig: (mint) =>
+      ensureRuntimeReady().then(() =>
+        resolveTokenConfig(connection, mint, program.programId),
+      ),
+
+    formatAmount: (rawAmount, tokenConfig) =>
+      formatAmount(rawAmount, tokenConfig),
+
+    parseAmount: (displayAmount, tokenConfig) =>
+      parseAmount(displayAmount, tokenConfig),
+
     getActiveSubscriptions: (filter) =>
       ensureRuntimeReady().then(() => getActiveSubscriptions(program, filter)),
 
@@ -1284,14 +1348,17 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
       ),
 
     // Usage-based billing methods
-    createUsagePlan: (params: VelaUsagePlanParams) =>
-      usageCreateUsagePlan(program, {
+    createUsagePlan: async (params: VelaUsagePlanParams) => {
+      const { createUsagePlan } = await import("./usage");
+      return createUsagePlan(program, {
         ...params,
         merchant: wallet.publicKey,
-      }),
+      });
+    },
 
-    submitUsageReport: (params: VelaSubmitUsageReportParams) =>
-      usageSubmitUsageReport(
+    submitUsageReport: async (params: VelaSubmitUsageReportParams) => {
+      const { submitUsageReport } = await import("./usage");
+      return submitUsageReport(
         program,
         { ...params, merchantPublicKey: wallet.publicKey },
         connection,
@@ -1299,7 +1366,8 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           keeperEndpoint: config.keeperEndpoint,
           authToken: config.keeperAuthToken,
         },
-      ),
+      );
+    },
 
     getUsagePlan: async (
       usagePlanAddress: PublicKey,
@@ -1400,6 +1468,29 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
           buildCancelInstruction(program, {
             ...params,
             authority: wallet.publicKey,
+          }),
+        ),
+      cancelPlanChange: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildCancelPlanChangeInstruction(program, connection, {
+            mandate: params.mandate,
+            authority: wallet.publicKey,
+          }),
+        ),
+      schedulePlanChange: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildSchedulePlanChangeInstruction(program, connection, {
+            mandate: params.mandate,
+            authority: wallet.publicKey,
+            newPlan: params.newPlan,
+          }),
+        ),
+      updateMandatePlan: (params) =>
+        ensureRuntimeReady().then(() =>
+          buildUpdateMandatePlanInstruction(program, connection, {
+            mandate: params.mandate,
+            authority: wallet.publicKey,
+            newPlan: params.newPlan,
           }),
         ),
       wrap: (params) =>

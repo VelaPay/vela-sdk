@@ -1,12 +1,11 @@
 import type { Program } from "@coral-xyz/anchor";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import {
   type PublicKey,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
-import { PDAFactory } from "../accounts/pda";
+import { getAssociatedTokenAddress, PDAFactory } from "../accounts/pda";
 import {
   getSubscribablePlan,
   resolvePlanContext,
@@ -96,7 +95,7 @@ export async function buildSubscribeInstruction(
   );
 
   // Derive subscriber's credential ATA (Token-2022, for the non-transferable credential NFT)
-  const subscriberCredentialAccount = getAssociatedTokenAddressSync(
+  const subscriberCredentialAccount = getAssociatedTokenAddress(
     credentialMint,
     subscriber,
     false,

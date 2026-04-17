@@ -12,28 +12,48 @@
   "engines": {
     "node": ">=18"
   },
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/esm/index.d.ts",
+  "main": "./dist/cjs/src/index.cjs",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/esm/src/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/esm/index.d.ts",
-        "default": "./dist/esm/index.js"
+        "types": "./dist/esm/src/index.d.ts",
+        "default": "./dist/esm/src/index.js"
       },
       "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
+        "types": "./dist/esm/src/index.d.ts",
+        "default": "./dist/cjs/src/index.cjs"
       }
     },
     "./x402": {
       "import": {
-        "types": "./dist/esm/x402/index.d.ts",
-        "default": "./dist/esm/x402/index.js"
+        "types": "./dist/esm/src/x402/index.d.ts",
+        "default": "./dist/esm/src/x402/index.js"
       },
       "require": {
-        "types": "./dist/esm/x402/index.d.ts",
-        "default": "./dist/cjs/x402/index.cjs"
+        "types": "./dist/esm/src/x402/index.d.ts",
+        "default": "./dist/cjs/src/x402/index.cjs"
+      }
+    },
+    "./events": {
+      "import": {
+        "types": "./dist/esm/src/events/index.d.ts",
+        "default": "./dist/esm/src/events/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/events/index.d.ts",
+        "default": "./dist/cjs/src/events/index.cjs"
+      }
+    },
+    "./browser": {
+      "import": {
+        "types": "./dist/esm/src/browser/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/browser/index.d.ts",
+        "default": "./dist/cjs/index.cjs"
       }
     },
     "./idl/vela_protocol.json": "./idl/vela_protocol.json"
@@ -61,7 +81,8 @@
     "@x402/svm": "^2.9.0",
     "commander": "^14.0.3",
     "decimal.js": "10.6.0",
-    "hono": "^4.12.12"
+    "hono": "^4.12.12",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@biomejs/biome": "latest",

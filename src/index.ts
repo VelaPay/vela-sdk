@@ -14,12 +14,18 @@ export {
   derivePlanAddress,
   deserializeAgentMandate,
   deserializeMandate,
+  deserializeMandateAccount,
   deserializeMerchantState,
   deserializePlan,
   deserializeStreamMandate,
+  deserializeTokenConfigAccount,
   deserializeUsagePlan,
   STREAM_MANDATE_DISCRIMINATOR,
+  TOKEN_CONFIG_DISCRIMINATOR,
+  VELA_MANDATE_DISCRIMINATOR,
+  fetchMandate,
   fetchStreamMandate,
+  fetchTokenConfig,
   getActiveSubscriptions,
   listAgentMandates,
   getMerchantPlans,
@@ -32,6 +38,14 @@ export {
 } from "./accounts";
 // ALT manager
 export { ALTManager } from "./alt/lookup-table";
+export type {
+  PeriodicUpgradePlanInput,
+  PreviewPlanChangeResult,
+  StreamRatePlanInput,
+  UpgradeBuilderArgs,
+  UpgradePlanInput,
+} from "./builders";
+export { UpgradeBuilder } from "./builders";
 export type { VelaClient } from "./client";
 // Client factory
 export { createVelaClient } from "./client";
@@ -44,17 +58,25 @@ export type {
 export { createUsagePlan, submitUsageReport } from "./usage";
 // Constants
 export {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   BILLING_SEED,
+  EURC_MINT,
   KEEPER_CONFIG_SEED,
   PROGRAM_ID,
+  PYUSD_MINT,
   SEED_PREFIXES,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
+  USDC_DECIMALS,
+  USDC_MINT,
 } from "./constants";
 // Errors
 export {
   AgentMandateAlreadyExistsError,
   AgentMandateNotFoundError,
   AmountExceedsPlanAmountError,
+  AmountPrecisionExceeded,
   DailyLimitExceededError,
   DuplicateServiceError,
   FrequencyTooLowError,
@@ -73,6 +95,9 @@ export {
   OverflowError,
   PlanNotActiveError,
   PullTooEarlyError,
+  TokenChangeNotSupported,
+  TokenConfigDisabled,
+  TokenConfigNotFound,
   PullAmountTooSmallError,
   PullCooldownActiveError,
   StreamInsufficientBalanceError,
@@ -91,6 +116,14 @@ export {
   ProtocolPausedError,
 } from "./errors";
 export { accruedNow } from "./accrued";
+export {
+  formatAmount,
+  getEnabledTokens,
+  getTokenSymbol,
+  parseAmount,
+  resolveTokenConfig,
+  TOKEN_SYMBOLS,
+} from "./token";
 // Helius provider (opt-in)
 export {
   createHelius,
@@ -107,6 +140,7 @@ export type {
   BuildAgentPullResult,
   BuildAdminCancelResult,
   BuildCancelResult,
+  BuildCancelPlanChangeResult,
   BuildCreateAgentMandateResult,
   BuildCreatePlanResult,
   BuildDrainAgentMandateResult,
@@ -122,11 +156,13 @@ export type {
   BuildRequestBillingRecordResult,
   BuildRequestValidationResult,
   BuildRevokeAgentMandateResult,
+  BuildSchedulePlanChangeResult,
   BuildSubscribeResult,
   BuildUnpauseProtocolResult,
   BuildUnwrapResult,
   BuildUpdateTokenConfigParams,
   BuildUpdateTokenConfigResult,
+  BuildUpdateMandatePlanResult,
   BuildUpdateKeeperConfigResult,
   BuildWrapAndSubscribeResult,
   BuildWrapResult,
@@ -140,6 +176,7 @@ export {
   buildAgentPullInstruction,
   buildAdminCancelInstruction,
   buildCancelInstruction,
+  buildCancelPlanChangeInstruction,
   buildCancelStreamInstruction,
   buildCreateAgentMandateInstruction,
   buildCreatePlanInstruction,
@@ -160,10 +197,12 @@ export {
   buildRequestUsageComputationInstruction,
   buildRequestValidationInstruction,
   buildRevokeAgentMandateInstruction,
+  buildSchedulePlanChangeInstruction,
   buildSubmitUsageReportInstruction,
   buildSubscribeInstruction,
   buildUnpauseProtocolInstruction,
   buildUnwrapInstruction,
+  buildUpdateMandatePlanInstruction,
   buildUpdateTokenConfigInstruction,
   buildUpdateStreamRateInstruction,
   buildUpdateKeeperConfigInstruction,
@@ -254,6 +293,7 @@ export type {
   ValidateAgentPullParams,
   VerifyAgentMandateParams,
   TokenConfig,
+  TokenConfigAccount,
 } from "./types";
 export type { StreamMandate, StreamStatus } from "./types/stream-mandate";
 // Usage seed constants

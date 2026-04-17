@@ -7,9 +7,9 @@ import {
 } from "@solana/spl-token";
 import { describe, expect, test } from "bun:test";
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
-import idl from "../../idl/vela_protocol.json";
 import * as instructionBarrel from "../../src/instructions";
 import * as root from "../../src/index";
+import { velaProgramIdl } from "../../src/idl";
 import {
   buildAdjustAgentMandateInstruction,
   buildAgentPullInstruction,
@@ -35,7 +35,7 @@ function createReadOnlyProgramWithConfigStub(configStub?: {
     } as any,
     { commitment: "confirmed" },
   );
-  const program = new Program(idl as any, provider);
+  const program = new Program(velaProgramIdl as any, provider);
   (program.account as any).protocolConfig = {
     fetch: async () => ({
       wrappedUsdcMint:

@@ -16,7 +16,6 @@ import {
 } from "@solana/web3.js";
 import { LiteSVMProvider } from "anchor-litesvm";
 import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
-import idl from "../../idl/vela_protocol.json";
 import {
   buildAdminCancelInstruction,
   buildPauseProtocolInstruction,
@@ -28,6 +27,7 @@ import {
   PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
+import { velaProgramIdl } from "../../src/idl";
 import {
   bootstrapMerchantCredential,
   bootstrapTokenConfig,
@@ -123,10 +123,10 @@ describe("emergency instructions", () => {
     airdropSol(svm, subscriber.publicKey, 5n * BigInt(LAMPORTS_PER_SOL));
 
     adminProvider = new LiteSVMProvider(svm, new Wallet(admin));
-    adminProgram = new Program(idl as any, adminProvider);
+    adminProgram = new Program(velaProgramIdl as any, adminProvider);
 
     subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
-    subscriberProgram = new Program(idl as any, subscriberProvider);
+    subscriberProgram = new Program(velaProgramIdl as any, subscriberProvider);
 
     // Create a minimal SPL USDC mint for wrapping infrastructure
     const {
@@ -425,7 +425,7 @@ describe("emergency instructions", () => {
         new Wallet(freshSubscriber),
       );
       const freshSubscriberProgram = new Program(
-        idl as any,
+        velaProgramIdl as any,
         freshSubscriberProvider,
       );
 

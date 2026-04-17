@@ -4,6 +4,8 @@ export type { BuildAgentPullResult } from "./agent-pull";
 export { buildAgentPullInstruction } from "./agent-pull";
 export type { BuildCancelResult } from "./cancel";
 export { buildCancelInstruction } from "./cancel";
+export type { BuildCancelPlanChangeResult } from "./cancel-plan-change";
+export { buildCancelPlanChangeInstruction } from "./cancel-plan-change";
 export type { BuildCreateAgentMandateResult } from "./create-agent-mandate";
 export { buildCreateAgentMandateInstruction } from "./create-agent-mandate";
 export type {
@@ -56,6 +58,8 @@ export type { BuildPauseAgentMandateResult } from "./pause-agent-mandate";
 export { buildPauseAgentMandateInstruction } from "./pause-agent-mandate";
 export type { BuildSubscribeResult } from "./subscribe";
 export { buildSubscribeInstruction } from "./subscribe";
+export type { BuildSchedulePlanChangeResult } from "./schedule-plan-change";
+export { buildSchedulePlanChangeInstruction } from "./schedule-plan-change";
 export type { BuildResumeAgentMandateResult } from "./resume-agent-mandate";
 export { buildResumeAgentMandateInstruction } from "./resume-agent-mandate";
 export type { BuildRevokeAgentMandateResult } from "./revoke-agent-mandate";
@@ -67,6 +71,8 @@ export type {
   BuildUpdateTokenConfigResult,
 } from "./update-token-config";
 export { buildUpdateTokenConfigInstruction } from "./update-token-config";
+export type { BuildUpdateMandatePlanResult } from "./update-mandate-plan";
+export { buildUpdateMandatePlanInstruction } from "./update-mandate-plan";
 export type { BuildWrapResult } from "./wrap";
 export { buildWrapInstruction } from "./wrap";
 export type { BuildUnwrapResult } from "./unwrap";

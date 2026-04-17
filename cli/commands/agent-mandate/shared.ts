@@ -1,10 +1,10 @@
 import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import type { Command } from "commander";
-import idl from "../../../idl/vela_protocol.json";
 import { deserializeAgentMandate } from "../../../src/accounts/deserialize";
 import { PROGRAM_ID } from "../../../src/constants";
 import { VelaError } from "../../../src/errors/base";
+import { velaProgramIdl } from "../../../src/idl";
 import type {
   AgentMandate,
   AgentMandateDrainResult,
@@ -151,7 +151,7 @@ export async function fetchAgentMandateByAddress(
     } as any,
     { commitment: "confirmed" },
   );
-  const program = new Program(idl as any, provider);
+  const program = new Program(velaProgramIdl as any, provider);
   const raw = await (program.account as any).agentMandate.fetch(mandateAddress);
   return deserializeAgentMandate(mandateAddress, raw);
 }

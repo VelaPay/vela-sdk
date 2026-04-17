@@ -1,18 +1,37 @@
 import type { Program } from "@coral-xyz/anchor";
-import {
-  TOKEN_2022_PROGRAM_ID,
-  createAssociatedTokenAccountIdempotentInstruction,
-  getAssociatedTokenAddressSync,
-} from "@solana/spl-token";
-import type { TransactionInstruction } from "@solana/web3.js";
+import { type PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
+import { getAssociatedTokenAddress } from "../accounts/pda";
+import { asInstructionData } from "../browser/bytes";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "../constants";
 import type { VelaWrapAndSubscribeParams } from "../types";
 import { buildSubscribeInstruction } from "./subscribe";
 import { buildWrapInstruction } from "./wrap";
 
 export interface BuildWrapAndSubscribeResult {
   instructions: TransactionInstruction[];
-  mandateAddress: import("@solana/web3.js").PublicKey;
-  credentialAccountAddress: import("@solana/web3.js").PublicKey;
+  mandateAddress: PublicKey;
+  credentialAccountAddress: PublicKey;
+}
+
+function createAssociatedTokenAccountIdempotentInstruction(
+  payer: PublicKey,
+  associatedToken: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey,
+  tokenProgramId: PublicKey = TOKEN_2022_PROGRAM_ID,
+) {
+  return new TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: associatedToken, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ],
+    data: asInstructionData(Uint8Array.of(1)),
+  });
 }
 
 /**
@@ -55,7 +74,7 @@ export async function buildWrapAndSubscribeInstructions(
   instructions.push(subscribeIx);
 
   // 2. Create the mandate-owned wrapped USDC ATA.
-  const wrappedAta = getAssociatedTokenAddressSync(
+  const wrappedAta = getAssociatedTokenAddress(
     wrappedUsdcMint,
     mandateAddress,
     true,

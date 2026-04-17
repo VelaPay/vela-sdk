@@ -1,5 +1,6 @@
 import type BN from "bn.js";
 import type { Commitment, Connection, PublicKey } from "@solana/web3.js";
+import { seedBytes } from "./browser/bytes";
 
 export interface VelaClientConfig {
   connection: Connection;
@@ -111,6 +112,15 @@ export interface VelaMandate {
   bump: number;
   billingType: BillingType;
   version: number;
+  lastPullAt?: bigint;
+  lastBillingRecordedPull?: bigint;
+  validationRequestNonce?: bigint;
+  billingRequestNonce?: bigint;
+  creditBalance?: bigint;
+  pendingNewPlan?: PublicKey;
+  pendingEffectiveAt?: bigint;
+  pendingChangeType?: number;
+  pendingNonceShort?: number[];
   _reserved?: number[];
 }
 
@@ -170,13 +180,22 @@ export interface ProtocolConfig {
 }
 
 export interface TokenConfig {
+  address?: PublicKey;
   mint: PublicKey;
   tokenProgram: PublicKey;
   billingRail: BillingRail;
   decimals: number;
   enabled: boolean;
   oracleReference: PublicKey;
+  admin?: PublicKey;
+  createdAt?: bigint;
+  bump?: number;
+  version?: number;
+  tokenSymbol?: string;
+  _reserved?: number[];
 }
+
+export type TokenConfigAccount = TokenConfig;
 
 export interface VelaCreatePlanParams {
   amount: bigint | number;
@@ -584,9 +603,9 @@ export interface VelaRequestUsageComputationParams {
 export type BillingType = "flat" | "usage";
 
 // PDA seed buffers for usage billing
-export const USAGE_PLAN_SEED = Buffer.from("usage_plan");
-export const USAGE_REPORT_SEED = Buffer.from("usage_report");
-export const USAGE_CREDENTIAL_SEED = Buffer.from("usage_credential");
+export const USAGE_PLAN_SEED = seedBytes("usage_plan");
+export const USAGE_REPORT_SEED = seedBytes("usage_report");
+export const USAGE_CREDENTIAL_SEED = seedBytes("usage_credential");
 
 // Account shape returned by program.account.usagePlan.fetch()
 export interface UsagePlanAccount {

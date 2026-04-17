@@ -6,13 +6,9 @@
  * requiring it to be installed.
  */
 declare module "helius-sdk" {
-  import type { Connection } from "@solana/web3.js";
+  export type HeliusNetwork = "mainnet" | "devnet";
 
-  export class Helius {
-    connection: Connection;
-    rpc: {
-      sendSmartTransaction(serialized: any): Promise<string>;
-    };
+  export interface HeliusClient {
     webhooks: {
       getAll(): Promise<
         Array<{
@@ -34,6 +30,13 @@ declare module "helius-sdk" {
         webhookID: string;
       }>;
     };
-    constructor(apiKey: string, cluster?: string);
   }
+
+  export function createHelius(options: {
+    apiKey?: string;
+    network?: HeliusNetwork;
+    rebateAddress?: string;
+    baseUrl?: string;
+    userAgent?: string;
+  }): HeliusClient;
 }

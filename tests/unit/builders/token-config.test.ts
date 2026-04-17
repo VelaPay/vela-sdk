@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
-import idl from "../../../idl/vela_protocol.json";
 import { PDAFactory } from "../../../src/accounts/pda";
+import { velaProgramIdl } from "../../../src/idl";
 import {
   buildInitTokenConfigInstruction,
   buildUpdateTokenConfigInstruction,
@@ -19,11 +19,11 @@ function createReadOnlyProgram(): Program {
     { commitment: "confirmed" },
   );
 
-  return new Program(idl as any, provider);
+  return new Program(velaProgramIdl as any, provider);
 }
 
 function instructionDef(name: string) {
-  const definition = (idl as any).instructions.find(
+  const definition = (velaProgramIdl as any).instructions.find(
     (entry: { name: string }) => entry.name === name,
   );
   if (!definition) {

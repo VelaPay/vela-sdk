@@ -22,7 +22,6 @@ import {
 } from "@solana/web3.js";
 import { LiteSVMProvider } from "anchor-litesvm";
 import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
-import idl from "../../idl/vela_protocol.json";
 import {
   ALTManager,
   createVelaClient,
@@ -32,6 +31,7 @@ import {
   type VelaWallet,
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
+import { velaProgramIdl } from "../../src/idl";
 import {
   bootstrapTokenConfig,
   createToken2022Ata,
@@ -192,7 +192,7 @@ describe("agent mandate VelaClient integration", () => {
     airdropSol(svm, authority.publicKey, 20n * BigInt(LAMPORTS_PER_SOL));
 
     provider = new LiteSVMProvider(svm, new Wallet(authority));
-    adminProgram = new Program(idl as any, provider);
+    adminProgram = new Program(velaProgramIdl as any, provider);
     usdcMint = await createUsdcMint(provider);
     authorityUsdcAccount = await createSplTokenAccount(
       provider,

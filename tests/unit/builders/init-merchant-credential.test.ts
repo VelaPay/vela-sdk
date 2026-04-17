@@ -7,9 +7,9 @@ import {
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
 } from "@solana/web3.js";
-import idl from "../../../idl/vela_protocol.json";
 import { PDAFactory } from "../../../src/accounts/pda";
 import { TOKEN_2022_PROGRAM_ID } from "../../../src/constants";
+import { velaProgramIdl } from "../../../src/idl";
 import { buildInitMerchantCredentialInstruction } from "../../../src/instructions/init-merchant-credential";
 
 function createReadOnlyProgram(): Program {
@@ -23,11 +23,11 @@ function createReadOnlyProgram(): Program {
     { commitment: "confirmed" },
   );
 
-  return new Program(idl as any, provider);
+  return new Program(velaProgramIdl as any, provider);
 }
 
 function instructionDef(name: string) {
-  const definition = (idl as any).instructions.find(
+  const definition = (velaProgramIdl as any).instructions.find(
     (entry: { name: string }) => entry.name === name,
   );
   if (!definition) {
