@@ -39,7 +39,7 @@ describe("agent mandate PDA helpers", () => {
     ).toBe(expected.toBase58());
   });
 
-  test("@vela/sdk root exports the agent mandate helpers", async () => {
+  test("@velapay/sdk root exports the agent mandate helpers", async () => {
     const root = await import("../../src/index");
     expect(root.deriveAgentMandateAddress).toBe(deriveAgentMandateAddress);
     expect(root.deriveAgentMandateWrappedAta).toBe(deriveAgentMandateWrappedAta);

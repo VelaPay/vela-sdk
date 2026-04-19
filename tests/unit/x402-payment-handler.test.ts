@@ -23,7 +23,7 @@ function createChallenge(): VelaPaymentChallenge {
 }
 
 describe("VelaPaymentHandler", () => {
-  test("@vela/sdk/x402 stays on a separate subpath", async () => {
+  test("@velapay/sdk/x402 stays on a separate subpath", async () => {
     const root = await import("../../src/index");
     const x402 = await import("../../src/x402/index");
 

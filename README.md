@@ -1,7 +1,7 @@
-# @vela/sdk
+# @velapay/sdk
 
-[![npm](https://img.shields.io/npm/v/@vela/sdk)](https://www.npmjs.com/package/@vela/sdk)
-[![license](https://img.shields.io/npm/l/@vela/sdk)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/@velapay/sdk)](https://www.npmjs.com/package/@velapay/sdk)
+[![license](https://img.shields.io/npm/l/@velapay/sdk)](./LICENSE)
 
 TypeScript SDK for [Vela](https://velapay.com) — a privacy-first subscription billing protocol on Solana built on Token-2022 transfer hooks. Provides instruction builders, a high-level client, pre-flight validators, and a CLI.
 
@@ -10,8 +10,8 @@ TypeScript SDK for [Vela](https://velapay.com) — a privacy-first subscription 
 ## Installation
 
 ```bash
-bun add @vela/sdk
-# or: npm install @vela/sdk
+bun add @velapay/sdk
+# or: npm install @velapay/sdk
 ```
 
 Optional peer dependency — enables Helius RPC, priority fee estimation, and enhanced transaction landing:
@@ -23,7 +23,7 @@ bun add helius-sdk
 ## Quick start
 
 ```ts
-import { createVelaClient, DEVNET_USDC_MINT } from "@vela/sdk";
+import { createVelaClient, DEVNET_USDC_MINT } from "@velapay/sdk";
 import { Connection } from "@solana/web3.js";
 
 const vela = createVelaClient({
@@ -144,7 +144,7 @@ import {
   derivePlanAddress,
   deriveCredentialMintAddress,
   deriveUsagePlanAddress,
-} from "@vela/sdk";
+} from "@velapay/sdk";
 ```
 
 ## CLI
@@ -152,7 +152,7 @@ import {
 Install globally or run with `bunx`:
 
 ```bash
-bun install -g @vela/sdk
+bun install -g @velapay/sdk
 ```
 
 ```bash
@@ -179,10 +179,10 @@ vela simulate --mandate <address>
 
 | Import path | Contents |
 |-------------|----------|
-| `@vela/sdk` | Full client, builders, validators, types |
-| `@vela/sdk/events` | Zod event schemas (re-exported by `@vela/webhook`) |
-| `@vela/sdk/x402` | x402 payment protocol helpers |
-| `@vela/sdk/browser` | Browser-safe bundle (no Node.js APIs) |
+| `@velapay/sdk` | Full client, builders, validators, types |
+| `@velapay/sdk/events` | Zod event schemas (re-exported by `@velapay/webhook`) |
+| `@velapay/sdk/x402` | x402 payment protocol helpers |
+| `@velapay/sdk/browser` | Browser-safe bundle (no Node.js APIs) |
 
 ## Development
 
@@ -212,7 +212,7 @@ protocol-backed integration coverage or packaged-consumer smoke checks are missi
 
 ## Related packages
 
-- [`@vela/webhook`](https://www.npmjs.com/package/@vela/webhook) — isomorphic webhook event verifier
+- [`@velapay/webhook`](https://www.npmjs.com/package/@velapay/webhook) — isomorphic webhook event verifier
 
 ## License
 

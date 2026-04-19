@@ -1,5 +1,5 @@
 {
-  "name": "@vela/sdk",
+  "name": "@velapay/sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for the Vela subscription billing protocol on Solana",
   "license": "MIT",

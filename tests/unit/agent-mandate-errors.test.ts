@@ -47,7 +47,7 @@ describe("agent mandate error translation", () => {
     expect(new ProtocolPausedError().code).toBe(6060);
   });
 
-  test("the new typed errors are importable from @vela/sdk", async () => {
+  test("the new typed errors are importable from @velapay/sdk", async () => {
     const root = await import("../../src/index");
     expect(root.UnauthorizedAgentError).toBe(UnauthorizedAgentError);
     expect(root.AgentMandateAlreadyExistsError).toBe(AgentMandateAlreadyExistsError);

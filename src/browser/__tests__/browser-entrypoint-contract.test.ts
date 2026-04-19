@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import * as browser from "@vela/sdk/browser";
+import * as browser from "@velapay/sdk/browser";
 import type {
   PreviewPlanChangeResult as BrowserPreviewPlanChangeResult,
   StreamMandate as BrowserStreamMandate,
   TokenConfigAccount as BrowserTokenConfigAccount,
   UpgradePlanInput as BrowserUpgradePlanInput,
   VelaMandate as BrowserVelaMandate,
-} from "@vela/sdk/browser";
+} from "@velapay/sdk/browser";
 
 type IsEqual<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
@@ -52,7 +52,7 @@ function readPackageFile(path: string) {
   return readFileSync(resolve(packageRoot, path), "utf8");
 }
 
-describe("@vela/sdk/browser contract", () => {
+describe("@velapay/sdk/browser contract", () => {
   test("exports the required browser-safe runtime surface", () => {
     expect(typeof browser.getMerchantState).toBe("function");
     expect(typeof browser.fetchMandate).toBe("function");
