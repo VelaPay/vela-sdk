@@ -5,8 +5,24 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vela-labs/vela-sdk.git"
+    "url": "git+https://github.com/vela-labs/vela-sdk.git"
   },
+  "homepage": "https://velapay.com",
+  "bugs": {
+    "url": "https://github.com/vela-labs/vela-sdk/issues"
+  },
+  "keywords": [
+    "solana",
+    "subscription",
+    "billing",
+    "payments",
+    "recurring",
+    "web3",
+    "blockchain",
+    "token-2022",
+    "transfer-hook",
+    "vela"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -18,44 +34,56 @@
   "main": "./dist/cjs/src/index.cjs",
   "module": "./dist/esm/src/index.js",
   "types": "./dist/esm/src/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "browser": ["./dist/esm/src/browser/index.d.ts"],
+      "events": ["./dist/esm/src/events/index.d.ts"],
+      "x402": ["./dist/esm/src/x402/index.d.ts"],
+      "*": ["./dist/esm/src/index.d.ts"]
+    }
+  },
   "exports": {
     ".": {
+      "types": "./dist/esm/src/index.d.ts",
       "import": {
         "types": "./dist/esm/src/index.d.ts",
         "default": "./dist/esm/src/index.js"
       },
       "require": {
-        "types": "./dist/esm/src/index.d.ts",
+        "types": "./dist/esm/src/index.d.cts",
         "default": "./dist/cjs/src/index.cjs"
       }
     },
     "./x402": {
+      "types": "./dist/esm/src/x402/index.d.ts",
       "import": {
         "types": "./dist/esm/src/x402/index.d.ts",
         "default": "./dist/esm/src/x402/index.js"
       },
       "require": {
-        "types": "./dist/esm/src/x402/index.d.ts",
+        "types": "./dist/esm/src/x402/index.d.cts",
         "default": "./dist/cjs/src/x402/index.cjs"
       }
     },
     "./events": {
+      "types": "./dist/esm/src/events/index.d.ts",
       "import": {
         "types": "./dist/esm/src/events/index.d.ts",
         "default": "./dist/esm/src/events/index.js"
       },
       "require": {
-        "types": "./dist/esm/src/events/index.d.ts",
+        "types": "./dist/esm/src/events/index.d.cts",
         "default": "./dist/cjs/src/events/index.cjs"
       }
     },
     "./browser": {
+      "types": "./dist/esm/src/browser/index.d.ts",
       "import": {
         "types": "./dist/esm/src/browser/index.d.ts",
         "default": "./dist/esm/index.js"
       },
       "require": {
-        "types": "./dist/esm/src/browser/index.d.ts",
+        "types": "./dist/esm/src/browser/index.d.cts",
         "default": "./dist/cjs/index.cjs"
       }
     },
@@ -67,10 +95,14 @@
   "files": ["dist", "bin", "cli", "idl"],
   "scripts": {
     "build": "bun run build.ts",
+    "prepublishOnly": "bun run release:verify",
     "test": "bun test",
+    "test:protocol": "bun run ./scripts/assert-protocol-artifacts.ts && bun test tests/unit/idl.test.ts tests/integration/client.test.ts tests/integration/simulate.test.ts tests/integration/emergency.test.ts tests/integration/agent-mandate-client.test.ts --reporter=dot",
     "check": "tsc --noEmit",
-    "lint": "bunx @biomejs/biome check src/ cli/ tests/",
-    "format": "bunx @biomejs/biome format --write src/ cli/ tests/"
+    "release:verify": "bun run check && bun test && bun run test:protocol && bun run build && bun run smoke:package",
+    "smoke:package": "bun run ./scripts/release-smoke.ts",
+    "lint": "bunx @biomejs/biome check src/ cli/ tests/ scripts/",
+    "format": "bunx @biomejs/biome format --write src/ cli/ tests/ scripts/"
   },
   "dependencies": {
     "@arcium-hq/client": "0.9.3",

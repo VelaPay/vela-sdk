@@ -1,36 +1,37 @@
 # @vela/sdk
 
-TypeScript SDK for the [Vela](https://velapay.com) subscription billing protocol on Solana. Provides instruction builders, a high-level client, pre-flight validators, and a CLI — all built on Token-2022 transfer hooks.
+[![npm](https://img.shields.io/npm/v/@vela/sdk)](https://www.npmjs.com/package/@vela/sdk)
+[![license](https://img.shields.io/npm/l/@vela/sdk)](./LICENSE)
 
-Examples in this README assume the current **devnet** deployment.
+TypeScript SDK for [Vela](https://velapay.com) — a privacy-first subscription billing protocol on Solana built on Token-2022 transfer hooks. Provides instruction builders, a high-level client, pre-flight validators, and a CLI.
+
+> **Devnet only.** Mainnet deployment is not yet live. All examples target the current devnet program.
 
 ## Installation
 
 ```bash
 bun add @vela/sdk
+# or: npm install @vela/sdk
 ```
 
-Peer dependency (optional — enables priority fee estimation and enhanced RPC):
+Optional peer dependency — enables Helius RPC, priority fee estimation, and enhanced transaction landing:
 
 ```bash
 bun add helius-sdk
 ```
 
-## Quick Start
+## Quick start
 
 ```ts
-import { DEVNET_USDC_MINT, createVelaClient } from "@vela/sdk";
+import { createVelaClient, DEVNET_USDC_MINT } from "@vela/sdk";
 import { Connection } from "@solana/web3.js";
 
-const connection = new Connection("https://api.devnet.solana.com");
-const splUsdcMint = DEVNET_USDC_MINT;
-
 const vela = createVelaClient({
-  connection,
+  connection: new Connection("https://api.devnet.solana.com"),
   wallet,                  // any wallet with signTransaction + publicKey
   commitment: "confirmed",
-  heliusApiKey: "...",     // optional: upgrades connection to Helius RPC
-  keeperEndpoint: "...",   // optional: auto-registers billing schedules
+  heliusApiKey: "...",     // optional — upgrades to Helius RPC
+  keeperEndpoint: "...",   // optional — auto-registers billing schedules
 });
 ```
 
@@ -41,13 +42,13 @@ const vela = createVelaClient({
 ```ts
 // Create a billing plan (merchant)
 const { signature, address: planAddress } = await vela.createPlan({
-  amount: 10_000_000n,          // 10 USDC (6 decimals)
-  frequency: 2_592_000,         // 30 days in seconds
+  amount: 10_000_000n,     // 10 USDC (6 decimals)
+  frequency: 2_592_000,    // seconds — 30 days
   usdcMintAddress,
   wrappedUsdcMint,
 });
 
-// Subscribe (subscriber) — wraps SPL USDC and creates mandate atomically
+// Subscribe — wraps SPL USDC and creates a mandate atomically
 const { signature, address: mandateAddress } = await vela.wrapAndSubscribe({
   planAddress,
   merchantAddress,
@@ -57,7 +58,7 @@ const { signature, address: mandateAddress } = await vela.wrapAndSubscribe({
   amount: 10_000_000n,
 });
 
-// Pull payment (keeper / merchant)
+// Pull payment (keeper or merchant)
 await vela.pullPayment({
   mandateAddress,
   subscriberAddress,
@@ -78,14 +79,12 @@ await vela.cancelSubscription({
 ### Usage-based billing
 
 ```ts
-// Create a usage plan
 const { usagePlanAddress } = await vela.createUsagePlan({
   planAddress,
   maxAmountPerPeriod: 100_000_000n,
   periodDuration: 2_592_000,
 });
 
-// Submit a usage report (triggers encrypted Arcium computation in Phase 1)
 await vela.submitUsageReport({
   usagePlanAddress,
   mandateAddress,
@@ -93,19 +92,21 @@ await vela.submitUsageReport({
 });
 ```
 
-### Validators (pre-flight, read-only)
+### Pre-flight validators
+
+Read-only checks before submitting a transaction:
 
 ```ts
 const result = await vela.validate.pullPayment(mandateAddress);
 if (!result.canPull) console.error(result.reason);
 
-const result = await vela.validate.subscribe(planAddress);
-const result = await vela.validate.cancel(mandateAddress);
+await vela.validate.subscribe(planAddress);
+await vela.validate.cancel(mandateAddress);
 ```
 
 ### Raw instruction builders
 
-Use `vela.instructions.*` when you need to compose transactions yourself:
+Compose your own transactions when you need full control:
 
 ```ts
 const { instruction, mandateAddress } = await vela.instructions.subscribe({
@@ -119,8 +120,9 @@ const { instruction, mandateAddress } = await vela.instructions.subscribe({
 
 ### Keeper / billing schedule
 
+Register mandates with the keeper service for automated recurring pulls:
+
 ```ts
-// Register a mandate with the keeper for automated pulls
 await vela.registerBillingSchedule({
   mandateAddress,
   planAddress,
@@ -131,7 +133,6 @@ await vela.registerBillingSchedule({
   billingType: "fixed",
 });
 
-// Cancel the keeper schedule on cancellation
 await vela.cancelBillingSchedule(mandateAddress);
 ```
 
@@ -147,6 +148,12 @@ import {
 ```
 
 ## CLI
+
+Install globally or run with `bunx`:
+
+```bash
+bun install -g @vela/sdk
+```
 
 ```bash
 # Create a billing plan
@@ -168,25 +175,45 @@ vela status --mandate <address>
 vela simulate --mandate <address>
 ```
 
+## Subpath exports
+
+| Import path | Contents |
+|-------------|----------|
+| `@vela/sdk` | Full client, builders, validators, types |
+| `@vela/sdk/events` | Zod event schemas (re-exported by `@vela/webhook`) |
+| `@vela/sdk/x402` | x402 payment protocol helpers |
+| `@vela/sdk/browser` | Browser-safe bundle (no Node.js APIs) |
+
 ## Development
 
 ```bash
 bun install
 
-# Build (dual CJS + ESM output)
-bun run build
-
-# Tests
-bun test
-
-# Type check
-bun run check
-
-# Lint / format
-bun run lint
-bun run format
+bun run build   # dual ESM + CJS output with type declarations
+bun test        # run tests
+bun run test:protocol # requires sibling vela-protocol build artifacts
+bun run check   # TypeScript type check
+bun run lint    # Biome lint
+bun run smoke:package  # verify the packed npm artifact in a fresh consumer
+bun run release:verify # production-grade release gate
+bun run format  # Biome format
 ```
+
+`bun run test:protocol` and `bun run release:verify` expect built artifacts from the sibling
+`vela-protocol` repo. Build that repo first so these files exist:
+
+- `../vela-protocol/target/deploy/vela_protocol.so`
+- `../vela-protocol/target/deploy/vela_transfer_hook.so`
+- `../vela-protocol/target/idl/vela_protocol.json`
+- `../vela-protocol/target/idl/vela_transfer_hook.json`
+
+`prepublishOnly` runs `bun run release:verify`, so publishing now refuses to proceed if the
+protocol-backed integration coverage or packaged-consumer smoke checks are missing.
+
+## Related packages
+
+- [`@vela/webhook`](https://www.npmjs.com/package/@vela/webhook) — isomorphic webhook event verifier
 
 ## License
 
-MIT
+[MIT](./LICENSE)

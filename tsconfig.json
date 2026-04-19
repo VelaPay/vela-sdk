@@ -1,25 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
-    "paths": {
-      "@vela/sdk": ["./src/index.ts"],
-      "@vela/sdk/browser": ["./src/browser/index.ts"],
-      "@vela/sdk/*": ["./src/*"]
-    },
+    "target": "ES2022",
     "strict": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "outDir": "./dist",
-    "rootDir": ".",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "types": ["bun"]
-  },
-  "include": ["src/**/*", "cli/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist"]
+    "skipLibCheck": true
+  }
 }

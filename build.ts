@@ -87,7 +87,22 @@ async function build() {
     process.exit(1);
   }
 
-  console.log("Build complete: dist/esm/ (ESM) + dist/cjs/ (CJS) + .d.ts declarations");
+  // Copy .d.ts → .d.cts so CJS consumers get correct types (require.types must be .d.cts)
+  const { readdirSync, copyFileSync, statSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  function copyDtsAsDcts(dir: string) {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) {
+        copyDtsAsDcts(full);
+      } else if (entry.endsWith(".d.ts") && !entry.endsWith(".d.cts")) {
+        copyFileSync(full, full.replace(/\.d\.ts$/, ".d.cts"));
+      }
+    }
+  }
+  copyDtsAsDcts("./dist/esm");
+
+  console.log("Build complete: dist/esm/ (ESM) + dist/cjs/ (CJS) + .d.ts/.d.cts declarations");
 }
 
 build();
