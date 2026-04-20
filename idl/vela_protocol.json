@@ -1,5 +1,5 @@
 {
-  "address": "Dbya62vPiJsD36zwGTqH3J2hVWo9KHq2ShYe3Gx3ry6",
+  "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT",
   "metadata": {
     "name": "vela_protocol",
     "version": "0.2.0",
@@ -381,7 +381,7 @@
         },
         {
           "name": "protocol_program",
-          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
         },
         {
           "name": "token_2022_program",
@@ -626,7 +626,7 @@
         },
         {
           "name": "protocol_program",
-          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
         },
         {
           "name": "token_2022_program",
@@ -1497,7 +1497,7 @@
         },
         {
           "name": "protocol_program",
-          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
         },
         {
           "name": "token_2022_program",
@@ -1648,7 +1648,7 @@
         },
         {
           "name": "protocol_program",
-          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
         },
         {
           "name": "token_2022_program",
@@ -2531,7 +2531,7 @@
         },
         {
           "name": "protocol_program",
-          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
         },
         {
           "name": "token_2022_program",
@@ -4193,7 +4193,7 @@
         },
         {
           "name": "protocol_program",
-          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
         },
         {
           "name": "token_2022_program",
@@ -4367,7 +4367,7 @@
         },
         {
           "name": "protocol_program",
-          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
         },
         {
           "name": "token_2022_program",
@@ -6379,6 +6379,10 @@
             "type": "pubkey"
           },
           {
+            "name": "token_symbol",
+            "type": "string"
+          },
+          {
             "name": "old_plan",
             "type": "pubkey"
           },
@@ -6440,12 +6444,32 @@
             "type": "pubkey"
           },
           {
-            "name": "cancelled_plan",
+            "name": "token_symbol",
+            "type": "string"
+          },
+          {
+            "name": "old_plan",
             "type": "pubkey"
+          },
+          {
+            "name": "new_plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "proration_amount",
+            "type": "i64"
+          },
+          {
+            "name": "change_type",
+            "type": "u8"
           },
           {
             "name": "signer",
             "type": "pubkey"
+          },
+          {
+            "name": "applied_at",
+            "type": "i64"
           },
           {
             "name": "timestamp",
@@ -6877,6 +6901,14 @@
             "type": "pubkey"
           },
           {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_symbol",
+            "type": "string"
+          },
+          {
             "name": "cancelled_at",
             "type": "i64"
           },
@@ -6925,6 +6957,10 @@
             "type": "pubkey"
           },
           {
+            "name": "token_symbol",
+            "type": "string"
+          },
+          {
             "name": "rate_per_second",
             "type": "u64"
           },
@@ -6963,6 +6999,14 @@
             "type": "pubkey"
           },
           {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_symbol",
+            "type": "string"
+          },
+          {
             "name": "paused_at",
             "type": "i64"
           },
@@ -6993,6 +7037,14 @@
           {
             "name": "mandate",
             "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_symbol",
+            "type": "string"
           },
           {
             "name": "old_rate_per_second",
@@ -7039,6 +7091,14 @@
             "type": "pubkey"
           },
           {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_symbol",
+            "type": "string"
+          },
+          {
             "name": "resumed_at",
             "type": "i64"
           },
@@ -7069,6 +7129,14 @@
           {
             "name": "mandate",
             "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_symbol",
+            "type": "string"
           },
           {
             "name": "amount",

@@ -85,7 +85,7 @@ function createMockProgram(
       ? createMockPlan()
       : opts.plan;
   return {
-    programId: new PublicKey("BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"),
+    programId: new PublicKey("CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"),
     account: {
       velaMandate: {
         fetch: mock(async () => {

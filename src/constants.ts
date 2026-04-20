@@ -1,12 +1,16 @@
 import { PublicKey } from "@solana/web3.js";
+import {
+  DEFAULT_VELA_PROTOCOL_PROGRAM_ID,
+  DEFAULT_VELA_TRANSFER_HOOK_PROGRAM_ID,
+} from "./generated/program-ids";
 import { seedBytes } from "./browser/bytes";
 
 export const PROGRAM_ID = new PublicKey(
-  "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC",
+  DEFAULT_VELA_PROTOCOL_PROGRAM_ID,
 );
 /** Default hook program ID. SDK fetches dynamically from ProtocolConfig at runtime (SDK-03). Kept as fallback for offline/test scenarios. */
 export const TRANSFER_HOOK_PROGRAM_ID = new PublicKey(
-  "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX",
+  DEFAULT_VELA_TRANSFER_HOOK_PROGRAM_ID,
 );
 
 export const SEED_PREFIXES = {

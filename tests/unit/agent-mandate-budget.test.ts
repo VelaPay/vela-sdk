@@ -64,7 +64,7 @@ function createMockProgram(args: {
   });
 
   return {
-    programId: new PublicKey("BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"),
+    programId: new PublicKey("CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"),
     account: {
       agentMandate: { fetch },
       protocolConfig: {

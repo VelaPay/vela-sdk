@@ -1,5 +1,5 @@
 {
-  "address": "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX",
+  "address": "3agVoFp4NZFuKbVqCV8HbjSZn1xW4Utk4U1Wir3TKjZ9",
   "metadata": {
     "name": "vela_transfer_hook",
     "version": "0.1.0",
@@ -9,7 +9,16 @@
   "instructions": [
     {
       "name": "init_extra_account_meta_list",
-      "discriminator": [16, 12, 254, 251, 252, 103, 115, 58],
+      "discriminator": [
+        16,
+        12,
+        254,
+        251,
+        252,
+        103,
+        115,
+        58
+      ],
       "accounts": [
         {
           "name": "admin",
@@ -27,8 +36,25 @@
               {
                 "kind": "const",
                 "value": [
-                  101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116,
-                  45, 109, 101, 116, 97, 115
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
                 ]
               },
               {
@@ -53,7 +79,16 @@
     },
     {
       "name": "transfer_hook",
-      "discriminator": [105, 37, 101, 197, 75, 251, 102, 26],
+      "discriminator": [
+        105,
+        37,
+        101,
+        197,
+        75,
+        251,
+        102,
+        26
+      ],
       "accounts": [
         {
           "name": "source_token"
@@ -74,8 +109,25 @@
               {
                 "kind": "const",
                 "value": [
-                  101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116,
-                  45, 109, 101, 116, 97, 115
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
                 ]
               },
               {
@@ -87,7 +139,7 @@
         },
         {
           "name": "protocol_program",
-          "address": "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC"
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
         },
         {
           "name": "wrapping_vault"
@@ -120,7 +172,16 @@
     },
     {
       "name": "update_extra_account_meta_list",
-      "discriminator": [44, 125, 141, 226, 97, 179, 166, 96],
+      "discriminator": [
+        44,
+        125,
+        141,
+        226,
+        97,
+        179,
+        166,
+        96
+      ],
       "accounts": [
         {
           "name": "admin",
@@ -138,8 +199,25 @@
               {
                 "kind": "const",
                 "value": [
-                  101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116,
-                  45, 109, 101, 116, 97, 115
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
                 ]
               },
               {
