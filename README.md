@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@velapay/sdk)](https://www.npmjs.com/package/@velapay/sdk)
 [![license](https://img.shields.io/npm/l/@velapay/sdk)](./LICENSE)
 
-TypeScript SDK for [Vela](https://velapay.com) — a privacy-first subscription billing protocol on Solana built on Token-2022 transfer hooks. Provides instruction builders, a high-level client, pre-flight validators, and a CLI.
+TypeScript SDK for [Vela](https://velapay.com) — private, programmable payment authority on Solana, built on Token-2022 transfer hooks. Subscriptions, streams, usage, and agent budgets on one authorization primitive. Provides instruction builders, a high-level client, pre-flight validators, and a CLI.
 
 > **Devnet only.** Mainnet deployment is not yet live. All examples target the current devnet program.
 
