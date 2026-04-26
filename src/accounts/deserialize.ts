@@ -30,40 +30,169 @@ import type {
 import type { StreamMandate, StreamStatus } from "../types/stream-mandate";
 import { WrongAccountTypeError } from "../errors/stream-errors";
 
-/**
- * Maps an Anchor-deserialized MandateStatus enum variant to SDK string literal.
- * Anchor represents Rust enums as objects with a single key: { active: {} } | { cancelled: {} } | { expired: {} }
- */
-function mapMandateStatus(raw: any): MandateStatus {
+type AnchorNumeric = { toString(): string } | bigint | number;
+type AnchorEnumVariant<T extends string> = Partial<Record<T, object>>;
+type AnchorBytes = number[] | Uint8Array;
+
+interface AnchorAgentServiceLimit {
+  service: PublicKey;
+  dailyLimit: AnchorNumeric;
+  dailySpent: AnchorNumeric;
+  lastReset: AnchorNumeric;
+}
+
+interface AnchorVelaMandate {
+  subscriber: PublicKey;
+  plan?: PublicKey | null;
+  merchant: PublicKey;
+  mandateIndex?: AnchorNumeric;
+  amount: AnchorNumeric;
+  frequency: AnchorNumeric;
+  startDate: AnchorNumeric;
+  expiry: AnchorNumeric;
+  maxPulls: AnchorNumeric;
+  pullsExecuted: AnchorNumeric;
+  nextPaymentDue: AnchorNumeric;
+  status: AnchorEnumVariant<"active" | "cancelled" | "expired">;
+  bump: number;
+  billingType?: AnchorEnumVariant<"flat" | "usage">;
+  version?: number;
+  lastPullAt?: AnchorNumeric;
+  lastBillingRecordedPull?: AnchorNumeric;
+  validationRequestNonce?: AnchorNumeric;
+  billingRequestNonce?: AnchorNumeric;
+  creditBalance?: AnchorNumeric;
+  pendingNewPlan?: PublicKey;
+  pendingEffectiveAt?: AnchorNumeric;
+  pendingChangeType?: AnchorNumeric;
+  pendingNonceShort?: AnchorBytes;
+  _reserved?: AnchorBytes;
+}
+
+interface AnchorAgentMandate {
+  authority: PublicKey;
+  agent: PublicKey;
+  dailyLimit: AnchorNumeric;
+  dailySpent: AnchorNumeric;
+  dailyLastReset: AnchorNumeric;
+  lifetimeCap: AnchorNumeric;
+  totalSpent: AnchorNumeric;
+  minPullAmount: AnchorNumeric;
+  minPullInterval: AnchorNumeric;
+  lastPullAt: AnchorNumeric;
+  status: AnchorEnumVariant<"active" | "paused" | "revoked">;
+  services?: AnchorAgentServiceLimit[];
+  bump: number;
+  version?: number;
+  _reserved?: AnchorBytes;
+}
+
+interface AnchorVelaPlan {
+  merchant: PublicKey;
+  planId: AnchorNumeric;
+  amount: AnchorNumeric;
+  frequency: AnchorNumeric;
+  trialPeriod: AnchorNumeric;
+  maxPulls: AnchorNumeric;
+  status: AnchorEnumVariant<"active" | "inactive">;
+  credentialMint: PublicKey;
+  billingMint?: PublicKey;
+  bump: number;
+  version?: number;
+  _reserved?: AnchorBytes;
+}
+
+interface AnchorUsagePlanTier {
+  upTo: AnchorNumeric;
+  ratePerUnit: AnchorNumeric;
+}
+
+interface AnchorVelaUsagePlan {
+  merchant: PublicKey;
+  planId: AnchorNumeric;
+  unitName: AnchorBytes;
+  tiers?: AnchorUsagePlanTier[];
+  tierCount?: AnchorNumeric;
+  maxChargePerPeriod: AnchorNumeric;
+  settlementFrequency: AnchorNumeric;
+  status: AnchorEnumVariant<"active" | "inactive">;
+  credentialMint: PublicKey;
+  bump: number;
+  version?: number;
+  _reserved?: AnchorBytes;
+}
+
+interface AnchorMerchantState {
+  merchant: PublicKey;
+  planCount: AnchorNumeric;
+  bump: number;
+  credentialMint?: PublicKey;
+  mandateCounter?: AnchorNumeric;
+  version?: number;
+  _reserved?: AnchorBytes;
+}
+
+interface AnchorProtocolConfig {
+  admin: PublicKey;
+  wrappedUsdcMint: PublicKey;
+  wrappingVault: PublicKey;
+  transferHookProgramId: PublicKey;
+  paused: boolean;
+  version?: number;
+}
+
+interface AnchorTokenConfig {
+  address?: PublicKey;
+  mint: PublicKey;
+  tokenProgram: PublicKey;
+  billingRail?: AnchorEnumVariant<"transferHook" | "tokenDelegate">;
+  decimals?: AnchorNumeric;
+  enabled?: boolean;
+  oracleReference: PublicKey;
+  admin?: PublicKey;
+  createdAt?: AnchorNumeric;
+  bump?: AnchorNumeric;
+  version?: AnchorNumeric;
+  _reserved?: AnchorBytes;
+}
+
+function mapMandateStatus(
+  raw: AnchorEnumVariant<"active" | "cancelled" | "expired">,
+): MandateStatus {
   if (raw.active !== undefined) return "active";
   if (raw.cancelled !== undefined) return "cancelled";
   if (raw.expired !== undefined) return "expired";
   throw new Error(`Unknown MandateStatus variant: ${JSON.stringify(raw)}`);
 }
 
-/**
- * Maps an Anchor-deserialized PlanStatus enum variant to SDK string literal.
- */
-function mapPlanStatus(raw: any): PlanStatus {
+function mapPlanStatus(
+  raw: AnchorEnumVariant<"active" | "inactive">,
+): PlanStatus {
   if (raw.active !== undefined) return "active";
   if (raw.inactive !== undefined) return "inactive";
   throw new Error(`Unknown PlanStatus variant: ${JSON.stringify(raw)}`);
 }
 
-function mapBillingType(raw: any): BillingType {
+function mapBillingType(
+  raw: AnchorEnumVariant<"flat" | "usage"> | undefined,
+): BillingType {
   if (!raw || raw.flat !== undefined) return "flat";
   if (raw.usage !== undefined) return "usage";
   throw new Error(`Unknown BillingType variant: ${JSON.stringify(raw)}`);
 }
 
-function mapAgentMandateStatus(raw: any): AgentMandateStatus {
+function mapAgentMandateStatus(
+  raw: AnchorEnumVariant<"active" | "paused" | "revoked">,
+): AgentMandateStatus {
   if (raw.active !== undefined) return "active";
   if (raw.paused !== undefined) return "paused";
   if (raw.revoked !== undefined) return "revoked";
   throw new Error(`Unknown AgentMandateStatus variant: ${JSON.stringify(raw)}`);
 }
 
-function deserializeAgentServiceLimit(raw: any): AgentServiceLimit {
+function deserializeAgentServiceLimit(
+  raw: AnchorAgentServiceLimit,
+): AgentServiceLimit {
   return {
     service: raw.service,
     dailyLimit: BigInt(raw.dailyLimit.toString()),
@@ -76,18 +205,20 @@ function decodeUnitName(raw: number[] | Uint8Array): string {
   return utf8FromFixedBytes(raw);
 }
 
-function toBigInt(raw: { toString(): string } | bigint | number): bigint {
+function toBigInt(raw: AnchorNumeric): bigint {
   return BigInt(raw.toString());
 }
 
-function toReserved(raw: number[] | Uint8Array | undefined): number[] | undefined {
+function toReserved(raw: AnchorBytes | undefined): number[] | undefined {
   if (raw == null) {
     return undefined;
   }
   return Array.from(raw);
 }
 
-function mapBillingRail(raw: any): BillingRail {
+function mapBillingRail(
+  raw: AnchorEnumVariant<"transferHook" | "tokenDelegate"> | undefined,
+): BillingRail {
   if (!raw || raw.transferHook !== undefined) return "transferHook";
   if (raw.tokenDelegate !== undefined) return "tokenDelegate";
   throw new Error(`Unknown BillingRail variant: ${JSON.stringify(raw)}`);
@@ -149,7 +280,8 @@ function discriminatorHex(data: BufferLike): string {
   return hexFromBytes(data);
 }
 
-export const STREAM_MANDATE_DISCRIMINATOR = accountDiscriminator("StreamMandate");
+export const STREAM_MANDATE_DISCRIMINATOR =
+  accountDiscriminator("StreamMandate");
 export const VELA_MANDATE_DISCRIMINATOR = accountDiscriminator("VelaMandate");
 export const TOKEN_CONFIG_DISCRIMINATOR = accountDiscriminator("TokenConfig");
 
@@ -255,7 +387,10 @@ export async function fetchStreamMandate(
 
   const data = asBytes(info.data);
   const gotDiscriminator = data.subarray(0, Math.min(8, data.length));
-  if (data.length < 8 || !sliceEquals(gotDiscriminator, STREAM_MANDATE_DISCRIMINATOR)) {
+  if (
+    data.length < 8 ||
+    !sliceEquals(gotDiscriminator, STREAM_MANDATE_DISCRIMINATOR)
+  ) {
     throw new WrongAccountTypeError(
       address,
       "StreamMandate",
@@ -404,7 +539,10 @@ export async function fetchMandate(
 /**
  * Converts an Anchor-deserialized VelaMandate account (BN fields) to SDK type (bigint fields).
  */
-export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
+export function deserializeMandate(
+  address: PublicKey,
+  raw: AnchorVelaMandate,
+): VelaMandate {
   const version = Number(raw.version ?? 0);
   const pendingNewPlan =
     raw.pendingNewPlan &&
@@ -415,7 +553,7 @@ export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
   return {
     address,
     subscriber: raw.subscriber,
-    plan: version === 0 ? raw.plan : (raw.plan ?? undefined),
+    plan: raw.plan ?? undefined,
     merchant: raw.merchant,
     mandateIndex: version >= 1 ? toBigInt(raw.mandateIndex ?? 0) : undefined,
     amount: toBigInt(raw.amount),
@@ -464,7 +602,7 @@ export function deserializeMandate(address: PublicKey, raw: any): VelaMandate {
  */
 export function deserializeAgentMandate(
   address: PublicKey,
-  raw: any,
+  raw: AnchorAgentMandate,
 ): AgentMandate {
   return {
     address,
@@ -489,7 +627,10 @@ export function deserializeAgentMandate(
 /**
  * Converts an Anchor-deserialized VelaPlan account (BN fields) to SDK type (bigint fields).
  */
-export function deserializePlan(address: PublicKey, raw: any): VelaPlan {
+export function deserializePlan(
+  address: PublicKey,
+  raw: AnchorVelaPlan,
+): VelaPlan {
   return {
     billingType: "flat",
     address,
@@ -501,6 +642,10 @@ export function deserializePlan(address: PublicKey, raw: any): VelaPlan {
     maxPulls: BigInt(raw.maxPulls.toString()),
     status: mapPlanStatus(raw.status),
     credentialMint: raw.credentialMint,
+    billingMint:
+      raw.billingMint && !raw.billingMint.equals(PublicKey.default)
+        ? raw.billingMint
+        : undefined,
     bump: raw.bump,
     version: raw.version,
     _reserved: toReserved(raw._reserved),
@@ -512,15 +657,13 @@ export function deserializePlan(address: PublicKey, raw: any): VelaPlan {
  */
 export function deserializeUsagePlan(
   address: PublicKey,
-  raw: any,
+  raw: AnchorVelaUsagePlan,
 ): VelaUsagePlan {
   const tierCount = Number(raw.tierCount ?? 0);
-  const tiers = (raw.tiers ?? [])
-    .slice(0, tierCount)
-    .map((tier: any) => ({
-      upTo: BigInt(tier.upTo.toString()),
-      ratePerUnit: BigInt(tier.ratePerUnit.toString()),
-    }));
+  const tiers = (raw.tiers ?? []).slice(0, tierCount).map((tier) => ({
+    upTo: BigInt(tier.upTo.toString()),
+    ratePerUnit: BigInt(tier.ratePerUnit.toString()),
+  }));
 
   return {
     billingType: "usage",
@@ -545,7 +688,7 @@ export function deserializeUsagePlan(
  */
 export function deserializeMerchantState(
   address: PublicKey,
-  raw: any,
+  raw: AnchorMerchantState,
 ): MerchantState {
   const version = raw.version;
   return {
@@ -560,7 +703,9 @@ export function deserializeMerchantState(
   };
 }
 
-export function deserializeProtocolConfig(raw: any): ProtocolConfig {
+export function deserializeProtocolConfig(
+  raw: AnchorProtocolConfig,
+): ProtocolConfig {
   return {
     admin: raw.admin,
     wrappedUsdcMint: raw.wrappedUsdcMint,
@@ -571,7 +716,9 @@ export function deserializeProtocolConfig(raw: any): ProtocolConfig {
   };
 }
 
-export function deserializeTokenConfig(raw: any): TokenConfigAccount {
+export function deserializeTokenConfig(
+  raw: AnchorTokenConfig,
+): TokenConfigAccount {
   return {
     address: raw.address,
     mint: raw.mint,

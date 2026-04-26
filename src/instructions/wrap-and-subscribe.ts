@@ -68,7 +68,8 @@ export async function buildWrapAndSubscribeInstructions(
       subscriber,
       planAddress,
       merchantAddress,
-      usdcMintAddress: splUsdcMint, // kept for backward compat; subscribe no longer uses USDC
+      billingMint: wrappedUsdcMint,
+      usdcMintAddress: splUsdcMint, // kept for backward-compatible callers
       credentialMintAddress,
     });
   instructions.push(subscribeIx);

@@ -1,55 +1,106 @@
+<!-- markdownlint-disable MD013 -->
+
 # @velapay/sdk
 
 [![npm](https://img.shields.io/npm/v/@velapay/sdk)](https://www.npmjs.com/package/@velapay/sdk)
 [![license](https://img.shields.io/npm/l/@velapay/sdk)](./LICENSE)
 
-TypeScript SDK for [Vela](https://velapay.com) — private, programmable payment authority on Solana, built on Token-2022 transfer hooks. Subscriptions, streams, usage, and agent budgets on one authorization primitive. Provides instruction builders, a high-level client, pre-flight validators, and a CLI.
+TypeScript SDK for VelaPay, a private, programmable payment authority on Solana. The SDK is the compatibility layer between applications and the Vela Protocol programs: it builds Anchor instructions, resolves PDAs, deserializes accounts, validates pre-flight state, parses public events, and exposes a browser-safe entrypoint for checkout and embedded flows.
 
-> **Devnet only.** Mainnet deployment is not yet live. All examples target the current devnet program.
+> Devnet only. Mainnet deployment is not live yet. All examples target the current devnet programs.
+
+## Protocol Programs
+
+| Program | Devnet address |
+| --- | --- |
+| Vela Protocol | `CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT` |
+| Vela Transfer Hook | `3agVoFp4NZFuKbVqCV8HbjSZn1xW4Utk4U1Wir3TKjZ9` |
 
 ## Installation
 
-```bash
+```sh
 bun add @velapay/sdk
-# or: npm install @velapay/sdk
 ```
 
-Optional peer dependency — enables Helius RPC, priority fee estimation, and enhanced transaction landing:
+Other package managers are supported by the published package:
 
-```bash
+```sh
+npm install @velapay/sdk
+```
+
+`helius-sdk` is an optional peer dependency. Install it only when you want Helius RPC helpers, priority fee estimation, or webhook utilities.
+
+```sh
 bun add helius-sdk
 ```
 
-## Quick start
+## Quick Start
 
 ```ts
-import { createVelaClient, DEVNET_USDC_MINT } from "@velapay/sdk";
 import { Connection } from "@solana/web3.js";
+import { createVelaClient } from "@velapay/sdk";
 
 const vela = createVelaClient({
-  connection: new Connection("https://api.devnet.solana.com"),
-  wallet,                  // any wallet with signTransaction + publicKey
+  connection: new Connection("https://api.devnet.solana.com", "confirmed"),
+  wallet, // any wallet with publicKey + signTransaction
   commitment: "confirmed",
-  heliusApiKey: "...",     // optional — upgrades to Helius RPC
-  keeperEndpoint: "...",   // optional — auto-registers billing schedules
+  heliusApiKey: process.env.HELIUS_API_KEY, // optional
+  keeperEndpoint: process.env.VELA_KEEPER_URL, // optional
 });
 ```
 
-## API
+The client has three layers:
 
-### Subscription lifecycle
+| Layer | Use when |
+| --- | --- |
+| Top-level client methods | You want the SDK to build, sign, send, confirm, and return enriched data |
+| `vela.instructions.*` | You need raw `TransactionInstruction` objects for custom transactions |
+| `vela.validate.*` | You need read-only checks before asking a wallet to sign |
+
+## Multi-Token Billing
+
+Periodic plans and stream mandates are not USDC-only. A merchant may bind a plan to any enabled Token-2022 billing mint registered in the protocol through `TokenConfig`.
+
+`billingMint` is optional for backwards compatibility. If omitted, the SDK resolves the protocol's wrapped-USDC mint from `ProtocolConfig`.
 
 ```ts
-// Create a billing plan (merchant)
-const { signature, address: planAddress } = await vela.createPlan({
-  amount: 10_000_000n,     // 10 USDC (6 decimals)
-  frequency: 2_592_000,    // seconds — 30 days
-  usdcMintAddress,
-  wrappedUsdcMint,
+import { PYUSD_MINT } from "@velapay/sdk";
+
+const { signature, address: planAddress, data: plan } = await vela.createPlan({
+  amount: 10_000_000n,
+  frequency: 2_592_000,
+  trialPeriod: 0,
+  maxPulls: 12n,
+  billingMint: PYUSD_MINT,
 });
 
-// Subscribe — wraps SPL USDC and creates a mandate atomically
-const { signature, address: mandateAddress } = await vela.wrapAndSubscribe({
+console.log(signature, planAddress.toBase58(), plan.billingMint?.toBase58());
+```
+
+For display and amount parsing, resolve the token config first:
+
+```ts
+const tokenConfig = await vela.resolveTokenConfig(PYUSD_MINT);
+
+const rawAmount = vela.parseAmount("10.00", tokenConfig);
+const displayAmount = vela.formatAmount(rawAmount, tokenConfig);
+```
+
+## Subscription Lifecycle
+
+For Token-2022 billing mints that are already funded in the subscriber's mandate-owned token account, create the mandate directly:
+
+```ts
+const { address: mandateAddress } = await vela.createSubscription({
+  planAddress,
+  merchantAddress,
+});
+```
+
+For the wrapped-USDC compatibility path, wrap SPL USDC and subscribe atomically:
+
+```ts
+const { address: mandateAddress } = await vela.wrapAndSubscribe({
   planAddress,
   merchantAddress,
   splUsdcMint,
@@ -57,17 +108,23 @@ const { signature, address: mandateAddress } = await vela.wrapAndSubscribe({
   wrappingVault,
   amount: 10_000_000n,
 });
+```
 
-// Pull payment (keeper or merchant)
+Execute a pull by passing the billing mint used by the plan. `wrappedUsdcMint` is still accepted for legacy wrapped-USDC callers, but new integrations should use `billingMint`.
+
+```ts
 await vela.pullPayment({
   mandateAddress,
   subscriberAddress,
   merchantAddress,
   planAddress,
-  wrappedUsdcMint,
+  billingMint: PYUSD_MINT,
 });
+```
 
-// Cancel
+Cancel the mandate when the subscriber revokes authority:
+
+```ts
 await vela.cancelSubscription({
   mandateAddress,
   subscriberAddress,
@@ -76,143 +133,139 @@ await vela.cancelSubscription({
 });
 ```
 
-### Usage-based billing
+## Raw Instruction Builders
+
+Raw builders return unsigned instructions plus the PDAs they derive. They are useful for batching, address lookup tables, simulations, and server-side transaction assembly.
 
 ```ts
-const { usagePlanAddress } = await vela.createUsagePlan({
-  planAddress,
-  maxAmountPerPeriod: 100_000_000n,
-  periodDuration: 2_592_000,
-});
-
-await vela.submitUsageReport({
-  usagePlanAddress,
-  mandateAddress,
-  encryptedUsage: ...,
-});
+const { instruction, planAddress, billingMintAddress, tokenConfigAddress } =
+  await vela.instructions.createPlan({
+    planId,
+    amount: 10_000_000n,
+    frequency: 2_592_000,
+    maxPulls: 12n,
+    billingMint: PYUSD_MINT,
+  });
 ```
 
-### Pre-flight validators
-
-Read-only checks before submitting a transaction:
+Token admins can build token-config instructions directly from the package export:
 
 ```ts
-const result = await vela.validate.pullPayment(mandateAddress);
-if (!result.canPull) console.error(result.reason);
+import { buildInitTokenConfigInstruction } from "@velapay/sdk";
 
-await vela.validate.subscribe(planAddress);
-await vela.validate.cancel(mandateAddress);
+const { instruction, tokenConfigAddress } =
+  await buildInitTokenConfigInstruction(vela.program, {
+    admin,
+    mint: PYUSD_MINT,
+    billingRail: "hook",
+    decimals: 6,
+  });
 ```
 
-### Raw instruction builders
+## Accounts and Discovery
 
-Compose your own transactions when you need full control:
-
-```ts
-const { instruction, mandateAddress } = await vela.instructions.subscribe({
-  planAddress,
-  planId,
-  merchantAddress,
-  wrappedUsdcMint,
-  credentialMintAddress,
-});
-```
-
-### Keeper / billing schedule
-
-Register mandates with the keeper service for automated recurring pulls:
-
-```ts
-await vela.registerBillingSchedule({
-  mandateAddress,
-  planAddress,
-  subscriberAddress,
-  merchantAddress,
-  frequency,
-  nextPaymentDue,
-  billingType: "fixed",
-});
-
-await vela.cancelBillingSchedule(mandateAddress);
-```
-
-### Address derivation
+The SDK exports PDA helpers, account fetchers, and deserializers so downstream services can index protocol state without duplicating layouts.
 
 ```ts
 import {
-  deriveMandateAddress,
   derivePlanAddress,
-  deriveCredentialMintAddress,
-  deriveUsagePlanAddress,
+  deserializePlan,
+  fetchTokenConfig,
+  getActiveSubscriptions,
+  getSubscribablePlan,
 } from "@velapay/sdk";
+```
+
+Plan deserialization exposes `billingMint` for flat plans. Consumers should treat the mint as authoritative for settlement and token identity.
+
+## Events
+
+Event schemas are available from `@velapay/sdk/events` and are re-exported by `@velapay/webhook`.
+
+```ts
+import { VelaEventSchema } from "@velapay/sdk/events";
+
+const event = VelaEventSchema.parse(payload);
+```
+
+For token events, `mint` is authoritative. `token_symbol` is display metadata and may be an empty string for non-USDC stream events. Consumers may enrich display labels from a local mint map or `TokenConfig`, but should not rewrite protocol event truth.
+
+## Browser Entrypoint
+
+Browser applications should import from the browser-safe subpath. It excludes Node-only helpers and keeps transaction-building code available for checkout and embedded widgets.
+
+```ts
+import {
+  buildCreatePlanInstruction,
+  buildSubscribeInstruction,
+} from "@velapay/sdk/browser";
 ```
 
 ## CLI
 
-Install globally or run with `bunx`:
+The package includes a `vela` CLI for local development and operator workflows.
 
-```bash
+```sh
 bun install -g @velapay/sdk
-```
 
-```bash
-# Create a billing plan
 vela create-plan --amount 10000000 --frequency 2592000 --keypair ~/.config/solana/id.json
-
-# Subscribe to a plan
 vela subscribe --plan <address> --merchant <address> --keypair ~/.config/solana/id.json
-
-# Pull payment
 vela pull --mandate <address> --keypair ~/.config/solana/id.json
-
-# Cancel subscription
 vela cancel --mandate <address> --keypair ~/.config/solana/id.json
-
-# Check mandate status
 vela status --mandate <address>
-
-# Simulate a pull (dry-run)
 vela simulate --mandate <address>
 ```
 
-## Subpath exports
+## Subpath Exports
 
 | Import path | Contents |
-|-------------|----------|
-| `@velapay/sdk` | Full client, builders, validators, types |
-| `@velapay/sdk/events` | Zod event schemas (re-exported by `@velapay/webhook`) |
+| --- | --- |
+| `@velapay/sdk` | Client, builders, validators, account helpers, constants, and types |
+| `@velapay/sdk/browser` | Browser-safe instruction builders and constants |
+| `@velapay/sdk/events` | Zod event schemas and event types |
 | `@velapay/sdk/x402` | x402 payment protocol helpers |
-| `@velapay/sdk/browser` | Browser-safe bundle (no Node.js APIs) |
+| `@velapay/sdk/idl/vela_protocol.json` | Generated Vela Protocol IDL |
 
 ## Development
 
-```bash
+```sh
 bun install
 
-bun run build   # dual ESM + CJS output with type declarations
-bun test        # run tests
-bun run test:protocol # requires sibling vela-protocol build artifacts
-bun run check   # TypeScript type check
-bun run lint    # Biome lint
-bun run smoke:package  # verify the packed npm artifact in a fresh consumer
-bun run release:verify # production-grade release gate
-bun run format  # Biome format
+bun run check
+bun test
+bun run build
+bun run smoke:package
 ```
 
-`bun run test:protocol` and `bun run release:verify` expect built artifacts from the sibling
-`vela-protocol` repo. Build that repo first so these files exist:
+Protocol-backed tests require built artifacts from the sibling `vela-protocol` repository:
 
-- `../vela-protocol/target/deploy/vela_protocol.so`
-- `../vela-protocol/target/deploy/vela_transfer_hook.so`
-- `../vela-protocol/target/idl/vela_protocol.json`
-- `../vela-protocol/target/idl/vela_transfer_hook.json`
+```text
+../vela-protocol/target/deploy/vela_protocol.so
+../vela-protocol/target/deploy/vela_transfer_hook.so
+../vela-protocol/target/idl/vela_protocol.json
+../vela-protocol/target/idl/vela_transfer_hook.json
+```
 
-`prepublishOnly` runs `bun run release:verify`, so publishing now refuses to proceed if the
-protocol-backed integration coverage or packaged-consumer smoke checks are missing.
+Run the full release gate before publishing:
 
-## Related packages
+```sh
+bun run release:verify
+```
 
-- [`@velapay/webhook`](https://www.npmjs.com/package/@velapay/webhook) — isomorphic webhook event verifier
+`prepublishOnly` runs `bun run release:verify`, so publishing fails if type checks, tests, protocol-backed integration coverage, build output, or package smoke checks fail.
+
+## Rollout Compatibility
+
+The SDK must be released in the same rollout window as protocol upgrades that change instruction accounts, account layouts, event schemas, token semantics, or program ids.
+
+Before updating runtime consumers:
+
+1. Regenerate or copy the final protocol IDL into `idl/vela_protocol.json`.
+2. Update generated program ids if the protocol addresses changed.
+3. Run `bun run release:verify`.
+4. Pin downstream runtime repos to the verified SDK version.
+
+For this multi-token rollout, downstream code must rely on `mint` as canonical and preserve raw `token_symbol` values when decoding stream and pull events.
 
 ## License
 

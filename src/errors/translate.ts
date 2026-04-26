@@ -33,6 +33,14 @@ import {
 } from "./program-errors";
 
 type ErrorConstructor = new (context?: Record<string, unknown>) => VelaError;
+type AnchorErrorLike = {
+  error?: {
+    errorCode?: {
+      number?: number;
+    };
+  };
+  transactionMessage?: string;
+};
 
 const ERROR_MAP: Record<number, ErrorConstructor> = {
   6000: PullTooEarlyError,
@@ -81,8 +89,8 @@ export function translateError(
   error: unknown,
   context?: Record<string, unknown>,
 ): VelaError {
-  // Check for Anchor error structure
-  const anchorCode = (error as any)?.error?.errorCode?.number;
+  const errorLike = error as AnchorErrorLike;
+  const anchorCode = errorLike.error?.errorCode?.number;
 
   if (typeof anchorCode === "number" && anchorCode in ERROR_MAP) {
     return new ERROR_MAP[anchorCode](context);
@@ -90,7 +98,7 @@ export function translateError(
 
   // Check for SendTransactionError from LiteSVM / web3.js
   // Format: "InstructionErrorCustom { code: 6000 }"
-  const txMessage = (error as any)?.transactionMessage;
+  const txMessage = errorLike.transactionMessage;
   if (typeof txMessage === "string") {
     const codeMatch = txMessage.match(
       /InstructionErrorCustom\s*\{\s*code:\s*(\d+)\s*\}/,

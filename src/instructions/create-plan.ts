@@ -10,6 +10,7 @@ import {
   deriveCredentialMintAddress,
   deriveMerchantStateAddress,
   derivePlanAddress,
+  PDAFactory,
 } from "../accounts/pda";
 import { TOKEN_2022_PROGRAM_ID } from "../constants";
 import type { VelaCreatePlanParams } from "../types";
@@ -18,6 +19,8 @@ export interface BuildCreatePlanResult {
   instruction: TransactionInstruction;
   planAddress: PublicKey;
   credentialMintAddress: PublicKey;
+  billingMintAddress: PublicKey;
+  tokenConfigAddress: PublicKey;
 }
 
 /**
@@ -34,21 +37,25 @@ export async function buildCreatePlanInstruction(
   const { merchant, planId, amount, frequency, maxPulls } = params;
   const trialPeriod = params.trialPeriod ?? 0;
   const maxPullsBigInt = BigInt(maxPulls);
+  const programId = program.programId;
 
   if (maxPullsBigInt < 1n) {
     throw new RangeError("Plan maxPulls must be at least 1");
   }
 
   // Derive PDAs
-  const [merchantState] = deriveMerchantStateAddress(
-    merchant,
-    program.programId,
-  );
-  const [planAddress] = derivePlanAddress(merchant, planId, program.programId);
+  const [merchantState] = deriveMerchantStateAddress(merchant, programId);
+  const [planAddress] = derivePlanAddress(merchant, planId, programId);
   const [credentialMintAddress] = deriveCredentialMintAddress(
     merchant,
     planId,
-    program.programId,
+    programId,
+  );
+  const billingMintAddress =
+    params.billingMint ?? (await fetchDefaultBillingMint(program));
+  const [tokenConfigAddress] = PDAFactory.tokenConfig(
+    billingMintAddress,
+    programId,
   );
 
   // Convert to BN for Anchor
@@ -64,11 +71,25 @@ export async function buildCreatePlanInstruction(
       merchantState,
       plan: planAddress,
       credentialMint: credentialMintAddress,
+      billingMint: billingMintAddress,
+      tokenConfig: tokenConfigAddress,
       systemProgram: SystemProgram.programId,
       token2022Program: TOKEN_2022_PROGRAM_ID,
       rent: SYSVAR_RENT_PUBKEY,
     })
     .instruction();
 
-  return { instruction, planAddress, credentialMintAddress };
+  return {
+    instruction,
+    planAddress,
+    credentialMintAddress,
+    billingMintAddress,
+    tokenConfigAddress,
+  };
+}
+
+async function fetchDefaultBillingMint(program: Program): Promise<PublicKey> {
+  const [protocolConfig] = PDAFactory.config(program.programId);
+  const raw = await (program.account as any).protocolConfig.fetch(protocolConfig);
+  return raw.wrappedUsdcMint as PublicKey;
 }

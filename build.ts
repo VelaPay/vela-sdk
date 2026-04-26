@@ -7,10 +7,6 @@ async function build() {
   ];
   const browserEntrypoints = ["./src/browser/index.ts"];
   const external = [
-    "@x402/core",
-    "@x402/fetch",
-    "@x402/hono",
-    "@x402/svm",
     "@coral-xyz/anchor",
     "@solana/web3.js",
     "@solana/spl-token",
@@ -102,7 +98,9 @@ async function build() {
   }
   copyDtsAsDcts("./dist/esm");
 
-  console.log("Build complete: dist/esm/ (ESM) + dist/cjs/ (CJS) + .d.ts/.d.cts declarations");
+  console.log(
+    "Build complete: dist/esm/ (ESM) + dist/cjs/ (CJS) + .d.ts/.d.cts declarations",
+  );
 }
 
 build();

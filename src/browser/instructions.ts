@@ -4,6 +4,8 @@ export type { BuildCancelPlanChangeResult } from "../instructions/cancel-plan-ch
 export { buildCancelPlanChangeInstruction } from "../instructions/cancel-plan-change";
 export type { BuildCreatePlanResult } from "../instructions/create-plan";
 export { buildCreatePlanInstruction } from "../instructions/create-plan";
+export type { BuildSubscribeResult } from "../instructions/subscribe";
+export { buildSubscribeInstruction } from "../instructions/subscribe";
 export type { BuildSchedulePlanChangeResult } from "../instructions/schedule-plan-change";
 export { buildSchedulePlanChangeInstruction } from "../instructions/schedule-plan-change";
 export type { BuildUpdateMandatePlanResult } from "../instructions/update-mandate-plan";

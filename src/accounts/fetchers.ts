@@ -39,6 +39,7 @@ const AGENT_MANDATE_DISCRIMINATOR = Uint8Array.from([
 const AGENT_MANDATE_RESERVED_BYTES = 64;
 const AGENT_MANDATE_AUTHORITY_OFFSET = 8;
 const AGENT_MANDATE_AGENT_OFFSET = AGENT_MANDATE_AUTHORITY_OFFSET + 32;
+type AnchorAgentMandateAccount = Parameters<typeof deserializeAgentMandate>[1];
 
 function mapAgentMandateStatus(status: number): AgentMandate["status"] {
   switch (status) {
@@ -139,7 +140,7 @@ function getProgramConnection(program: Program): Connection | undefined {
 }
 
 function getLegacyAgentMandateFetcher(program: Program): {
-  fetch: (address: PublicKey) => Promise<unknown>;
+  fetch: (address: PublicKey) => Promise<AnchorAgentMandateAccount>;
 } | null {
   const client = (program.account as any).agentMandate;
   if (client && typeof client.fetch === "function") {
@@ -151,7 +152,9 @@ function getLegacyAgentMandateFetcher(program: Program): {
 function getLegacyAgentMandateLister(program: Program): {
   all: (
     filters?: Array<{ memcmp: { offset: number; bytes: string } }>,
-  ) => Promise<Array<{ publicKey: PublicKey; account: unknown }>>;
+  ) => Promise<
+    Array<{ publicKey: PublicKey; account: AnchorAgentMandateAccount }>
+  >;
 } | null {
   const client = (program.account as any).agentMandate;
   if (client && typeof client.all === "function") {

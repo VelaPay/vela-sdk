@@ -139,6 +139,7 @@ describe("instruction byte stability", () => {
       frequency: 30n * 86_400n,
       trialPeriod: 0n,
       maxPulls: 12n,
+      billingMint: splUsdcMint,
     });
     const cancelPlanChange = await buildCancelPlanChangeInstruction(
       { programId: authority } as any,

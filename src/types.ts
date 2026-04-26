@@ -135,6 +135,7 @@ export interface VelaPlan {
   maxPulls: bigint;
   status: PlanStatus;
   credentialMint: PublicKey;
+  billingMint?: PublicKey;
   bump: number;
   version?: number;
   _reserved?: number[];
@@ -202,11 +203,13 @@ export interface VelaCreatePlanParams {
   frequency: bigint | number;
   trialPeriod?: bigint | number;
   maxPulls: bigint | number;
+  billingMint?: PublicKey;
 }
 
 export interface VelaSubscribeParams {
   planAddress: PublicKey;
   merchantAddress: PublicKey;
+  billingMint?: PublicKey;
   /** @deprecated No longer used for delegate approval (D-12). Kept for backward compatibility. */
   usdcMintAddress?: PublicKey;
 }
@@ -217,8 +220,10 @@ export interface VelaPullParams {
   subscriberAddress: PublicKey;
   merchantAddress: PublicKey;
   planAddress: PublicKey;
-  /** The Token-2022 wrapped USDC mint used for transfer_checked */
-  wrappedUsdcMint: PublicKey;
+  /** The Token-2022 billing mint used for transfer_checked. */
+  billingMint?: PublicKey;
+  /** @deprecated Use billingMint. Kept for wrapped-USDC callers. */
+  wrappedUsdcMint?: PublicKey;
   /** The protocol's SPL USDC vault (used for PDA resolution) */
   wrappingVault?: PublicKey;
   /** Optional override for dynamic transfer-hook resolution. */

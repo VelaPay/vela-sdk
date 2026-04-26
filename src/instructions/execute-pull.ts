@@ -55,8 +55,8 @@ export async function buildExecutePullInstruction(
     subscriberAddress,
     merchantAddress,
     planAddress,
-    wrappedUsdcMint,
   } = params;
+  const billingMint = params.billingMint ?? params.wrappedUsdcMint;
 
   const programId = program.programId ?? PROGRAM_ID;
 
@@ -65,12 +65,15 @@ export async function buildExecutePullInstruction(
       "buildExecutePullInstruction: mandateAddress is required (V2 -- cannot be re-derived from plan alone).",
     );
   }
+  if (!billingMint) {
+    throw new Error("buildExecutePullInstruction: billingMint is required");
+  }
   const mandateAddress = explicitMandateAddress;
   const mandate = await fetchMandate(_connection, mandateAddress);
 
   const [pullApproval] = PDAFactory.approval(mandateAddress, programId);
   const [tokenConfigAddress] = PDAFactory.tokenConfig(
-    wrappedUsdcMint,
+    billingMint,
     programId,
   );
   const [protocolConfig] = PDAFactory.config(programId);
@@ -82,20 +85,20 @@ export async function buildExecutePullInstruction(
   const effectiveHookProgramId =
     params.hookProgramId ?? protocolConfigValues.hookProgramId;
   const [extraAccountMetaList] = PDAFactory.extraAccountMetas(
-    wrappedUsdcMint,
+    billingMint,
     effectiveHookProgramId,
   );
 
-  // Derive Token-2022 ATAs for wrapped USDC
+  // Derive Token-2022 ATAs for the plan billing mint.
   const subscriberWrappedAccount = getAssociatedTokenAddressSync(
-    wrappedUsdcMint,
+    billingMint,
     mandateAddress,
     true,
     TOKEN_2022_PROGRAM_ID,
   );
 
   const merchantWrappedAccount = getAssociatedTokenAddressSync(
-    wrappedUsdcMint,
+    billingMint,
     merchantAddress,
     true,
     TOKEN_2022_PROGRAM_ID,
@@ -115,7 +118,7 @@ export async function buildExecutePullInstruction(
       mandate: mandateAddress,
       subscriberWrappedAccount,
       merchantWrappedAccount,
-      wrappedUsdcMint,
+      wrappedUsdcMint: billingMint,
       pullApproval,
       tokenConfig: tokenConfigAddress,
       protocolConfig,

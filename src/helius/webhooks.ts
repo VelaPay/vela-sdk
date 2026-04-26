@@ -1,4 +1,5 @@
 import { BorshCoder, EventParser, type Idl } from "@coral-xyz/anchor";
+import type { PublicKey } from "@solana/web3.js";
 import { PROGRAM_ID } from "../constants";
 import idl from "../../idl/vela_protocol.json";
 import { createHelius } from "./provider";
@@ -16,12 +17,37 @@ import type {
   HeliusWebhookTransaction,
 } from "../types";
 
+type AnchorNumeric = string | number | bigint | { toString(): string };
+type AnchorMandateStatus = Partial<
+  Record<"active" | "paused" | "revoked", object>
+>;
+interface AnchorEventData {
+  mandate: PublicKey;
+  authority: PublicKey;
+  agent: PublicKey;
+  service?: PublicKey;
+  dailyLimit?: AnchorNumeric;
+  lifetimeCap?: AnchorNumeric;
+  serviceCount?: AnchorNumeric;
+  fundedAmount?: AnchorNumeric;
+  minPullAmount?: AnchorNumeric;
+  minPullInterval?: AnchorNumeric;
+  amount?: AnchorNumeric;
+  dailySpent: AnchorNumeric;
+  totalSpent: AnchorNumeric;
+  remainingBalance?: AnchorNumeric;
+  status?: AnchorMandateStatus;
+}
+
 function normalizeWebhookTypes(transactionTypes?: string[]): string[] {
   return [...(transactionTypes ?? ["Any"])].sort();
 }
 
 function sameWebhookTypes(left: string[], right: string[]): boolean {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
 }
 
 export async function ensureAgentWebhook(args: {
@@ -31,7 +57,9 @@ export async function ensureAgentWebhook(args: {
 }): Promise<{ webhookId: string; reused: boolean }> {
   const programId = (args.programId ?? PROGRAM_ID).toBase58();
   const helius = await createHelius(args.apiKey);
-  const expectedTypes = normalizeWebhookTypes(args.agentWebhook.transactionTypes);
+  const expectedTypes = normalizeWebhookTypes(
+    args.agentWebhook.transactionTypes,
+  );
   const expectedWebhookType = args.agentWebhook.webhookType ?? "enhanced";
   const expectedAuthHeader = args.agentWebhook.authHeader ?? null;
   const existing = (await helius.webhooks.getAll()).find(
@@ -69,7 +97,10 @@ export async function ensureAgentWebhook(args: {
 }
 
 function normalizePayload(
-  payload: HeliusWebhookPayload | HeliusWebhookTransaction[] | HeliusWebhookTransaction,
+  payload:
+    | HeliusWebhookPayload
+    | HeliusWebhookTransaction[]
+    | HeliusWebhookTransaction,
 ): HeliusWebhookTransaction[] {
   if (Array.isArray(payload)) {
     return payload;
@@ -80,13 +111,39 @@ function normalizePayload(
   return [payload];
 }
 
-function toBigInt(value: bigint | number | string | { toString(): string }): bigint {
+function toBigInt(
+  value: AnchorNumeric | undefined,
+  field = "event numeric field",
+): bigint {
+  if (value === undefined) {
+    throw new Error(`Missing ${field}`);
+  }
   return BigInt(value.toString());
 }
 
+function toNumber(value: AnchorNumeric | undefined, field: string): number {
+  if (value === undefined) {
+    throw new Error(`Missing ${field}`);
+  }
+  return Number(value);
+}
+
+function requirePublicKey(
+  value: PublicKey | undefined,
+  field: string,
+): PublicKey {
+  if (value === undefined) {
+    throw new Error(`Missing ${field}`);
+  }
+  return value;
+}
+
 function normalizeMandateStatus(
-  raw: { active?: unknown; paused?: unknown; revoked?: unknown },
+  raw: AnchorMandateStatus | undefined,
 ): "active" | "paused" | "revoked" {
+  if (raw === undefined) {
+    throw new Error("Missing AgentMandateStatus variant");
+  }
   if (raw.active !== undefined) {
     return "active";
   }
@@ -100,7 +157,7 @@ function normalizeMandateStatus(
 }
 
 function normalizeAgentEvent(
-  event: { name: string; data: any },
+  event: { name: string; data: AnchorEventData },
   signature?: string,
 ): AgentWebhookEvent | null {
   switch (event.name) {
@@ -113,7 +170,7 @@ function normalizeAgentEvent(
         agent: event.data.agent,
         dailyLimit: toBigInt(event.data.dailyLimit),
         lifetimeCap: toBigInt(event.data.lifetimeCap),
-        serviceCount: Number(event.data.serviceCount),
+        serviceCount: toNumber(event.data.serviceCount, "serviceCount"),
         fundedAmount: toBigInt(event.data.fundedAmount),
         remainingBalance: toBigInt(event.data.remainingBalance),
       } satisfies AgentMandateCreatedEvent;
@@ -139,7 +196,7 @@ function normalizeAgentEvent(
         mandate: event.data.mandate,
         authority: event.data.authority,
         agent: event.data.agent,
-        service: event.data.service,
+        service: requirePublicKey(event.data.service, "service"),
         amount: toBigInt(event.data.amount),
         dailySpent: toBigInt(event.data.dailySpent),
         totalSpent: toBigInt(event.data.totalSpent),
@@ -194,7 +251,10 @@ function normalizeAgentEvent(
 }
 
 export function parseAgentWebhookPayload(
-  payload: HeliusWebhookPayload | HeliusWebhookTransaction[] | HeliusWebhookTransaction,
+  payload:
+    | HeliusWebhookPayload
+    | HeliusWebhookTransaction[]
+    | HeliusWebhookTransaction,
   programId = PROGRAM_ID,
 ): AgentWebhookEvent[] {
   const parser = new EventParser(programId, new BorshCoder(idl as Idl));
@@ -214,7 +274,10 @@ export function parseAgentWebhookPayload(
 }
 
 export async function handleAgentWebhookPayload(
-  payload: HeliusWebhookPayload | HeliusWebhookTransaction[] | HeliusWebhookTransaction,
+  payload:
+    | HeliusWebhookPayload
+    | HeliusWebhookTransaction[]
+    | HeliusWebhookTransaction,
   onAgentEvent: (event: AgentWebhookEvent) => void | Promise<void>,
   programId = PROGRAM_ID,
 ): Promise<AgentWebhookEvent[]> {

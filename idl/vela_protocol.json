@@ -944,6 +944,37 @@
           "writable": true
         },
         {
+          "name": "billing_mint"
+        },
+        {
+          "name": "token_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "billing_mint"
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         },
@@ -1429,7 +1460,32 @@
           "writable": true
         },
         {
-          "name": "token_config"
+          "name": "token_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wrapped_usdc_mint"
+              }
+            ]
+          }
         },
         {
           "name": "protocol_config",
@@ -3694,6 +3750,37 @@
           "writable": true
         },
         {
+          "name": "billing_mint"
+        },
+        {
+          "name": "token_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "billing_mint"
+              }
+            ]
+          }
+        },
+        {
           "name": "subscriber_credential_account",
           "writable": true
         },
@@ -4125,7 +4212,32 @@
           "writable": true
         },
         {
-          "name": "token_config"
+          "name": "token_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wrapped_usdc_mint"
+              }
+            ]
+          }
         },
         {
           "name": "protocol_config",
@@ -7748,6 +7860,10 @@
             "type": "pubkey"
           },
           {
+            "name": "billing_mint",
+            "type": "pubkey"
+          },
+          {
             "name": "bump",
             "type": "u8"
           },
@@ -7760,7 +7876,7 @@
             "type": {
               "array": [
                 "u8",
-                64
+                32
               ]
             }
           }

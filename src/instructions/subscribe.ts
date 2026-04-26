@@ -21,6 +21,8 @@ export interface BuildSubscribeResult {
   instruction: TransactionInstruction;
   mandateAddress: PublicKey;
   credentialAccountAddress: PublicKey;
+  billingMintAddress: PublicKey;
+  tokenConfigAddress: PublicKey;
 }
 
 /**
@@ -50,6 +52,7 @@ export async function buildSubscribeInstruction(
   // the fetched plan still points at the older mint.
   let credentialMint: PublicKey;
   let resolvedMerchant = merchantAddress;
+  let resolvedBillingMint = params.billingMint;
   const explicitCredentialMint =
     params.credentialMint ?? params.credentialMintAddress;
   if (explicitCredentialMint && resolvedMerchant != null) {
@@ -58,6 +61,10 @@ export async function buildSubscribeInstruction(
     const planAccount = await getSubscribablePlan(program, planAddress);
     const resolvedPlan = resolvePlanContext(planAccount);
     credentialMint = resolvedPlan.credentialMint;
+    resolvedBillingMint =
+      resolvedPlan.plan.billingType === "flat"
+        ? (resolvedPlan.plan.billingMint ?? resolvedBillingMint)
+        : resolvedBillingMint;
     resolvedMerchant = resolvedPlan.merchant;
     const [merchantCredentialMint] = PDAFactory.credential(
       resolvedMerchant,
@@ -75,6 +82,9 @@ export async function buildSubscribeInstruction(
     } else {
       credentialMint = resolvedPlan.credentialMint;
     }
+  }
+  if (!resolvedBillingMint) {
+    resolvedBillingMint = await fetchDefaultBillingMint(program);
   }
 
   const [merchantStateAddress] = PDAFactory.merchantState(
@@ -101,6 +111,10 @@ export async function buildSubscribeInstruction(
     false,
     TOKEN_2022_PROGRAM_ID,
   );
+  const [tokenConfigAddress] = PDAFactory.tokenConfig(
+    resolvedBillingMint,
+    programId,
+  );
 
   // No USDC accounts needed -- D-12: delegate approval removed entirely.
   // The subscribe instruction only creates the mandate and mints the credential NFT.
@@ -113,6 +127,8 @@ export async function buildSubscribeInstruction(
       plan: planAddress,
       mandate: mandateAddress,
       credentialMint,
+      billingMint: resolvedBillingMint,
+      tokenConfig: tokenConfigAddress,
       subscriberCredentialAccount,
       tokenProgram: TOKEN_PROGRAM_ID,
       token2022Program: TOKEN_2022_PROGRAM_ID,
@@ -126,5 +142,13 @@ export async function buildSubscribeInstruction(
     instruction,
     mandateAddress,
     credentialAccountAddress: subscriberCredentialAccount,
+    billingMintAddress: resolvedBillingMint,
+    tokenConfigAddress,
   };
+}
+
+async function fetchDefaultBillingMint(program: Program): Promise<PublicKey> {
+  const [protocolConfig] = PDAFactory.config(program.programId);
+  const raw = await (program.account as any).protocolConfig.fetch(protocolConfig);
+  return raw.wrappedUsdcMint as PublicKey;
 }
