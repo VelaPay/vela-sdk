@@ -1,7 +1,14 @@
 async function build() {
   const nodeEntrypoints = [
     "./src/index.ts",
+    "./src/accounts/index.ts",
+    "./src/errors/index.ts",
     "./src/events/index.ts",
+    "./src/inspection/index.ts",
+    "./src/instructions/index.ts",
+    "./src/protocol/index.ts",
+    "./src/security/index.ts",
+    "./src/token/index.ts",
     "./src/x402/index.ts",
     "./cli/index.ts",
   ];

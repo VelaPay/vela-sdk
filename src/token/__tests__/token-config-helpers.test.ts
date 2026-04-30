@@ -1,12 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { PublicKey } from "@solana/web3.js";
+import { PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "../../constants";
 import {
-  TOKEN_CONFIG_DISCRIMINATOR,
+  TokenConfigDisabled,
+  TokenConfigNotFound,
+} from "../../errors/upgrade-errors";
+import {
   getEnabledTokens,
   resolveTokenConfig,
+  TOKEN_CONFIG_DISCRIMINATOR,
 } from "../../index";
-import { PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "../../constants";
-import { TokenConfigDisabled, TokenConfigNotFound } from "../../errors/upgrade-errors";
 
 function addr(seed: number): PublicKey {
   return new PublicKey(Uint8Array.from({ length: 32 }, () => seed));
@@ -52,11 +55,15 @@ describe("token config helpers", () => {
       getProgramAccounts: async () => [
         {
           pubkey: addr(10),
-          account: { data: serializeTokenConfig({ mint: usdc, enabled: true }) },
+          account: {
+            data: serializeTokenConfig({ mint: usdc, enabled: true }),
+          },
         },
         {
           pubkey: addr(11),
-          account: { data: serializeTokenConfig({ mint: pyusd, enabled: false }) },
+          account: {
+            data: serializeTokenConfig({ mint: pyusd, enabled: false }),
+          },
         },
       ],
     } as any;
@@ -79,8 +86,14 @@ describe("token config helpers", () => {
       PROGRAM_ID,
     );
     const accounts = new Map<string, Buffer>([
-      [enabledAddress.toBase58(), serializeTokenConfig({ mint: enabledMint, enabled: true })],
-      [disabledAddress.toBase58(), serializeTokenConfig({ mint: disabledMint, enabled: false })],
+      [
+        enabledAddress.toBase58(),
+        serializeTokenConfig({ mint: enabledMint, enabled: true }),
+      ],
+      [
+        disabledAddress.toBase58(),
+        serializeTokenConfig({ mint: disabledMint, enabled: false }),
+      ],
     ]);
     const connection = {
       getAccountInfo: async (key: PublicKey) => {
@@ -97,7 +110,11 @@ describe("token config helpers", () => {
       },
     } as any;
 
-    const resolved = await resolveTokenConfig(connection, enabledMint, PROGRAM_ID);
+    const resolved = await resolveTokenConfig(
+      connection,
+      enabledMint,
+      PROGRAM_ID,
+    );
     expect(resolved.mint.equals(enabledMint)).toBe(true);
 
     await expect(

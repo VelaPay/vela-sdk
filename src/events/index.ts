@@ -1,4 +1,6 @@
-export { baseEnvelope, BaseEventSchema, createEventSchema } from "./base";
+export type { BaseEvent } from "./base";
+export { BaseEventSchema, baseEnvelope, createEventSchema } from "./base";
+export type { MandateChangeType, MandateEvent } from "./mandate";
 export {
   MANDATE_EVENT_SCHEMAS,
   MandateCancelledSchema,
@@ -9,8 +11,15 @@ export {
   MandateUpgradeInitiatedSchema,
 } from "./mandate";
 export { PLAN_CHANGE_EVENT_SCHEMAS } from "./plan_change";
-export { PullFailedSchema, PullSucceededSchema, PULL_EVENT_SCHEMAS } from "./pull";
+export type { PullEvent } from "./pull";
 export {
+  PULL_EVENT_SCHEMAS,
+  PullFailedSchema,
+  PullSucceededSchema,
+} from "./pull";
+export type { StreamEvent } from "./stream";
+export {
+  STREAM_EVENT_SCHEMAS,
   StreamAccruedSchema,
   StreamCancelledSchema,
   StreamCreatedSchema,
@@ -18,11 +27,6 @@ export {
   StreamRateUpdatedSchema,
   StreamResumedSchema,
   StreamSettledSchema,
-  STREAM_EVENT_SCHEMAS,
 } from "./stream";
-export { EVENT_SCHEMAS, VelaEventSchema } from "./union";
-export type { BaseEvent } from "./base";
-export type { MandateChangeType, MandateEvent } from "./mandate";
-export type { PullEvent } from "./pull";
-export type { StreamEvent } from "./stream";
 export type { VelaEvent } from "./union";
+export { EVENT_SCHEMAS, VelaEventSchema } from "./union";

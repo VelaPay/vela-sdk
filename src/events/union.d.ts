@@ -1,6 +1,235 @@
 import { z } from "zod";
 export declare const EVENT_SCHEMAS: {
-    "stream.created": z.ZodObject<{
+  "stream.created": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"stream.created">;
+    },
+    z.core.$strip
+  >;
+  "stream.settled": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"stream.settled">;
+    },
+    z.core.$strip
+  >;
+  "stream.paused": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"stream.paused">;
+    },
+    z.core.$strip
+  >;
+  "stream.resumed": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"stream.resumed">;
+    },
+    z.core.$strip
+  >;
+  "stream.rate_updated": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"stream.rate_updated">;
+    },
+    z.core.$strip
+  >;
+  "stream.cancelled": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"stream.cancelled">;
+    },
+    z.core.$strip
+  >;
+  "stream.accrued": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"stream.accrued">;
+    },
+    z.core.$strip
+  >;
+  "mandate.created": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"mandate.created">;
+    },
+    z.core.$strip
+  >;
+  "mandate.updated": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"mandate.updated">;
+    },
+    z.core.$strip
+  >;
+  "mandate.cancelled": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"mandate.cancelled">;
+    },
+    z.core.$strip
+  >;
+  "mandate.upgrade_initiated": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"mandate.upgrade_initiated">;
+    },
+    z.core.$strip
+  >;
+  "mandate.upgrade_finalized": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"mandate.upgrade_finalized">;
+    },
+    z.core.$strip
+  >;
+  "mandate.upgrade_cancelled": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"mandate.upgrade_cancelled">;
+    },
+    z.core.$strip
+  >;
+  "pull.succeeded": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"pull.succeeded">;
+    },
+    z.core.$strip
+  >;
+  "pull.failed": z.ZodObject<
+    {
+      id: z.ZodString;
+      schema_version: z.ZodLiteral<1>;
+      emitted_at: z.ZodNumber;
+      signature: z.ZodString;
+      slot: z.ZodNumber;
+      mandate: z.ZodString;
+      mint: z.ZodString;
+      token_symbol: z.ZodString;
+      subscriber: z.ZodOptional<z.ZodString>;
+      event_type: z.ZodLiteral<"pull.failed">;
+    },
+    z.core.$strip
+  >;
+};
+export declare const VelaEventSchema: z.ZodDiscriminatedUnion<
+  readonly [
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -11,8 +240,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"stream.created">;
-    }, z.core.$strip>;
-    "stream.settled": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -23,8 +255,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"stream.settled">;
-    }, z.core.$strip>;
-    "stream.paused": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -35,8 +270,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"stream.paused">;
-    }, z.core.$strip>;
-    "stream.resumed": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -47,8 +285,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"stream.resumed">;
-    }, z.core.$strip>;
-    "stream.rate_updated": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -59,8 +300,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"stream.rate_updated">;
-    }, z.core.$strip>;
-    "stream.cancelled": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -71,8 +315,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"stream.cancelled">;
-    }, z.core.$strip>;
-    "stream.accrued": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -83,8 +330,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"stream.accrued">;
-    }, z.core.$strip>;
-    "mandate.created": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -95,8 +345,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"mandate.created">;
-    }, z.core.$strip>;
-    "mandate.updated": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -107,8 +360,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"mandate.updated">;
-    }, z.core.$strip>;
-    "mandate.cancelled": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -119,8 +375,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"mandate.cancelled">;
-    }, z.core.$strip>;
-    "mandate.upgrade_initiated": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -131,8 +390,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"mandate.upgrade_initiated">;
-    }, z.core.$strip>;
-    "mandate.upgrade_finalized": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -143,8 +405,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"mandate.upgrade_finalized">;
-    }, z.core.$strip>;
-    "mandate.upgrade_cancelled": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -155,8 +420,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"mandate.upgrade_cancelled">;
-    }, z.core.$strip>;
-    "pull.succeeded": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -167,8 +435,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"pull.succeeded">;
-    }, z.core.$strip>;
-    "pull.failed": z.ZodObject<{
+      },
+      z.core.$strip
+    >,
+    z.ZodObject<
+      {
         id: z.ZodString;
         schema_version: z.ZodLiteral<1>;
         emitted_at: z.ZodNumber;
@@ -179,173 +450,11 @@ export declare const EVENT_SCHEMAS: {
         token_symbol: z.ZodString;
         subscriber: z.ZodOptional<z.ZodString>;
         event_type: z.ZodLiteral<"pull.failed">;
-    }, z.core.$strip>;
-};
-export declare const VelaEventSchema: z.ZodDiscriminatedUnion<readonly [z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"stream.created">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"stream.settled">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"stream.paused">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"stream.resumed">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"stream.rate_updated">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"stream.cancelled">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"stream.accrued">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"mandate.created">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"mandate.updated">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"mandate.cancelled">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"mandate.upgrade_initiated">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"mandate.upgrade_finalized">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"mandate.upgrade_cancelled">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"pull.succeeded">;
-}, z.core.$strip>, z.ZodObject<{
-    id: z.ZodString;
-    schema_version: z.ZodLiteral<1>;
-    emitted_at: z.ZodNumber;
-    signature: z.ZodString;
-    slot: z.ZodNumber;
-    mandate: z.ZodString;
-    mint: z.ZodString;
-    token_symbol: z.ZodString;
-    subscriber: z.ZodOptional<z.ZodString>;
-    event_type: z.ZodLiteral<"pull.failed">;
-}, z.core.$strip>], "event_type">;
+      },
+      z.core.$strip
+    >,
+  ],
+  "event_type"
+>;
 export type VelaEvent = z.infer<typeof VelaEventSchema>;
 //# sourceMappingURL=union.d.ts.map

@@ -5,12 +5,13 @@ import {
   type BufferLike,
   hexFromBytes,
   readI64LE,
+  readU8,
   readU32LE,
   readU64LE,
-  readU8,
   sliceEquals,
   utf8FromFixedBytes,
 } from "../browser/bytes";
+import { WrongAccountTypeError } from "../errors/stream-errors";
 import type {
   AgentMandate,
   AgentMandateStatus,
@@ -28,7 +29,6 @@ import type {
   VelaUsagePlan,
 } from "../types";
 import type { StreamMandate, StreamStatus } from "../types/stream-mandate";
-import { WrongAccountTypeError } from "../errors/stream-errors";
 
 type AnchorNumeric = { toString(): string } | bigint | number;
 type AnchorEnumVariant<T extends string> = Partial<Record<T, object>>;

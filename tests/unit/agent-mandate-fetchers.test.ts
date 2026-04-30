@@ -1,10 +1,7 @@
 import { describe, expect, mock, test } from "bun:test";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
-import {
-  listAgentMandates,
-  verifyAgentMandate,
-} from "../../src/index";
+import { listAgentMandates, verifyAgentMandate } from "../../src/index";
 
 function createMockAgentMandateRaw(
   overrides: {
@@ -58,20 +55,22 @@ describe("agent mandate fetchers", () => {
     const authority = Keypair.generate().publicKey;
     const agent = Keypair.generate().publicKey;
     const wrappedUsdcMint = Keypair.generate().publicKey;
-    const all = mock(async (filters: Array<{ memcmp: { offset: number; bytes: string } }>) => {
-      expect(filters).toEqual([
-        { memcmp: { offset: 8, bytes: authority.toBase58() } },
-      ]);
-      return [
-        {
-          publicKey: Keypair.generate().publicKey,
-          account: createMockAgentMandateRaw({
-            authority,
-            agent,
-          }),
-        },
-      ];
-    });
+    const all = mock(
+      async (filters: Array<{ memcmp: { offset: number; bytes: string } }>) => {
+        expect(filters).toEqual([
+          { memcmp: { offset: 8, bytes: authority.toBase58() } },
+        ]);
+        return [
+          {
+            publicKey: Keypair.generate().publicKey,
+            account: createMockAgentMandateRaw({
+              authority,
+              agent,
+            }),
+          },
+        ];
+      },
+    );
 
     const program = {
       programId: new PublicKey("CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"),

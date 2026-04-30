@@ -12,6 +12,9 @@ export const PullFailedSchema = createEventSchema("pull.failed", {
   reason: z.string(),
 });
 
-export const PULL_EVENT_SCHEMAS = [PullSucceededSchema, PullFailedSchema] as const;
+export const PULL_EVENT_SCHEMAS = [
+  PullSucceededSchema,
+  PullFailedSchema,
+] as const;
 
 export type PullEvent = z.infer<(typeof PULL_EVENT_SCHEMAS)[number]>;

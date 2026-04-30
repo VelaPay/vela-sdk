@@ -32,15 +32,18 @@ export const StreamResumedSchema = createEventSchema("stream.resumed", {
   timestamp: z.number().int(),
 });
 
-export const StreamRateUpdatedSchema = createEventSchema("stream.rate_updated", {
-  old_rate_per_second: z.string(),
-  new_rate_per_second: z.string(),
-  old_authorized_max_rate: z.string(),
-  new_authorized_max_rate: z.string(),
-  signer: z.string(),
-  final_settle_amount: z.string(),
-  timestamp: z.number().int(),
-});
+export const StreamRateUpdatedSchema = createEventSchema(
+  "stream.rate_updated",
+  {
+    old_rate_per_second: z.string(),
+    new_rate_per_second: z.string(),
+    old_authorized_max_rate: z.string(),
+    new_authorized_max_rate: z.string(),
+    signer: z.string(),
+    final_settle_amount: z.string(),
+    timestamp: z.number().int(),
+  },
+);
 
 export const StreamCancelledSchema = createEventSchema("stream.cancelled", {
   cancelled_at: z.number().int(),

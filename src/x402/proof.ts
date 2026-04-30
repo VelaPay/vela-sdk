@@ -1,4 +1,8 @@
 import { randomUUID } from "node:crypto";
+import {
+  InvalidPaymentHeaderError,
+  InvalidRawAmountError,
+} from "../errors/sdk-errors";
 
 export const PAYMENT_REQUIRED_HEADER = "PAYMENT-REQUIRED";
 export const PAYMENT_SIGNATURE_HEADER = "PAYMENT-SIGNATURE";
@@ -16,6 +20,7 @@ export interface VelaPaymentChallenge {
   expires: number;
   service?: string;
   wrappedUsdcMint?: string;
+  protocolProgram?: string;
 }
 
 export interface VelaPaymentProof extends VelaPaymentChallenge {
@@ -29,23 +34,32 @@ function encodeBase64Json(value: unknown): string {
 
 function decodeBase64Json<T>(value: string, label: string): T {
   try {
-    return JSON.parse(Buffer.from(value.trim(), "base64url").toString("utf8")) as T;
+    return JSON.parse(
+      Buffer.from(value.trim(), "base64url").toString("utf8"),
+    ) as T;
   } catch {
-    throw new Error(`Invalid ${label} header payload`);
+    throw new InvalidPaymentHeaderError(label);
   }
 }
 
 export function parseRawAmount(value: bigint | number | string): bigint {
+  let amount: bigint;
   if (typeof value === "bigint") {
-    return value;
+    amount = value;
+  } else if (typeof value === "number") {
+    if (!Number.isSafeInteger(value)) {
+      throw new InvalidRawAmountError(value);
+    }
+    amount = BigInt(value);
+  } else if (/^\d+$/.test(value)) {
+    amount = BigInt(value);
+  } else {
+    throw new InvalidRawAmountError(value);
   }
-  if (typeof value === "number") {
-    return BigInt(value);
+  if (amount < 0n) {
+    throw new InvalidRawAmountError(value);
   }
-  if (/^\d+$/.test(value)) {
-    return BigInt(value);
-  }
-  throw new Error(`Invalid raw amount: ${value}`);
+  return amount;
 }
 
 export function createPaymentChallenge(params: {
@@ -56,6 +70,7 @@ export function createPaymentChallenge(params: {
   network?: string;
   service?: string;
   wrappedUsdcMint?: string;
+  protocolProgram?: string;
   nonce?: string;
   expires?: number;
   ttlMs?: number;
@@ -75,6 +90,7 @@ export function createPaymentChallenge(params: {
     expires: params.expires ?? now + ttlMs,
     service: params.service,
     wrappedUsdcMint: params.wrappedUsdcMint,
+    protocolProgram: params.protocolProgram,
   };
 }
 
@@ -85,10 +101,7 @@ export function encodePaymentChallenge(
 }
 
 export function decodePaymentChallenge(value: string): VelaPaymentChallenge {
-  return decodeBase64Json<VelaPaymentChallenge>(
-    value,
-    PAYMENT_REQUIRED_HEADER,
-  );
+  return decodeBase64Json<VelaPaymentChallenge>(value, PAYMENT_REQUIRED_HEADER);
 }
 
 export function createPaymentProof(

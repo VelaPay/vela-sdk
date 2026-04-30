@@ -10,7 +10,10 @@ export interface UsageReportBridgePayload {
 export interface UsageReportBridgeRetryOptions {
   maxAttempts?: number;
   initialDelayMs?: number;
-  fetchImpl?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  fetchImpl?: (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ) => Promise<Response>;
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -44,7 +47,9 @@ export async function postUsageReportBridge(
   const fetchImpl = options?.fetchImpl ?? fetch;
   const sleep = options?.sleep ?? defaultSleep;
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
@@ -83,5 +88,9 @@ export async function postUsageReportBridge(
     await sleep(initialDelayMs * 2 ** (attempt - 1));
   }
 
-  return { ok: false, attempts: maxAttempts, error: "Usage bridge failed unexpectedly" };
+  return {
+    ok: false,
+    attempts: maxAttempts,
+    error: "Usage bridge failed unexpectedly",
+  };
 }

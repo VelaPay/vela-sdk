@@ -1,8 +1,21 @@
-import { type Connection, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
+import {
+  type Connection,
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { fetchStreamMandate } from "../accounts/deserialize";
 import { getAssociatedTokenAddress, PDAFactory } from "../accounts/pda";
-import { asBytes, asInstructionData, instructionDiscriminator } from "../browser/bytes";
-import { PROGRAM_ID, TOKEN_2022_PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../constants";
+import {
+  asBytes,
+  asInstructionData,
+  instructionDiscriminator,
+} from "../browser/bytes";
+import {
+  PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+  TRANSFER_HOOK_PROGRAM_ID,
+} from "../constants";
 
 async function fetchProtocolConfigValues(
   connection: Connection,
@@ -11,7 +24,9 @@ async function fetchProtocolConfigValues(
   const [protocolConfig] = PDAFactory.config(programId);
   const info = await connection.getAccountInfo(protocolConfig);
   if (!info) {
-    throw new Error(`ProtocolConfig account not found: ${protocolConfig.toBase58()}`);
+    throw new Error(
+      `ProtocolConfig account not found: ${protocolConfig.toBase58()}`,
+    );
   }
 
   const data = asBytes(info.data);
@@ -19,8 +34,9 @@ async function fetchProtocolConfigValues(
   const hookProgramId = new PublicKey(data.subarray(154, 186));
   return {
     wrappingVault,
-    hookProgramId:
-      hookProgramId.equals(PublicKey.default) ? TRANSFER_HOOK_PROGRAM_ID : hookProgramId,
+    hookProgramId: hookProgramId.equals(PublicKey.default)
+      ? TRANSFER_HOOK_PROGRAM_ID
+      : hookProgramId,
   };
 }
 
@@ -35,7 +51,10 @@ export async function buildPauseStreamInstruction(args: {
   const [tokenConfig] = PDAFactory.tokenConfig(streamMandate.mint, programId);
   const [protocolConfig] = PDAFactory.config(programId);
   const [pullApproval] = PDAFactory.approval(mandate, programId);
-  const protocolConfigValues = await fetchProtocolConfigValues(connection, programId);
+  const protocolConfigValues = await fetchProtocolConfigValues(
+    connection,
+    programId,
+  );
   const [extraAccountMetaList] = PDAFactory.extraAccountMetas(
     streamMandate.mint,
     protocolConfigValues.hookProgramId,
@@ -64,8 +83,16 @@ export async function buildPauseStreamInstruction(args: {
       { pubkey: pullApproval, isSigner: false, isWritable: true },
       { pubkey: tokenConfig, isSigner: false, isWritable: false },
       { pubkey: protocolConfig, isSigner: false, isWritable: false },
-      { pubkey: protocolConfigValues.wrappingVault, isSigner: false, isWritable: true },
-      { pubkey: protocolConfigValues.hookProgramId, isSigner: false, isWritable: false },
+      {
+        pubkey: protocolConfigValues.wrappingVault,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: protocolConfigValues.hookProgramId,
+        isSigner: false,
+        isWritable: false,
+      },
       { pubkey: extraAccountMetaList, isSigner: false, isWritable: false },
       { pubkey: programId, isSigner: false, isWritable: false },
       { pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },

@@ -9,10 +9,10 @@ import {
 } from "@solana/web3.js";
 import {
   ALTManager,
-  PROGRAM_ID,
   createVelaClient,
   ensureAgentWebhook,
   handleAgentWebhookPayload,
+  PROGRAM_ID,
   parseAgentWebhookPayload,
 } from "../../src/index";
 

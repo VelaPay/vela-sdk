@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { PublicKey } from "@solana/web3.js";
+import { PDAFactory } from "../../accounts/pda";
+import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../../constants";
+import type { TokenConfigAccount, VelaMandate } from "../../types";
+import type { StreamMandate } from "../../types/stream-mandate";
 import {
   accountDiscriminator,
   concatBytes,
@@ -9,10 +13,6 @@ import {
   optionU64LE,
   u64LE,
 } from "../bytes";
-import { PDAFactory } from "../../accounts/pda";
-import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../../constants";
-import type { StreamMandate } from "../../types/stream-mandate";
-import type { TokenConfigAccount, VelaMandate } from "../../types";
 
 const subscriber = new PublicKey("11111111111111111111111111111112");
 const merchant = new PublicKey("11111111111111111111111111111113");
@@ -239,7 +239,9 @@ describe("browser-safe UpgradeBuilder", () => {
         authority: subscriber,
       }).execute();
 
-      expect(hexFromBytes(immediateInstruction.data.subarray(0, 8))).toBe("d3d5ea283a2accf8");
+      expect(hexFromBytes(immediateInstruction.data.subarray(0, 8))).toBe(
+        "d3d5ea283a2accf8",
+      );
       expect(hexFromBytes(scheduledInstruction.data)).toBe("2a09fad8502d346a");
       expect(hexFromBytes(streamingInstruction.data)).toBe(
         "8ad5eeea7139101b010800000000000000010800000000000000",

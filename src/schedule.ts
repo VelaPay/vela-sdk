@@ -9,7 +9,9 @@ function normalizeEndpoint(endpoint: string): string {
 }
 
 function authHeaders(authToken?: string): Record<string, string> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
@@ -60,7 +62,7 @@ export async function registerBillingSchedule(
 ): Promise<{ success: boolean; scheduleId?: string; error?: string }> {
   // Support legacy signature: registerBillingSchedule(program, params, "endpoint")
   const opts: KeeperScheduleOptions =
-    typeof options === "string" ? { keeperEndpoint: options } : options ?? {};
+    typeof options === "string" ? { keeperEndpoint: options } : (options ?? {});
 
   let endpoint: string;
   try {
@@ -68,7 +70,10 @@ export async function registerBillingSchedule(
       opts.keeperEndpoint ?? (await fetchKeeperConfig(program)).keeperEndpoint,
     );
   } catch (err) {
-    return { success: false, error: `Failed to resolve keeper endpoint: ${String(err)}` };
+    return {
+      success: false,
+      error: `Failed to resolve keeper endpoint: ${String(err)}`,
+    };
   }
 
   if (!endpoint) {
@@ -129,7 +134,7 @@ export async function cancelBillingSchedule(
   options?: KeeperScheduleOptions | string,
 ): Promise<{ success: boolean; error?: string }> {
   const opts: KeeperScheduleOptions =
-    typeof options === "string" ? { keeperEndpoint: options } : options ?? {};
+    typeof options === "string" ? { keeperEndpoint: options } : (options ?? {});
 
   let endpoint: string;
   try {
@@ -137,7 +142,10 @@ export async function cancelBillingSchedule(
       opts.keeperEndpoint ?? (await fetchKeeperConfig(program)).keeperEndpoint,
     );
   } catch (err) {
-    return { success: false, error: `Failed to resolve keeper endpoint: ${String(err)}` };
+    return {
+      success: false,
+      error: `Failed to resolve keeper endpoint: ${String(err)}`,
+    };
   }
 
   if (!endpoint) {

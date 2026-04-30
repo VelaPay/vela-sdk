@@ -1,32 +1,3 @@
-export { fetchMandate, getMerchantState } from "./accounts";
-export type {
-  PeriodicUpgradePlanInput,
-  PreviewPlanChangeResult,
-  StreamRatePlanInput,
-  UpgradeBuilderArgs,
-  UpgradePlanInput,
-} from "./builders";
-export { UpgradeBuilder } from "./builders";
-export { rawVelaIdl, withProgramAddress } from "./idl";
-export {
-  buildCancelInstruction,
-  buildCancelPlanChangeInstruction,
-  buildCreatePlanInstruction,
-  buildSubscribeInstruction,
-  buildSchedulePlanChangeInstruction,
-  buildUpdateMandatePlanInstruction,
-  buildUpdateStreamRateInstruction,
-  buildWrapAndSubscribeInstructions,
-} from "./instructions";
-export type {
-  BuildCancelPlanChangeResult,
-  BuildCancelResult,
-  BuildCreatePlanResult,
-  BuildSubscribeResult,
-  BuildSchedulePlanChangeResult,
-  BuildUpdateMandatePlanResult,
-  BuildWrapAndSubscribeResult,
-} from "./instructions";
 export {
   DEVNET_USDC_MINT,
   EURC_MINT,
@@ -46,3 +17,32 @@ export type {
   VelaMandate,
 } from "../types";
 export type { StreamMandate } from "../types/stream-mandate";
+export { fetchMandate, getMerchantState } from "./accounts";
+export type {
+  PeriodicUpgradePlanInput,
+  PreviewPlanChangeResult,
+  StreamRatePlanInput,
+  UpgradeBuilderArgs,
+  UpgradePlanInput,
+} from "./builders";
+export { UpgradeBuilder } from "./builders";
+export { rawVelaIdl, withProgramAddress } from "./idl";
+export type {
+  BuildCancelPlanChangeResult,
+  BuildCancelResult,
+  BuildCreatePlanResult,
+  BuildSchedulePlanChangeResult,
+  BuildSubscribeResult,
+  BuildUpdateMandatePlanResult,
+  BuildWrapAndSubscribeResult,
+} from "./instructions";
+export {
+  buildCancelInstruction,
+  buildCancelPlanChangeInstruction,
+  buildCreatePlanInstruction,
+  buildSchedulePlanChangeInstruction,
+  buildSubscribeInstruction,
+  buildUpdateMandatePlanInstruction,
+  buildUpdateStreamRateInstruction,
+  buildWrapAndSubscribeInstructions,
+} from "./instructions";

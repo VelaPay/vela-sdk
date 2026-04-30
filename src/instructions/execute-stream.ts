@@ -1,12 +1,22 @@
 import { sha256 } from "@noble/hashes/sha2.js";
-import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
-import { type Connection, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
+  type Connection,
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { fetchStreamMandate } from "../accounts/deserialize";
 import { PDAFactory } from "../accounts/pda";
 import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../constants";
 
 function instructionDiscriminator(name: string): Buffer {
-  return Buffer.from(sha256(new TextEncoder().encode(`global:${name}`)).slice(0, 8));
+  return Buffer.from(
+    sha256(new TextEncoder().encode(`global:${name}`)).slice(0, 8),
+  );
 }
 
 async function fetchProtocolConfigValues(
@@ -16,12 +26,16 @@ async function fetchProtocolConfigValues(
   const [protocolConfig] = PDAFactory.config(programId);
   const info = await connection.getAccountInfo(protocolConfig);
   if (!info) {
-    throw new Error(`ProtocolConfig account not found: ${protocolConfig.toBase58()}`);
+    throw new Error(
+      `ProtocolConfig account not found: ${protocolConfig.toBase58()}`,
+    );
   }
 
   const data = Buffer.from(info.data);
   if (data.length < 154) {
-    throw new Error(`ProtocolConfig account ${protocolConfig.toBase58()} is truncated`);
+    throw new Error(
+      `ProtocolConfig account ${protocolConfig.toBase58()} is truncated`,
+    );
   }
 
   const wrappingVault = new PublicKey(data.subarray(113, 145));
@@ -29,8 +43,9 @@ async function fetchProtocolConfigValues(
 
   return {
     wrappingVault,
-    hookProgramId:
-      hookProgramId.equals(PublicKey.default) ? TRANSFER_HOOK_PROGRAM_ID : hookProgramId,
+    hookProgramId: hookProgramId.equals(PublicKey.default)
+      ? TRANSFER_HOOK_PROGRAM_ID
+      : hookProgramId,
   };
 }
 
@@ -45,7 +60,10 @@ export async function buildExecuteStreamInstruction(args: {
   const [keeperConfig] = PDAFactory.keeperConfig(programId);
   const [tokenConfig] = PDAFactory.tokenConfig(streamMandate.mint, programId);
   const [protocolConfig] = PDAFactory.config(programId);
-  const protocolConfigValues = await fetchProtocolConfigValues(connection, programId);
+  const protocolConfigValues = await fetchProtocolConfigValues(
+    connection,
+    programId,
+  );
   const [pullApproval] = PDAFactory.approval(mandate, programId);
   const [extraAccountMetaList] = PDAFactory.extraAccountMetas(
     streamMandate.mint,
@@ -79,8 +97,16 @@ export async function buildExecuteStreamInstruction(args: {
       { pubkey: pullApproval, isSigner: false, isWritable: true },
       { pubkey: tokenConfig, isSigner: false, isWritable: false },
       { pubkey: protocolConfig, isSigner: false, isWritable: false },
-      { pubkey: protocolConfigValues.wrappingVault, isSigner: false, isWritable: true },
-      { pubkey: protocolConfigValues.hookProgramId, isSigner: false, isWritable: false },
+      {
+        pubkey: protocolConfigValues.wrappingVault,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: protocolConfigValues.hookProgramId,
+        isSigner: false,
+        isWritable: false,
+      },
       { pubkey: extraAccountMetaList, isSigner: false, isWritable: false },
       { pubkey: programId, isSigner: false, isWritable: false },
       { pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },

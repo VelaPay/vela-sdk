@@ -1,15 +1,15 @@
 import type { Program } from "@coral-xyz/anchor";
 import {
-  SystemProgram,
   type PublicKey,
+  SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
 import { PDAFactory } from "../accounts/pda";
 import type { VelaAgentPullParams } from "../types";
 import {
-  TOKEN_2022_PROGRAM_ID,
   deriveAgentMandateContext,
   resolveAgentProtocolAccounts,
+  TOKEN_2022_PROGRAM_ID,
   toBn,
 } from "./agent-mandate-shared";
 

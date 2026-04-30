@@ -1,15 +1,14 @@
+import { describe, expect, test } from "bun:test";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
-import { describe, expect, test } from "bun:test";
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
-import * as instructionBarrel from "../../src/instructions";
-import * as root from "../../src/index";
 import { velaProgramIdl } from "../../src/idl";
+import * as root from "../../src/index";
 import {
   buildAdjustAgentMandateInstruction,
   buildAgentPullInstruction,
@@ -20,6 +19,7 @@ import {
   PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
+import * as instructionBarrel from "../../src/instructions";
 
 function createReadOnlyProgramWithConfigStub(configStub?: {
   wrappedUsdcMint?: PublicKey;

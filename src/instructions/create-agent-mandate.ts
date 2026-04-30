@@ -1,15 +1,19 @@
 import type { Program } from "@coral-xyz/anchor";
-import { SystemProgram, type PublicKey, type TransactionInstruction } from "@solana/web3.js";
+import {
+  type PublicKey,
+  SystemProgram,
+  type TransactionInstruction,
+} from "@solana/web3.js";
 import type { VelaCreateAgentMandateParams } from "../types";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
   deriveAgentMandateContext,
   deriveAuthorityUsdcAccount,
   deriveMintAuthorityAddress,
   mapServiceLimitInputs,
   resolveAgentProtocolAccounts,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
   toBn,
 } from "./agent-mandate-shared";
 

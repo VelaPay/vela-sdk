@@ -16,15 +16,24 @@ const payload: UsageReportBridgePayload = {
 describe("postUsageReportBridge", () => {
   test("succeeds on first attempt", async () => {
     let calls = 0;
-    const result = await postUsageReportBridge("https://keeper.example.com/", payload, "secret", {
-      fetchImpl: async (input, init) => {
-        calls += 1;
-        expect(String(input)).toBe("https://keeper.example.com/api/keeper/usage-report");
-        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer secret");
-        return new Response(JSON.stringify({ id: "abc" }), { status: 201 });
+    const result = await postUsageReportBridge(
+      "https://keeper.example.com/",
+      payload,
+      "secret",
+      {
+        fetchImpl: async (input, init) => {
+          calls += 1;
+          expect(String(input)).toBe(
+            "https://keeper.example.com/api/keeper/usage-report",
+          );
+          expect((init?.headers as Record<string, string>).Authorization).toBe(
+            "Bearer secret",
+          );
+          return new Response(JSON.stringify({ id: "abc" }), { status: 201 });
+        },
+        sleep: async () => {},
       },
-      sleep: async () => {},
-    });
+    );
 
     expect(calls).toBe(1);
     expect(result).toEqual({ ok: true, attempts: 1, status: 201 });
@@ -34,19 +43,24 @@ describe("postUsageReportBridge", () => {
     let calls = 0;
     const sleeps: number[] = [];
 
-    const result = await postUsageReportBridge("https://keeper.example.com", payload, undefined, {
-      fetchImpl: async () => {
-        calls += 1;
-        if (calls < 3) {
-          throw new Error(`network-${calls}`);
-        }
-        return new Response(JSON.stringify({ id: "abc" }), { status: 201 });
+    const result = await postUsageReportBridge(
+      "https://keeper.example.com",
+      payload,
+      undefined,
+      {
+        fetchImpl: async () => {
+          calls += 1;
+          if (calls < 3) {
+            throw new Error(`network-${calls}`);
+          }
+          return new Response(JSON.stringify({ id: "abc" }), { status: 201 });
+        },
+        sleep: async (ms) => {
+          sleeps.push(ms);
+        },
+        initialDelayMs: 100,
       },
-      sleep: async (ms) => {
-        sleeps.push(ms);
-      },
-      initialDelayMs: 100,
-    });
+    );
 
     expect(calls).toBe(3);
     expect(sleeps).toEqual([100, 200]);
@@ -55,15 +69,22 @@ describe("postUsageReportBridge", () => {
 
   test("does not retry non-retryable client errors", async () => {
     let calls = 0;
-    const result = await postUsageReportBridge("https://keeper.example.com", payload, undefined, {
-      fetchImpl: async () => {
-        calls += 1;
-        return new Response(JSON.stringify({ error: "bad request" }), { status: 400 });
+    const result = await postUsageReportBridge(
+      "https://keeper.example.com",
+      payload,
+      undefined,
+      {
+        fetchImpl: async () => {
+          calls += 1;
+          return new Response(JSON.stringify({ error: "bad request" }), {
+            status: 400,
+          });
+        },
+        sleep: async () => {
+          throw new Error("sleep should not be called");
+        },
       },
-      sleep: async () => {
-        throw new Error("sleep should not be called");
-      },
-    });
+    );
 
     expect(calls).toBe(1);
     expect(result).toEqual({
@@ -78,17 +99,24 @@ describe("postUsageReportBridge", () => {
     let calls = 0;
     const sleeps: number[] = [];
 
-    const result = await postUsageReportBridge("https://keeper.example.com", payload, undefined, {
-      fetchImpl: async () => {
-        calls += 1;
-        return new Response(JSON.stringify({ error: "temporary" }), { status: 503 });
+    const result = await postUsageReportBridge(
+      "https://keeper.example.com",
+      payload,
+      undefined,
+      {
+        fetchImpl: async () => {
+          calls += 1;
+          return new Response(JSON.stringify({ error: "temporary" }), {
+            status: 503,
+          });
+        },
+        sleep: async (ms) => {
+          sleeps.push(ms);
+        },
+        initialDelayMs: 50,
+        maxAttempts: 3,
       },
-      sleep: async (ms) => {
-        sleeps.push(ms);
-      },
-      initialDelayMs: 50,
-      maxAttempts: 3,
-    });
+    );
 
     expect(calls).toBe(3);
     expect(sleeps).toEqual([50, 100]);

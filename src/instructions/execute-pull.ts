@@ -72,10 +72,7 @@ export async function buildExecutePullInstruction(
   const mandate = await fetchMandate(_connection, mandateAddress);
 
   const [pullApproval] = PDAFactory.approval(mandateAddress, programId);
-  const [tokenConfigAddress] = PDAFactory.tokenConfig(
-    billingMint,
-    programId,
-  );
+  const [tokenConfigAddress] = PDAFactory.tokenConfig(billingMint, programId);
   const [protocolConfig] = PDAFactory.config(programId);
   const [keeperConfig] = PDAFactory.keeperConfig(programId);
   const protocolConfigValues = await fetchProtocolConfigValues(

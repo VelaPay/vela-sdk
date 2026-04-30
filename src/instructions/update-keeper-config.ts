@@ -1,5 +1,5 @@
 import type { Program } from "@coral-xyz/anchor";
-import { PublicKey, type TransactionInstruction } from "@solana/web3.js";
+import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { PDAFactory } from "../accounts/pda";
 import { PROGRAM_ID } from "../constants";
 import type { UpdateKeeperConfigParams } from "../types";

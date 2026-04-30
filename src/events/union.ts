@@ -56,6 +56,9 @@ export const EVENT_SCHEMAS = {
   "pull.failed": PullFailedSchema,
 } satisfies Record<string, z.ZodType>;
 
-export const VelaEventSchema = z.discriminatedUnion("event_type", EVENT_SCHEMA_LIST);
+export const VelaEventSchema = z.discriminatedUnion(
+  "event_type",
+  EVENT_SCHEMA_LIST,
+);
 
 export type VelaEvent = z.infer<typeof VelaEventSchema>;

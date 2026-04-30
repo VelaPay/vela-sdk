@@ -14,31 +14,31 @@ import {
 } from "@solana/web3.js";
 import { LiteSVMProvider } from "anchor-litesvm";
 import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import { velaProgramIdl } from "../../src/idl";
 import {
   buildAdminCancelInstruction,
+  buildCreatePlanInstruction,
+  buildExecutePullInstruction,
   buildPauseProtocolInstruction,
   buildUnpauseProtocolInstruction,
-  buildCreatePlanInstruction,
   buildWrapAndSubscribeInstructions,
-  buildExecutePullInstruction,
   deserializeMandate,
   PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
-import { velaProgramIdl } from "../../src/idl";
+import {
+  hasProtocolBuildArtifacts,
+  requireProtocolProgramSo,
+} from "../helpers/protocol-artifacts";
 import {
   bootstrapMerchantCredential,
   bootstrapTokenConfig,
   createToken2022Ata,
   findHookSo,
-  installPhase7AdminState,
-  insertPullApproval,
   sendInstructions as helperSendInstructions,
+  insertPullApproval,
+  installPhase7AdminState,
 } from "./phase7-helpers";
-import {
-  hasProtocolBuildArtifacts,
-  requireProtocolProgramSo,
-} from "../helpers/protocol-artifacts";
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
 

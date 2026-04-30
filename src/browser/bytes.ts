@@ -73,7 +73,9 @@ export function hexFromBytes(value: BufferLike): string {
   ).join("");
 }
 
-export function concatBytes(...parts: Array<BufferLike | null | undefined>): Uint8Array {
+export function concatBytes(
+  ...parts: Array<BufferLike | null | undefined>
+): Uint8Array {
   const chunks = parts
     .filter((part): part is BufferLike => part != null)
     .map(asBytes);
@@ -110,13 +112,17 @@ export function i64LE(value: bigint | number): Uint8Array {
 export function optionU64LE(
   value: bigint | number | null | undefined,
 ): Uint8Array {
-  return value == null ? Uint8Array.of(0) : concatBytes(Uint8Array.of(1), u64LE(value));
+  return value == null
+    ? Uint8Array.of(0)
+    : concatBytes(Uint8Array.of(1), u64LE(value));
 }
 
 export function optionI64LE(
   value: bigint | number | null | undefined,
 ): Uint8Array {
-  return value == null ? Uint8Array.of(0) : concatBytes(Uint8Array.of(1), i64LE(value));
+  return value == null
+    ? Uint8Array.of(0)
+    : concatBytes(Uint8Array.of(1), i64LE(value));
 }
 
 export function instructionDiscriminator(name: string): Uint8Array {

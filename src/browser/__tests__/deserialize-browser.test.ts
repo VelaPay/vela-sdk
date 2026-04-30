@@ -101,9 +101,15 @@ async function withBufferDisabled<T>(run: () => Promise<T>): Promise<T> {
 
 describe("browser-safe deserialization", () => {
   beforeEach(() => {
-    expect(hexFromBytes(accountDiscriminator("VelaMandate"))).toBe("fe7d92c3d9e76cc8");
-    expect(hexFromBytes(accountDiscriminator("StreamMandate"))).toBe("91ee9766c7c905a4");
-    expect(hexFromBytes(accountDiscriminator("TokenConfig"))).toBe("5c49ff2b6b337565");
+    expect(hexFromBytes(accountDiscriminator("VelaMandate"))).toBe(
+      "fe7d92c3d9e76cc8",
+    );
+    expect(hexFromBytes(accountDiscriminator("StreamMandate"))).toBe(
+      "91ee9766c7c905a4",
+    );
+    expect(hexFromBytes(accountDiscriminator("TokenConfig"))).toBe(
+      "5c49ff2b6b337565",
+    );
   });
 
   test("deserializes mandate, stream, and token config without Buffer", async () => {
@@ -116,7 +122,10 @@ describe("browser-safe deserialization", () => {
 
       const mandate = deserializeMandateAccount(address, mandateBytes());
       const stream = deserializeStreamMandate(address, streamMandateBytes());
-      const tokenConfig = deserializeTokenConfigAccount(address, tokenConfigBytes());
+      const tokenConfig = deserializeTokenConfigAccount(
+        address,
+        tokenConfigBytes(),
+      );
 
       expect(mandate.amount).toBe(10_000_000n);
       expect(mandate.pendingNewPlan).toBeUndefined();
@@ -129,7 +138,9 @@ describe("browser-safe deserialization", () => {
 
   test("rejects truncated and wrong-discriminator browser bytes", async () => {
     await withBufferDisabled(async () => {
-      const { deserializeMandateAccount } = await import("../../accounts/deserialize");
+      const { deserializeMandateAccount } = await import(
+        "../../accounts/deserialize"
+      );
 
       expect(() =>
         deserializeMandateAccount(address, mandateBytes().subarray(0, 32)),

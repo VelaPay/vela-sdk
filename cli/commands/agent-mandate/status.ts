@@ -4,8 +4,8 @@ import type { Command } from "commander";
 import { VelaError } from "../../../src/errors/base";
 import { createConnection } from "../../utils/connection";
 import { formatAgentMandateBudget } from "../../utils/formatting";
-import { printOutput } from "../../utils/output";
 import { loadKeypair } from "../../utils/keypair";
+import { printOutput } from "../../utils/output";
 import { createCliVelaClient } from "../../utils/sdk";
 
 type GlobalCliOptions = {

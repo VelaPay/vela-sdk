@@ -6,7 +6,11 @@ import {
 } from "@solana/web3.js";
 import BN from "bn.js";
 import { getAssociatedTokenAddress, PDAFactory } from "../accounts/pda";
-import { PROGRAM_ID, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "../constants";
+import {
+  PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "../constants";
 import type { VelaWrapParams } from "../types";
 
 export interface BuildWrapResult {
@@ -32,8 +36,7 @@ export async function buildWrapInstruction(
     wrappingVault,
     destinationOwner = subscriber,
     destinationWrappedAccount,
-  } =
-    params;
+  } = params;
 
   const programId = program.programId ?? PROGRAM_ID;
 

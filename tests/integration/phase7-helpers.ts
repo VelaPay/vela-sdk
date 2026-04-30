@@ -2,9 +2,9 @@ import { createHash } from "node:crypto";
 import type { Program } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import {
   Keypair,

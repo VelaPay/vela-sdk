@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { Keypair } from "@solana/web3.js";
 import { Hono } from "hono";
+import { instructionDiscriminator } from "../../src/browser/bytes";
+import { PROGRAM_ID } from "../../src/constants";
 import { VelaPaymentHandler } from "../../src/x402/client";
 import {
   PAYMENT_REQUIRED_HEADER,
@@ -36,6 +38,16 @@ describe("x402 flow", () => {
                         agent.toBase58(),
                         authority.toBase58(),
                         destination.toBase58(),
+                        PROGRAM_ID.toBase58(),
+                      ],
+                      instructions: [
+                        {
+                          programIdIndex: 3,
+                          accounts: [0, 1, 2],
+                          data: Array.from(
+                            instructionDiscriminator("agent_pull"),
+                          ),
+                        },
                       ],
                     },
                   },
@@ -85,10 +97,9 @@ describe("x402 flow", () => {
         },
       },
       fetch: async (input, init) => {
-        const request = input instanceof Request ? input : new Request(input, init);
-        retryHeader = request.headers.get(
-          PAYMENT_SIGNATURE_HEADER,
-        );
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        retryHeader = request.headers.get(PAYMENT_SIGNATURE_HEADER);
         return app.request(request);
       },
     });

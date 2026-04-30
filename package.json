@@ -36,10 +36,39 @@
   "types": "./dist/esm/src/index.d.ts",
   "typesVersions": {
     "*": {
-      "browser": ["./dist/esm/src/browser/index.d.ts"],
-      "events": ["./dist/esm/src/events/index.d.ts"],
-      "x402": ["./dist/esm/src/x402/index.d.ts"],
-      "*": ["./dist/esm/src/index.d.ts"]
+      "browser": [
+        "./dist/esm/src/browser/index.d.ts"
+      ],
+      "accounts": [
+        "./dist/esm/src/accounts/index.d.ts"
+      ],
+      "errors": [
+        "./dist/esm/src/errors/index.d.ts"
+      ],
+      "events": [
+        "./dist/esm/src/events/index.d.ts"
+      ],
+      "inspection": [
+        "./dist/esm/src/inspection/index.d.ts"
+      ],
+      "instructions": [
+        "./dist/esm/src/instructions/index.d.ts"
+      ],
+      "protocol": [
+        "./dist/esm/src/protocol/index.d.ts"
+      ],
+      "security": [
+        "./dist/esm/src/security/index.d.ts"
+      ],
+      "token": [
+        "./dist/esm/src/token/index.d.ts"
+      ],
+      "x402": [
+        "./dist/esm/src/x402/index.d.ts"
+      ],
+      "*": [
+        "./dist/esm/src/index.d.ts"
+      ]
     }
   },
   "exports": {
@@ -52,6 +81,28 @@
       "require": {
         "types": "./dist/esm/src/index.d.cts",
         "default": "./dist/cjs/src/index.cjs"
+      }
+    },
+    "./accounts": {
+      "types": "./dist/esm/src/accounts/index.d.ts",
+      "import": {
+        "types": "./dist/esm/src/accounts/index.d.ts",
+        "default": "./dist/esm/src/accounts/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/accounts/index.d.cts",
+        "default": "./dist/cjs/src/accounts/index.cjs"
+      }
+    },
+    "./errors": {
+      "types": "./dist/esm/src/errors/index.d.ts",
+      "import": {
+        "types": "./dist/esm/src/errors/index.d.ts",
+        "default": "./dist/esm/src/errors/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/errors/index.d.cts",
+        "default": "./dist/cjs/src/errors/index.cjs"
       }
     },
     "./x402": {
@@ -76,6 +127,61 @@
         "default": "./dist/cjs/src/events/index.cjs"
       }
     },
+    "./inspection": {
+      "types": "./dist/esm/src/inspection/index.d.ts",
+      "import": {
+        "types": "./dist/esm/src/inspection/index.d.ts",
+        "default": "./dist/esm/src/inspection/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/inspection/index.d.cts",
+        "default": "./dist/cjs/src/inspection/index.cjs"
+      }
+    },
+    "./instructions": {
+      "types": "./dist/esm/src/instructions/index.d.ts",
+      "import": {
+        "types": "./dist/esm/src/instructions/index.d.ts",
+        "default": "./dist/esm/src/instructions/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/instructions/index.d.cts",
+        "default": "./dist/cjs/src/instructions/index.cjs"
+      }
+    },
+    "./protocol": {
+      "types": "./dist/esm/src/protocol/index.d.ts",
+      "import": {
+        "types": "./dist/esm/src/protocol/index.d.ts",
+        "default": "./dist/esm/src/protocol/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/protocol/index.d.cts",
+        "default": "./dist/cjs/src/protocol/index.cjs"
+      }
+    },
+    "./security": {
+      "types": "./dist/esm/src/security/index.d.ts",
+      "import": {
+        "types": "./dist/esm/src/security/index.d.ts",
+        "default": "./dist/esm/src/security/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/security/index.d.cts",
+        "default": "./dist/cjs/src/security/index.cjs"
+      }
+    },
+    "./token": {
+      "types": "./dist/esm/src/token/index.d.ts",
+      "import": {
+        "types": "./dist/esm/src/token/index.d.ts",
+        "default": "./dist/esm/src/token/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/src/token/index.d.cts",
+        "default": "./dist/cjs/src/token/index.cjs"
+      }
+    },
     "./browser": {
       "types": "./dist/esm/src/browser/index.d.ts",
       "import": {
@@ -92,15 +198,23 @@
   "bin": {
     "vela": "./bin/vela"
   },
-  "files": ["dist", "bin", "cli", "idl"],
+  "files": [
+    "dist",
+    "bin",
+    "idl",
+    "docs",
+    "SECURITY.md"
+  ],
   "scripts": {
     "build": "bun run build.ts",
     "prepublishOnly": "bun run release:verify",
     "test": "bun test",
     "test:protocol": "bun run ./scripts/assert-protocol-artifacts.ts && bun test tests/unit/idl.test.ts tests/integration/client.test.ts tests/integration/simulate.test.ts tests/integration/emergency.test.ts tests/integration/agent-mandate-client.test.ts --reporter=dot",
     "check": "tsc --noEmit",
-    "release:verify": "bun run check && bun test && bun run test:protocol && bun run build && bun run smoke:package",
+    "release:preflight": "bun run ./scripts/release-preflight.ts",
+    "release:verify": "bun run release:preflight && bun run check && bun test && bun run test:protocol && bun run build && bun run smoke:package",
     "smoke:package": "bun run ./scripts/release-smoke.ts",
+    "docs:api": "bun run ./scripts/generate-api-docs.ts",
     "lint": "bunx @biomejs/biome check src/ cli/ tests/ scripts/",
     "format": "bunx @biomejs/biome format --write src/ cli/ tests/ scripts/"
   },
@@ -112,7 +226,7 @@
     "@solana/web3.js": "^1.98.4",
     "commander": "^14.0.3",
     "decimal.js": "10.6.0",
-    "hono": "^4.12.12",
+    "hono": "^4.12.15",
     "zod": "^4.3.6"
   },
   "devDependencies": {

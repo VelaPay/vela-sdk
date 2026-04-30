@@ -21,6 +21,7 @@ import {
 } from "@solana/web3.js";
 import { LiteSVMProvider } from "anchor-litesvm";
 import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import { velaProgramIdl } from "../../src/idl";
 import {
   buildCancelInstruction,
   buildCreatePlanInstruction,
@@ -30,19 +31,18 @@ import {
   PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
-import { velaProgramIdl } from "../../src/idl";
+import {
+  hasProtocolBuildArtifacts,
+  requireProtocolProgramSo,
+} from "../helpers/protocol-artifacts";
 import {
   bootstrapMerchantCredential,
   bootstrapTokenConfig,
   createToken2022Ata,
   findHookSo,
-  installPhase7AdminState,
   insertPullApproval,
+  installPhase7AdminState,
 } from "./phase7-helpers";
-import {
-  hasProtocolBuildArtifacts,
-  requireProtocolProgramSo,
-} from "../helpers/protocol-artifacts";
 
 // ── Test helpers (same as client.test.ts) ─────────────────────────────────────
 
@@ -178,195 +178,203 @@ async function mintUsdc(
 describe.skipIf(!hasProtocolBuildArtifacts())(
   "Full Billing Cycle Simulation",
   () => {
-  test("full billing cycle completes on LiteSVM: create -> wrapAndSubscribe -> pull x 3 -> cancel", async () => {
-    // ── Setup ──
-    const soPath = requireProtocolProgramSo();
-    const hookSoPath = findHookSo();
-    const svm = new LiteSVM().withDefaultPrograms().withTransactionHistory(0n);
-    svm.addProgramFromFile(PROGRAM_ID, soPath);
-    svm.addProgramFromFile(TRANSFER_HOOK_PROGRAM_ID, hookSoPath);
+    test("full billing cycle completes on LiteSVM: create -> wrapAndSubscribe -> pull x 3 -> cancel", async () => {
+      // ── Setup ──
+      const soPath = requireProtocolProgramSo();
+      const hookSoPath = findHookSo();
+      const svm = new LiteSVM()
+        .withDefaultPrograms()
+        .withTransactionHistory(0n);
+      svm.addProgramFromFile(PROGRAM_ID, soPath);
+      svm.addProgramFromFile(TRANSFER_HOOK_PROGRAM_ID, hookSoPath);
 
-    const merchant = Keypair.generate();
-    const subscriber = Keypair.generate();
+      const merchant = Keypair.generate();
+      const subscriber = Keypair.generate();
 
-    airdropSol(svm, merchant.publicKey, 10n * BigInt(LAMPORTS_PER_SOL));
-    airdropSol(svm, subscriber.publicKey, 5n * BigInt(LAMPORTS_PER_SOL));
+      airdropSol(svm, merchant.publicKey, 10n * BigInt(LAMPORTS_PER_SOL));
+      airdropSol(svm, subscriber.publicKey, 5n * BigInt(LAMPORTS_PER_SOL));
 
-    const merchantProvider = new LiteSVMProvider(svm, new Wallet(merchant));
-    const merchantProgram = new Program(velaProgramIdl as any, merchantProvider);
+      const merchantProvider = new LiteSVMProvider(svm, new Wallet(merchant));
+      const merchantProgram = new Program(
+        velaProgramIdl as any,
+        merchantProvider,
+      );
 
-    const subscriberProvider = new LiteSVMProvider(svm, new Wallet(subscriber));
-    const subscriberProgram = new Program(
-      velaProgramIdl as any,
-      subscriberProvider,
-    );
+      const subscriberProvider = new LiteSVMProvider(
+        svm,
+        new Wallet(subscriber),
+      );
+      const subscriberProgram = new Program(
+        velaProgramIdl as any,
+        subscriberProvider,
+      );
 
-    // Create USDC
-    const usdcMint = await createUsdcMint(merchantProvider);
-    const subscriberTokenAccount = await createSplTokenAccount(
-      merchantProvider,
-      subscriber.publicKey,
-      usdcMint,
-    );
+      // Create USDC
+      const usdcMint = await createUsdcMint(merchantProvider);
+      const subscriberTokenAccount = await createSplTokenAccount(
+        merchantProvider,
+        subscriber.publicKey,
+        usdcMint,
+      );
 
-    const planAmount = 10_000_000n; // 10 USDC
-    const planFrequency = 3_600n; // 1 hour
-    const maxPulls = 5n; // 5 max pulls, but we only pull 3 then cancel
+      const planAmount = 10_000_000n; // 10 USDC
+      const planFrequency = 3_600n; // 1 hour
+      const maxPulls = 5n; // 5 max pulls, but we only pull 3 then cancel
 
-    // Mint enough USDC for all pulls + extra
-    await mintUsdc(
-      merchantProvider,
-      usdcMint,
-      subscriberTokenAccount,
-      planAmount * (maxPulls + 1n),
-    );
+      // Mint enough USDC for all pulls + extra
+      await mintUsdc(
+        merchantProvider,
+        usdcMint,
+        subscriberTokenAccount,
+        planAmount * (maxPulls + 1n),
+      );
 
-    const phase7State = await installPhase7AdminState({
-      provider: merchantProvider,
-      svm,
-      admin: merchant,
-      splUsdcMint: usdcMint,
-    });
-    const wrappedUsdcMint = phase7State.wrappedUsdcMint;
-    const wrappingVault = phase7State.wrappingVault;
-
-    const merchantBootstrap = await bootstrapMerchantCredential(
-      merchantProvider,
-      merchantProgram,
-      merchant,
-    );
-    const credentialMintAddress = merchantBootstrap.credentialMintAddress;
-
-    await bootstrapTokenConfig(
-      merchantProvider,
-      merchantProgram,
-      merchant,
-      wrappedUsdcMint,
-      "hook",
-      DECIMALS,
-    );
-
-    // ── 1. Create Plan ──
-    const createResult = await buildCreatePlanInstruction(merchantProgram, {
-      merchant: merchant.publicKey,
-      planId: 0n,
-      amount: planAmount,
-      frequency: planFrequency,
-      maxPulls,
-      trialPeriod: 0n,
-    });
-
-    svm.expireBlockhash();
-    const createTx = new Transaction().add(createResult.instruction);
-    await merchantProvider.sendAndConfirm!(createTx, []);
-
-    const planAddress = createResult.planAddress;
-    const merchantWrappedAccount = await createToken2022Ata(
-      merchantProvider,
-      merchant.publicKey,
-      wrappedUsdcMint,
-    );
-
-    // ── 2. Wrap + Subscribe ──
-    const subResult = await buildWrapAndSubscribeInstructions(
-      subscriberProgram,
-      {
-        subscriber: subscriber.publicKey,
-        planAddress,
-        merchantAddress: merchant.publicKey,
+      const phase7State = await installPhase7AdminState({
+        provider: merchantProvider,
+        svm,
+        admin: merchant,
         splUsdcMint: usdcMint,
+      });
+      const wrappedUsdcMint = phase7State.wrappedUsdcMint;
+      const wrappingVault = phase7State.wrappingVault;
+
+      const merchantBootstrap = await bootstrapMerchantCredential(
+        merchantProvider,
+        merchantProgram,
+        merchant,
+      );
+      const credentialMintAddress = merchantBootstrap.credentialMintAddress;
+
+      await bootstrapTokenConfig(
+        merchantProvider,
+        merchantProgram,
+        merchant,
         wrappedUsdcMint,
-        wrappingVault,
-        amount: planAmount * (maxPulls + 1n),
-        credentialMintAddress,
-      },
-    );
+        "hook",
+        DECIMALS,
+      );
 
-    await sendInstructions(subscriberProvider, subResult.instructions);
+      // ── 1. Create Plan ──
+      const createResult = await buildCreatePlanInstruction(merchantProgram, {
+        merchant: merchant.publicKey,
+        planId: 0n,
+        amount: planAmount,
+        frequency: planFrequency,
+        maxPulls,
+        trialPeriod: 0n,
+      });
 
-    const mandateAddress = subResult.mandateAddress;
+      svm.expireBlockhash();
+      const createTx = new Transaction().add(createResult.instruction);
+      await merchantProvider.sendAndConfirm!(createTx, []);
 
-    // Verify mandate created correctly
-    let rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
-      mandateAddress,
-    );
-    let mandate = deserializeMandate(mandateAddress, rawMandate);
-    expect(mandate.status).toBe("active");
-    expect(mandate.pullsExecuted).toBe(0n);
+      const planAddress = createResult.planAddress;
+      const merchantWrappedAccount = await createToken2022Ata(
+        merchantProvider,
+        merchant.publicKey,
+        wrappedUsdcMint,
+      );
 
-    // ── 3. Pull x 3 ──
-    for (let i = 0; i < 3; i++) {
-      // Read nextPaymentDue and advance clock
+      // ── 2. Wrap + Subscribe ──
+      const subResult = await buildWrapAndSubscribeInstructions(
+        subscriberProgram,
+        {
+          subscriber: subscriber.publicKey,
+          planAddress,
+          merchantAddress: merchant.publicKey,
+          splUsdcMint: usdcMint,
+          wrappedUsdcMint,
+          wrappingVault,
+          amount: planAmount * (maxPulls + 1n),
+          credentialMintAddress,
+        },
+      );
+
+      await sendInstructions(subscriberProvider, subResult.instructions);
+
+      const mandateAddress = subResult.mandateAddress;
+
+      // Verify mandate created correctly
+      let rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
+        mandateAddress,
+      );
+      let mandate = deserializeMandate(mandateAddress, rawMandate);
+      expect(mandate.status).toBe("active");
+      expect(mandate.pullsExecuted).toBe(0n);
+
+      // ── 3. Pull x 3 ──
+      for (let i = 0; i < 3; i++) {
+        // Read nextPaymentDue and advance clock
+        rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
+          mandateAddress,
+        );
+        mandate = deserializeMandate(mandateAddress, rawMandate);
+        advanceClock(svm, BigInt(mandate.nextPaymentDue));
+        insertPullApproval({
+          svm,
+          mandate: mandateAddress,
+          validUntil: BigInt(mandate.nextPaymentDue),
+          approvedAmount: planAmount,
+        });
+
+        const pullResult = await buildExecutePullInstruction(
+          merchantProgram,
+          merchantProvider.connection,
+          {
+            payer: merchant.publicKey,
+            subscriberAddress: subscriber.publicKey,
+            merchantAddress: merchant.publicKey,
+            planAddress,
+            wrappedUsdcMint,
+            wrappingVault,
+            mandateAddress,
+          },
+        );
+
+        await sendInstructions(merchantProvider, [pullResult.instruction]);
+        await finalizeBillingRecord(
+          svm,
+          merchantProgram,
+          mandateAddress,
+          BigInt(i + 1),
+        );
+      }
+
+      // Verify pulls executed
       rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
         mandateAddress,
       );
       mandate = deserializeMandate(mandateAddress, rawMandate);
-      advanceClock(svm, BigInt(mandate.nextPaymentDue));
-      insertPullApproval({
-        svm,
-        mandate: mandateAddress,
-        validUntil: BigInt(mandate.nextPaymentDue),
-        approvedAmount: planAmount,
+      expect(mandate.pullsExecuted).toBe(3n);
+
+      // Verify wrapped USDC transfers
+      const merchantAccount = await getAccount(
+        merchantProvider.connection,
+        merchantWrappedAccount,
+        undefined,
+        TOKEN_2022_PROGRAM_ID,
+      );
+      expect(merchantAccount.amount).toBe(planAmount * 3n);
+
+      // ── 4. Cancel ──
+      const cancelResult = await buildCancelInstruction(subscriberProgram, {
+        authority: subscriber.publicKey,
+        mandateAddress,
+        subscriberAddress: subscriber.publicKey,
+        planAddress,
+        usdcMintAddress: usdcMint,
+        credentialMintAddress,
       });
 
-      const pullResult = await buildExecutePullInstruction(
-        merchantProgram,
-        merchantProvider.connection,
-        {
-          payer: merchant.publicKey,
-          subscriberAddress: subscriber.publicKey,
-          merchantAddress: merchant.publicKey,
-          planAddress,
-          wrappedUsdcMint,
-          wrappingVault,
-          mandateAddress,
-        },
-      );
+      await sendInstructions(subscriberProvider, [cancelResult.instruction]);
 
-      await sendInstructions(merchantProvider, [pullResult.instruction]);
-      await finalizeBillingRecord(
-        svm,
-        merchantProgram,
+      // ── Final Verification ──
+      rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
         mandateAddress,
-        BigInt(i + 1),
       );
-    }
-
-    // Verify pulls executed
-    rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
-      mandateAddress,
-    );
-    mandate = deserializeMandate(mandateAddress, rawMandate);
-    expect(mandate.pullsExecuted).toBe(3n);
-
-    // Verify wrapped USDC transfers
-    const merchantAccount = await getAccount(
-      merchantProvider.connection,
-      merchantWrappedAccount,
-      undefined,
-      TOKEN_2022_PROGRAM_ID,
-    );
-    expect(merchantAccount.amount).toBe(planAmount * 3n);
-
-    // ── 4. Cancel ──
-    const cancelResult = await buildCancelInstruction(subscriberProgram, {
-      authority: subscriber.publicKey,
-      mandateAddress,
-      subscriberAddress: subscriber.publicKey,
-      planAddress,
-      usdcMintAddress: usdcMint,
-      credentialMintAddress,
+      mandate = deserializeMandate(mandateAddress, rawMandate);
+      expect(mandate.pullsExecuted).toBe(3n);
+      expect(mandate.status).toBe("cancelled");
     });
-
-    await sendInstructions(subscriberProvider, [cancelResult.instruction]);
-
-    // ── Final Verification ──
-    rawMandate = await (merchantProgram.account as any).velaMandate.fetch(
-      mandateAddress,
-    );
-    mandate = deserializeMandate(mandateAddress, rawMandate);
-    expect(mandate.pullsExecuted).toBe(3n);
-    expect(mandate.status).toBe("cancelled");
-  });
   },
 );

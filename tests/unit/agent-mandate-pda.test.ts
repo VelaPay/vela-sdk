@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+} from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import {
   deriveAgentMandateAddress,
@@ -42,6 +45,8 @@ describe("agent mandate PDA helpers", () => {
   test("@velapay/sdk root exports the agent mandate helpers", async () => {
     const root = await import("../../src/index");
     expect(root.deriveAgentMandateAddress).toBe(deriveAgentMandateAddress);
-    expect(root.deriveAgentMandateWrappedAta).toBe(deriveAgentMandateWrappedAta);
+    expect(root.deriveAgentMandateWrappedAta).toBe(
+      deriveAgentMandateWrappedAta,
+    );
   });
 });

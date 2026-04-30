@@ -1,11 +1,11 @@
-import { sha256 } from "@noble/hashes/sha2.js";
 import { describe, expect, test } from "bun:test";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { PublicKey } from "@solana/web3.js";
-import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../../constants";
 import { PDAFactory } from "../../accounts/pda";
-import { UpgradeBuilder } from "../upgrade-builder";
-import type { StreamMandate } from "../../types/stream-mandate";
+import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../../constants";
 import type { TokenConfigAccount } from "../../types";
+import type { StreamMandate } from "../../types/stream-mandate";
+import { UpgradeBuilder } from "../upgrade-builder";
 
 const subscriber = new PublicKey("11111111111111111111111111111112");
 const merchant = new PublicKey("11111111111111111111111111111113");

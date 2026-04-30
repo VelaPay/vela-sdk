@@ -19,11 +19,15 @@ function candidatePaths(relativePath: string): string[] {
   return PROTOCOL_ROOT_CANDIDATES.map((root) => resolve(root, relativePath));
 }
 
-export const PROGRAM_SO_CANDIDATES = candidatePaths("target/deploy/vela_protocol.so");
+export const PROGRAM_SO_CANDIDATES = candidatePaths(
+  "target/deploy/vela_protocol.so",
+);
 export const TRANSFER_HOOK_SO_CANDIDATES = candidatePaths(
   "target/deploy/vela_transfer_hook.so",
 );
-export const PROTOCOL_IDL_CANDIDATES = candidatePaths("target/idl/vela_protocol.json");
+export const PROTOCOL_IDL_CANDIDATES = candidatePaths(
+  "target/idl/vela_protocol.json",
+);
 export const TRANSFER_HOOK_IDL_CANDIDATES = candidatePaths(
   "target/idl/vela_transfer_hook.json",
 );

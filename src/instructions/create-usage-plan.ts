@@ -1,11 +1,11 @@
 import type { Program } from "@coral-xyz/anchor";
 import {
-  PublicKey,
+  type PublicKey,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
-import BN from "bn.js";
+import type BN from "bn.js";
 import { PDAFactory } from "../accounts/pda";
 import { TOKEN_2022_PROGRAM_ID } from "../constants";
 import type { PricingTier, VelaUsagePlanParams } from "../types";
@@ -62,7 +62,11 @@ export async function buildCreateUsagePlanInstruction(
 
   const programId = program.programId;
 
-  const [usagePlanAddress] = deriveUsagePlanAddress(merchant, planId, programId);
+  const [usagePlanAddress] = deriveUsagePlanAddress(
+    merchant,
+    planId,
+    programId,
+  );
   const [credentialMintAddress] = deriveUsageCredentialMintAddress(
     merchant,
     planId,
@@ -71,11 +75,13 @@ export async function buildCreateUsagePlanInstruction(
 
   // Convert unit_name: Uint8Array (32 bytes) to number[] for Anchor
   const unitNameArray: number[] = Array.from(
-    unitName.length === 32 ? unitName : (() => {
-      const buf = new Uint8Array(32);
-      buf.set(unitName.slice(0, 32));
-      return buf;
-    })(),
+    unitName.length === 32
+      ? unitName
+      : (() => {
+          const buf = new Uint8Array(32);
+          buf.set(unitName.slice(0, 32));
+          return buf;
+        })(),
   );
 
   // Convert tiers to Anchor-compatible format

@@ -1,8 +1,8 @@
 import type { Program } from "@coral-xyz/anchor";
 import {
+  getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { PublicKey, type TransactionInstruction } from "@solana/web3.js";
 import BN from "bn.js";

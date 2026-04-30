@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import fc from "fast-check";
 import { PublicKey } from "@solana/web3.js";
+import fc from "fast-check";
 import { UpgradeBuilder } from "../../builders";
-import { computeProration } from "../preview";
 import type { TokenConfigAccount, VelaMandate } from "../../types";
+import { computeProration } from "../preview";
 
 const subscriber = new PublicKey("11111111111111111111111111111112");
 const merchant = new PublicKey("11111111111111111111111111111113");
@@ -24,7 +24,11 @@ const MAX_AMOUNT = 10n ** 12n;
 const DAY = 86_400n;
 const NOW_SECONDS = 1_700_000_000n;
 
-function mandateFromWindow(oldAmount: bigint, elapsed: bigint, total: bigint): VelaMandate {
+function mandateFromWindow(
+  oldAmount: bigint,
+  elapsed: bigint,
+  total: bigint,
+): VelaMandate {
   return {
     address: new PublicKey("11111111111111111111111111111117"),
     subscriber,

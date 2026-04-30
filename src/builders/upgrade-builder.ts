@@ -1,5 +1,10 @@
 import type { Program } from "@coral-xyz/anchor";
-import type { Connection, PublicKey, TransactionInstruction } from "@solana/web3.js";
+import type {
+  Connection,
+  PublicKey,
+  TransactionInstruction,
+} from "@solana/web3.js";
+import { TokenChangeNotSupported } from "../errors/upgrade-errors";
 import { buildSchedulePlanChangeInstruction } from "../instructions/schedule-plan-change";
 import { buildUpdateMandatePlanInstruction } from "../instructions/update-mandate-plan";
 import { buildUpdateStreamRateInstruction } from "../instructions/update-stream-rate";
@@ -8,7 +13,6 @@ import { formatAmount } from "../token/format-amount";
 import { getTokenSymbol } from "../token/token-symbols";
 import type { TokenConfigAccount, VelaMandate } from "../types";
 import type { StreamMandate } from "../types/stream-mandate";
-import { TokenChangeNotSupported } from "../errors/upgrade-errors";
 
 export interface PreviewPlanChangeResult {
   outcome: ProrationOutcome;
@@ -95,7 +99,8 @@ function previewPeriodicPlanChange(
   const now = nowSeconds();
   const effectiveAt = resolveEffectiveAt(newPlan.effectiveAt);
   const scheduled =
-    effectiveAt != null && BigInt(Math.floor(effectiveAt.getTime() / 1000)) > now;
+    effectiveAt != null &&
+    BigInt(Math.floor(effectiveAt.getTime() / 1000)) > now;
   const newAmount = toBigInt(newPlan.amount);
   const newAuthCeiling = newAmount;
   const remainingSeconds =
@@ -128,7 +133,8 @@ function previewPeriodicPlanChange(
     prorationAmount = preview.prorationAmount;
   }
 
-  const tokenSymbol = tokenConfig.tokenSymbol ?? getTokenSymbol(tokenConfig.mint);
+  const tokenSymbol =
+    tokenConfig.tokenSymbol ?? getTokenSymbol(tokenConfig.mint);
   return {
     outcome,
     prorationAmount,
@@ -154,7 +160,8 @@ function previewStreamRateChange(
   const newAuthCeiling = toBigInt(newPlan.authorizedMaxRate ?? newPlan.amount);
   const settleWindow = BigInt(Math.max(mandate.minSettleInterval, 1));
   const prorationAmount = (newRate - mandate.ratePerSecond) * settleWindow;
-  const tokenSymbol = tokenConfig.tokenSymbol ?? getTokenSymbol(tokenConfig.mint);
+  const tokenSymbol =
+    tokenConfig.tokenSymbol ?? getTokenSymbol(tokenConfig.mint);
 
   return {
     outcome:
@@ -236,7 +243,10 @@ export class UpgradeBuilder {
     }
 
     const newPlan = this.args.newPlan as PeriodicUpgradePlanInput;
-    if (this.args.mandate.plan?.equals(newPlan.address) && preview.outcome === "NoOp") {
+    if (
+      this.args.mandate.plan?.equals(newPlan.address) &&
+      preview.outcome === "NoOp"
+    ) {
       throw new Error("No plan change required");
     }
     if (preview.outcome === "ScheduledChange") {

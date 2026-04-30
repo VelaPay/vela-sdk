@@ -2,12 +2,12 @@ import type { Program } from "@coral-xyz/anchor";
 import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import type { VelaDrainAgentMandateParams } from "../types";
 import {
-  TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
   deriveAgentMandateContext,
   deriveAuthorityUsdcAccount,
   deriveMintAuthorityAddress,
   resolveAgentProtocolAccounts,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
 } from "./agent-mandate-shared";
 
 export interface BuildDrainAgentMandateResult {

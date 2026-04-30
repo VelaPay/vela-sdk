@@ -1,10 +1,10 @@
 import {
+  hasProtocolBuildArtifacts,
+  hasProtocolIdlArtifacts,
   PROGRAM_SO_CANDIDATES,
   PROTOCOL_IDL_CANDIDATES,
   TRANSFER_HOOK_IDL_CANDIDATES,
   TRANSFER_HOOK_SO_CANDIDATES,
-  hasProtocolBuildArtifacts,
-  hasProtocolIdlArtifacts,
 } from "../tests/helpers/protocol-artifacts";
 
 function renderCandidates(label: string, candidates: string[]): string {

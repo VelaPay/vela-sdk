@@ -2,7 +2,6 @@ import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import type { Command } from "commander";
 import { deserializeAgentMandate } from "../../../src/accounts/deserialize";
-import { PROGRAM_ID } from "../../../src/constants";
 import { VelaError } from "../../../src/errors/base";
 import { velaProgramIdl } from "../../../src/idl";
 import type {
@@ -13,12 +12,9 @@ import type {
   AgentServiceLimitInput,
 } from "../../../src/types";
 import { createConnection } from "../../utils/connection";
-import {
-  formatDuration,
-  formatLamports,
-} from "../../utils/formatting";
-import { printOutput } from "../../utils/output";
+import { formatDuration, formatLamports } from "../../utils/formatting";
 import { loadKeypair } from "../../utils/keypair";
+import { printOutput } from "../../utils/output";
 import { createCliVelaClient } from "../../utils/sdk";
 
 export type AgentMandateWriteResult =

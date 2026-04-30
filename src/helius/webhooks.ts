@@ -1,8 +1,7 @@
 import { BorshCoder, EventParser, type Idl } from "@coral-xyz/anchor";
 import type { PublicKey } from "@solana/web3.js";
-import { PROGRAM_ID } from "../constants";
 import idl from "../../idl/vela_protocol.json";
-import { createHelius } from "./provider";
+import { PROGRAM_ID } from "../constants";
 import type {
   AgentMandateAdjustedEvent,
   AgentMandateCreatedEvent,
@@ -16,6 +15,7 @@ import type {
   HeliusWebhookPayload,
   HeliusWebhookTransaction,
 } from "../types";
+import { createHelius } from "./provider";
 
 type AnchorNumeric = string | number | bigint | { toString(): string };
 type AnchorMandateStatus = Partial<

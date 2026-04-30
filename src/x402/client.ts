@@ -7,9 +7,9 @@ import {
   createPaymentProof,
   decodePaymentChallenge,
   encodePaymentProof,
-  parseRawAmount,
   PAYMENT_REQUIRED_HEADER,
   PAYMENT_SIGNATURE_HEADER,
+  parseRawAmount,
   type VelaPaymentChallenge,
 } from "./proof";
 

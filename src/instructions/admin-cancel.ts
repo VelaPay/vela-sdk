@@ -1,7 +1,7 @@
 import type { Program } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { PDAFactory, deriveConfigAddress } from "../accounts/pda";
+import { deriveConfigAddress, PDAFactory } from "../accounts/pda";
 import {
   getSubscribablePlan,
   resolvePlanContext,

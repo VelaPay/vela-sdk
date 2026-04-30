@@ -3,9 +3,9 @@ import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { deriveConfigAddress } from "../accounts/pda";
 import type { VelaAdjustAgentMandateParams } from "../types";
 import {
-  TOKEN_2022_PROGRAM_ID,
   deriveAgentMandateContext,
   mapServiceLimitInputs,
+  TOKEN_2022_PROGRAM_ID,
   toOptionalBn,
 } from "./agent-mandate-shared";
 

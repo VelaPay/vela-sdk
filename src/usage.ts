@@ -12,13 +12,19 @@
  * 4. Arcium computes the charge, writes back to PullApproval PDA
  * 5. Keeper executes pull via execute_pull (same as flat billing)
  */
-import { Transaction } from "@solana/web3.js";
-import type { Connection, PublicKey } from "@solana/web3.js";
+
+import {
+  getArciumProgramId,
+  getMXEPublicKey,
+  RescueCipher,
+  x25519,
+} from "@arcium-hq/client";
 import type { Program } from "@coral-xyz/anchor";
+import type { Connection, PublicKey } from "@solana/web3.js";
+import { Transaction } from "@solana/web3.js";
 import BN from "bn.js";
-import { RescueCipher, x25519, getMXEPublicKey, getArciumProgramId } from "@arcium-hq/client";
-import type { VelaUsagePlanParams, VelaSubmitUsageReportParams } from "./types";
 import { postUsageReportBridge } from "./internal/usage-bridge";
+import type { VelaSubmitUsageReportParams, VelaUsagePlanParams } from "./types";
 
 /** Options for the D1 bridge POST after on-chain submission */
 export interface UsageReportBridgeOptions {
@@ -27,6 +33,7 @@ export interface UsageReportBridgeOptions {
   /** Bearer auth token for the keeper Worker */
   authToken?: string;
 }
+
 import { buildCreateUsagePlanInstruction } from "./instructions/create-usage-plan";
 import { buildSubmitUsageReportInstruction } from "./instructions/submit-usage-report";
 
@@ -58,10 +65,8 @@ export async function createUsagePlan(
   program: Program,
   params: VelaUsagePlanParams & { merchant: PublicKey },
 ): Promise<{ usagePlanAddress: PublicKey; txSignature: string }> {
-  const { instruction, usagePlanAddress } = await buildCreateUsagePlanInstruction(
-    program,
-    params,
-  );
+  const { instruction, usagePlanAddress } =
+    await buildCreateUsagePlanInstruction(program, params);
 
   const tx = new Transaction().add(instruction);
   const txSignature = await (program.provider as any).sendAndConfirm(tx);
@@ -98,9 +103,14 @@ export async function submitUsageReport(
   const arciumProgramId = getArciumProgramId();
 
   // Fetch MXE public key from on-chain Arcium program
-  const mxePublicKeyBytes = await getMXEPublicKey(program.provider as any, arciumProgramId);
+  const mxePublicKeyBytes = await getMXEPublicKey(
+    program.provider as any,
+    arciumProgramId,
+  );
   if (!mxePublicKeyBytes) {
-    throw new Error("Arcium MXE public key not found on-chain — ensure Arcium is configured");
+    throw new Error(
+      "Arcium MXE public key not found on-chain — ensure Arcium is configured",
+    );
   }
 
   let clientPrivateKey: Uint8Array | undefined;
@@ -121,16 +131,17 @@ export async function submitUsageReport(
     // Pad to [[u8;32];4] — the on-chain program expects exactly 4 ciphertext blocks
     // Fill unused slots with zeros
     const encryptedUsage: number[][] = [0, 1, 2, 3].map((i) =>
-      i < encryptedFields.length ? encryptedFields[i] : new Array(32).fill(0) as number[],
+      i < encryptedFields.length
+        ? encryptedFields[i]
+        : (new Array(32).fill(0) as number[]),
     );
 
     const nonceU128 = nonceToU128(nonce);
     const nonceBN = new BN(nonceU128.toString());
     const pubKeyArray = Array.from(clientPublicKey);
 
-    const { instruction, usageReportAddress } = await buildSubmitUsageReportInstruction(
-      program,
-      {
+    const { instruction, usageReportAddress } =
+      await buildSubmitUsageReportInstruction(program, {
         merchant: params.merchantPublicKey,
         mandateAddress: params.mandateAddress,
         periodStart: params.periodStart,
@@ -138,8 +149,7 @@ export async function submitUsageReport(
         encryptedUsage,
         nonce: nonceBN,
         pubKey: pubKeyArray,
-      },
-    );
+      });
 
     const tx = new Transaction().add(instruction);
     const txSignature = await (program.provider as any).sendAndConfirm(tx);
@@ -151,8 +161,12 @@ export async function submitUsageReport(
         {
           mandateAddress: params.mandateAddress.toBase58(),
           merchantAddress: params.merchantPublicKey.toBase58(),
-          periodStart: new Date(Number(params.periodStart.toString()) * 1000).toISOString(),
-          periodEnd: new Date(Number(params.periodEnd.toString()) * 1000).toISOString(),
+          periodStart: new Date(
+            Number(params.periodStart.toString()) * 1000,
+          ).toISOString(),
+          periodEnd: new Date(
+            Number(params.periodEnd.toString()) * 1000,
+          ).toISOString(),
           usageUnits: Number(params.usageUnits.toString()),
           txSignature,
         },
@@ -164,8 +178,8 @@ export async function submitUsageReport(
         // The idempotent bridge endpoint allows a repair write later if all retry attempts fail.
         console.warn(
           `[vela-sdk] Usage report D1 bridge failed after ${bridgeResult.attempts} attempt(s)` +
-          `${bridgeResult.status ? ` (HTTP ${bridgeResult.status})` : ""}: ${bridgeResult.error ?? "unknown error"}. ` +
-          `On-chain report submitted successfully.`,
+            `${bridgeResult.status ? ` (HTTP ${bridgeResult.status})` : ""}: ${bridgeResult.error ?? "unknown error"}. ` +
+            `On-chain report submitted successfully.`,
         );
       }
     }

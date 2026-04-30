@@ -1,8 +1,15 @@
 import type { Program } from "@coral-xyz/anchor";
-import { type PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
+import {
+  type PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { getAssociatedTokenAddress } from "../accounts/pda";
 import { asInstructionData } from "../browser/bytes";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "../constants";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+} from "../constants";
 import type { VelaWrapAndSubscribeParams } from "../types";
 import { buildSubscribeInstruction } from "./subscribe";
 import { buildWrapInstruction } from "./wrap";
@@ -63,15 +70,18 @@ export async function buildWrapAndSubscribeInstructions(
   const instructions: TransactionInstruction[] = [];
 
   // 1. Subscribe first so we have the mandate PDA that will own the billing balance.
-  const { instruction: subscribeIx, mandateAddress, credentialAccountAddress } =
-    await buildSubscribeInstruction(program, {
-      subscriber,
-      planAddress,
-      merchantAddress,
-      billingMint: wrappedUsdcMint,
-      usdcMintAddress: splUsdcMint, // kept for backward-compatible callers
-      credentialMintAddress,
-    });
+  const {
+    instruction: subscribeIx,
+    mandateAddress,
+    credentialAccountAddress,
+  } = await buildSubscribeInstruction(program, {
+    subscriber,
+    planAddress,
+    merchantAddress,
+    billingMint: wrappedUsdcMint,
+    usdcMintAddress: splUsdcMint, // kept for backward-compatible callers
+    credentialMintAddress,
+  });
   instructions.push(subscribeIx);
 
   // 2. Create the mandate-owned wrapped USDC ATA.

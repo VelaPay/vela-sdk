@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { PDAFactory } from "../../src/accounts/pda";
 import { VELA_MANDATE_DISCRIMINATOR } from "../../src/accounts/deserialize";
+import { PDAFactory } from "../../src/accounts/pda";
 import { PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../../src/constants";
 import { velaProgramIdl } from "../../src/idl";
 import { buildExecutePullInstruction } from "../../src/instructions/execute-pull";

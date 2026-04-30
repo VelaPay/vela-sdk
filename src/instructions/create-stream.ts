@@ -1,10 +1,17 @@
 import { sha256 } from "@noble/hashes/sha2.js";
-import { type Connection, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
+import {
+  type Connection,
+  type PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { PDAFactory } from "../accounts/pda";
 import { PROGRAM_ID } from "../constants";
 
 function instructionDiscriminator(name: string): Buffer {
-  return Buffer.from(sha256(new TextEncoder().encode(`global:${name}`)).slice(0, 8));
+  return Buffer.from(
+    sha256(new TextEncoder().encode(`global:${name}`)).slice(0, 8),
+  );
 }
 
 function encodeOptionU64(value: bigint | null): Buffer {
@@ -26,12 +33,16 @@ async function fetchStreamMandateCounter(
   const [merchantStateAddress] = PDAFactory.merchantState(merchant, programId);
   const info = await connection.getAccountInfo(merchantStateAddress);
   if (!info) {
-    throw new Error(`MerchantState account not found: ${merchantStateAddress.toBase58()}`);
+    throw new Error(
+      `MerchantState account not found: ${merchantStateAddress.toBase58()}`,
+    );
   }
 
   const data = Buffer.from(info.data);
   if (data.length < 97) {
-    throw new Error(`MerchantState account ${merchantStateAddress.toBase58()} is truncated`);
+    throw new Error(
+      `MerchantState account ${merchantStateAddress.toBase58()} is truncated`,
+    );
   }
 
   return data.readBigUInt64LE(89);
@@ -61,8 +72,17 @@ export async function buildCreateStreamMandateInstruction(args: {
   } = args;
 
   const [merchantState] = PDAFactory.merchantState(merchant, programId);
-  const mandateIndex = await fetchStreamMandateCounter(connection, merchant, programId);
-  const [mandate] = PDAFactory.stream(subscriber, merchant, mandateIndex, programId);
+  const mandateIndex = await fetchStreamMandateCounter(
+    connection,
+    merchant,
+    programId,
+  );
+  const [mandate] = PDAFactory.stream(
+    subscriber,
+    merchant,
+    mandateIndex,
+    programId,
+  );
   const [tokenConfig] = PDAFactory.tokenConfig(mint, programId);
 
   const data = Buffer.concat([

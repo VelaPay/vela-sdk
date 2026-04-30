@@ -1,10 +1,11 @@
-import type BN from "bn.js";
 import type { Commitment, Connection, PublicKey } from "@solana/web3.js";
+import type BN from "bn.js";
 import { seedBytes } from "./browser/bytes";
 
 export interface VelaClientConfig {
   connection: Connection;
   wallet: VelaWallet;
+  cluster?: VelaCluster;
   dashboardApiUrl?: string;
   apiKey?: string;
   heliusApiKey?: string;
@@ -12,6 +13,10 @@ export interface VelaClientConfig {
   agentWebhook?: AgentWebhookConfig;
   onAgentEvent?: (event: AgentWebhookEvent) => void | Promise<void>;
   commitment?: Commitment;
+  /**
+   * Explicit Vela Protocol program ID. If omitted, the SDK resolves it from
+   * `cluster` or falls back to the generated default cluster.
+   */
   programId?: PublicKey;
   keeperEndpoint?: string;
   keeperAuthToken?: string;
@@ -63,6 +68,7 @@ export type MandateStatus = "active" | "cancelled" | "expired";
 export type PlanStatus = "active" | "inactive";
 export type AgentMandateStatus = "active" | "paused" | "revoked";
 export type BillingRail = "transferHook" | "tokenDelegate";
+export type VelaCluster = "devnet" | "localnet";
 
 export interface AgentServiceLimit {
   service: PublicKey;
@@ -574,14 +580,14 @@ export interface CancelValidationResult {
 // ── Usage-based billing types ─────────────────────────────────────────────────
 
 export interface PricingTier {
-  upTo: BN;         // usage units upper bound (0 = unlimited for last tier)
-  ratePerUnit: BN;  // micro-USDC per unit (6 decimals)
-  padding: BN;      // alignment/future use
+  upTo: BN; // usage units upper bound (0 = unlimited for last tier)
+  ratePerUnit: BN; // micro-USDC per unit (6 decimals)
+  padding: BN; // alignment/future use
 }
 
 export interface VelaUsagePlanParams {
   planId: BN;
-  unitName: Uint8Array;       // 32 bytes, UTF-8 padded
+  unitName: Uint8Array; // 32 bytes, UTF-8 padded
   tiers: PricingTier[];
   maxChargePerPeriod: BN;
   settlementFrequency: BN;
@@ -589,9 +595,9 @@ export interface VelaUsagePlanParams {
 
 export interface VelaSubmitUsageReportParams {
   mandateAddress: PublicKey;
-  periodStart: BN;  // i64 timestamp
-  periodEnd: BN;    // i64 timestamp
-  usageUnits: BN;   // plaintext units (SDK encrypts before submitting)
+  periodStart: BN; // i64 timestamp
+  periodEnd: BN; // i64 timestamp
+  usageUnits: BN; // plaintext units (SDK encrypts before submitting)
 }
 
 export interface VelaRequestUsageComputationParams {
@@ -600,9 +606,9 @@ export interface VelaRequestUsageComputationParams {
   usagePlanAddress: PublicKey;
   usageReportAddress: PublicKey;
   computationOffset: bigint;
-  ciphertext: Uint8Array[];   // encrypted fields for Arcium circuit
-  pubKey: Uint8Array;         // x25519 public key, 32 bytes
-  nonce: bigint;              // u128
+  ciphertext: Uint8Array[]; // encrypted fields for Arcium circuit
+  pubKey: Uint8Array; // x25519 public key, 32 bytes
+  nonce: bigint; // u128
 }
 
 export type BillingType = "flat" | "usage";

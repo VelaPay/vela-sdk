@@ -3,8 +3,8 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import {
   createVelaClient,
-  validateAgentPull,
   type ValidateAgentPullParams,
+  validateAgentPull,
 } from "../../src/index";
 
 function createMockAgentMandateRaw(

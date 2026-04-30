@@ -8,7 +8,11 @@ import {
 import { fetchMandate } from "../accounts/deserialize";
 import { getAssociatedTokenAddress, PDAFactory } from "../accounts/pda";
 import { asInstructionData, instructionDiscriminator } from "../browser/bytes";
-import { PROGRAM_ID, TOKEN_2022_PROGRAM_ID, TRANSFER_HOOK_PROGRAM_ID } from "../constants";
+import {
+  PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+  TRANSFER_HOOK_PROGRAM_ID,
+} from "../constants";
 
 export interface BuildUpdateMandatePlanResult {
   instruction: TransactionInstruction;
@@ -23,7 +27,9 @@ async function fetchProtocolConfigValues(
   wrappingVault: PublicKey;
   hookProgramId: PublicKey;
 }> {
-  const raw = await (program.account as any).protocolConfig.fetch(protocolConfig);
+  const raw = await (program.account as any).protocolConfig.fetch(
+    protocolConfig,
+  );
   return {
     wrappedUsdcMint: raw.wrappedUsdcMint,
     wrappingVault: raw.wrappingVault,

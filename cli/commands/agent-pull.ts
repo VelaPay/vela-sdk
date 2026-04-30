@@ -27,7 +27,8 @@ export function registerAgentPull(parent: Command): void {
     .option("--wrapping-vault <address>", "Wrapping vault override")
     .action(async (opts, command: Command) => {
       try {
-        const { globalOpts, connection, vela } = await createCliContext(command);
+        const { globalOpts, connection, vela } =
+          await createCliContext(command);
         const mandateAddress = parsePublicKey(opts.mandate, "mandate");
         const authority =
           opts.authority == null

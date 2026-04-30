@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { Keypair } from "@solana/web3.js";
 import { Hono } from "hono";
+import { instructionDiscriminator } from "../../src/browser/bytes";
+import { PROGRAM_ID } from "../../src/constants";
 import { createNonceCache } from "../../src/x402/nonce-cache";
 import {
   createPaymentProof,
@@ -8,6 +10,7 @@ import {
   encodePaymentProof,
   PAYMENT_REQUIRED_HEADER,
   PAYMENT_SIGNATURE_HEADER,
+  parseRawAmount,
 } from "../../src/x402/proof";
 import { createX402Middleware } from "../../src/x402/server";
 
@@ -24,6 +27,14 @@ function createPaidTransaction(args: {
           args.agent.toBase58(),
           args.authority.toBase58(),
           args.destination.toBase58(),
+          PROGRAM_ID.toBase58(),
+        ],
+        instructions: [
+          {
+            programIdIndex: 3,
+            accounts: [0, 1, 2],
+            data: Array.from(instructionDiscriminator("agent_pull")),
+          },
         ],
       },
     },
@@ -163,6 +174,16 @@ describe("createX402Middleware", () => {
                         agent.toBase58(),
                         authority.toBase58(),
                         destination.toBase58(),
+                        PROGRAM_ID.toBase58(),
+                      ],
+                      instructions: [
+                        {
+                          programIdIndex: 3,
+                          accounts: [0, 1, 2],
+                          data: Array.from(
+                            instructionDiscriminator("agent_pull"),
+                          ),
+                        },
                       ],
                     },
                   },
@@ -335,5 +356,125 @@ describe("createX402Middleware", () => {
     });
 
     expect(response.status).toBe(402);
+  });
+
+  test("rejects transactions when AgentPull logs are unavailable", async () => {
+    const agent = Keypair.generate().publicKey;
+    const authority = Keypair.generate().publicKey;
+    const destination = Keypair.generate().publicKey;
+    const app = new Hono();
+    app.use(
+      "*",
+      createX402Middleware({
+        amount: 500_000n,
+        agent,
+        authority,
+        destination,
+        connection: {
+          getTransaction: async () => {
+            const transaction = createPaidTransaction({
+              agent,
+              authority,
+              destination,
+              amount: 500_000n,
+            });
+            return {
+              ...transaction,
+              meta: {
+                ...transaction.meta,
+                logMessages: null,
+              },
+            };
+          },
+        } as any,
+      }),
+    );
+    app.get("/", (c) => c.text("paid"));
+
+    const challenge = decodePaymentChallenge(
+      (await app.request("http://vela.test/")).headers.get(
+        PAYMENT_REQUIRED_HEADER,
+      )!,
+    );
+    const response = await app.request("http://vela.test/", {
+      headers: {
+        [PAYMENT_SIGNATURE_HEADER]: encodePaymentProof(
+          createPaymentProof(challenge, "tx-without-logs"),
+        ),
+      },
+    });
+
+    expect(response.status).toBe(402);
+    expect(await response.text()).toContain("agent_pull");
+  });
+
+  test("rejects transactions without the expected Vela agent_pull instruction", async () => {
+    const agent = Keypair.generate().publicKey;
+    const authority = Keypair.generate().publicKey;
+    const destination = Keypair.generate().publicKey;
+    const app = new Hono();
+    app.use(
+      "*",
+      createX402Middleware({
+        amount: 500_000n,
+        agent,
+        authority,
+        destination,
+        connection: {
+          getTransaction: async () => {
+            const transaction = createPaidTransaction({
+              agent,
+              authority,
+              destination,
+              amount: 500_000n,
+            });
+            return {
+              ...transaction,
+              transaction: {
+                message: {
+                  ...transaction.transaction.message,
+                  instructions: [],
+                },
+              },
+            };
+          },
+        } as any,
+      }),
+    );
+    app.get("/", (c) => c.text("paid"));
+
+    const challenge = decodePaymentChallenge(
+      (await app.request("http://vela.test/")).headers.get(
+        PAYMENT_REQUIRED_HEADER,
+      )!,
+    );
+    const response = await app.request("http://vela.test/", {
+      headers: {
+        [PAYMENT_SIGNATURE_HEADER]: encodePaymentProof(
+          createPaymentProof(challenge, "tx-without-instruction"),
+        ),
+      },
+    });
+
+    expect(response.status).toBe(402);
+    expect(await response.text()).toContain("agent_pull instruction");
+  });
+});
+
+describe("parseRawAmount", () => {
+  test("rejects unsafe, fractional, and negative raw amounts", () => {
+    expect(() => parseRawAmount(-1n)).toThrow("Raw amount");
+    expect(() => parseRawAmount(-1)).toThrow("Raw amount");
+    expect(() => parseRawAmount(1.5)).toThrow("Raw amount");
+    expect(() => parseRawAmount(Number.MAX_SAFE_INTEGER + 1)).toThrow(
+      "Raw amount",
+    );
+    expect(() => parseRawAmount("-1")).toThrow("Raw amount");
+  });
+
+  test("accepts integer base-unit amounts", () => {
+    expect(parseRawAmount(0n)).toBe(0n);
+    expect(parseRawAmount(500_000)).toBe(500_000n);
+    expect(parseRawAmount("500000")).toBe(500_000n);
   });
 });

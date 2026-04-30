@@ -1,14 +1,21 @@
 import type { Connection } from "@solana/web3.js";
 import type { MiddlewareHandler } from "hono";
+import { instructionDiscriminator, sliceEquals } from "../browser/bytes";
+import { PROGRAM_ID } from "../constants";
+import {
+  PaymentProofExpiredError,
+  PaymentProofMismatchError,
+  PaymentTransactionVerificationError,
+} from "../errors/sdk-errors";
 import { createNonceCache, type NonceCache } from "./nonce-cache";
 import {
   createPaymentChallenge,
   decodePaymentProof,
   encodePaymentChallenge,
   isExpired,
-  parseRawAmount,
   PAYMENT_REQUIRED_HEADER,
   PAYMENT_SIGNATURE_HEADER,
+  parseRawAmount,
   type VelaPaymentChallenge,
   type VelaPaymentProof,
 } from "./proof";
@@ -21,10 +28,19 @@ type TokenBalanceLike = {
   mint?: string;
   uiTokenAmount?: { amount?: string };
 };
+type InstructionLike = {
+  programId?: AccountKeyLike;
+  programIdIndex?: number;
+  accounts?: number[];
+  accountKeyIndexes?: number[];
+  data?: string | number[] | Uint8Array;
+};
 type TransactionLike = {
   transaction?: {
     message?: {
       accountKeys?: AccountKeyLike[];
+      instructions?: InstructionLike[];
+      compiledInstructions?: InstructionLike[];
     };
   };
   meta?: {
@@ -39,6 +55,10 @@ type TransactionLike = {
   };
 };
 
+const AGENT_PULL_DISCRIMINATOR = instructionDiscriminator("agent_pull");
+const BASE58_ALPHABET =
+  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
 function ensureString(value: string | { toBase58(): string }): string {
   return typeof value === "string" ? value : value.toBase58();
 }
@@ -50,7 +70,11 @@ function normalizeAccountKey(entry: AccountKeyLike): string {
   if ("toBase58" in entry && typeof entry.toBase58 === "function") {
     return entry.toBase58();
   }
-  if ("pubkey" in entry && entry.pubkey && typeof entry.pubkey.toBase58 === "function") {
+  if (
+    "pubkey" in entry &&
+    entry.pubkey &&
+    typeof entry.pubkey.toBase58 === "function"
+  ) {
     return entry.pubkey.toBase58();
   }
   return String(entry);
@@ -78,6 +102,108 @@ function parseBalanceAmount(entry?: TokenBalanceLike): bigint {
   return BigInt(entry?.uiTokenAmount?.amount ?? "0");
 }
 
+function decodeBase58(value: string): Uint8Array | null {
+  const digits = [0];
+  for (const char of value) {
+    const carryStart = BASE58_ALPHABET.indexOf(char);
+    if (carryStart < 0) {
+      return null;
+    }
+    let carry = carryStart;
+    for (let index = 0; index < digits.length; index += 1) {
+      const next = digits[index] * 58 + carry;
+      digits[index] = next & 0xff;
+      carry = next >> 8;
+    }
+    while (carry > 0) {
+      digits.push(carry & 0xff);
+      carry >>= 8;
+    }
+  }
+
+  for (const char of value) {
+    if (char !== "1") {
+      break;
+    }
+    digits.push(0);
+  }
+
+  return Uint8Array.from(digits.reverse());
+}
+
+function decodeInstructionData(
+  data: InstructionLike["data"],
+): Uint8Array | null {
+  if (data == null) {
+    return null;
+  }
+  if (data instanceof Uint8Array) {
+    return data;
+  }
+  if (Array.isArray(data)) {
+    return Uint8Array.from(data);
+  }
+  return decodeBase58(data);
+}
+
+function extractInstructions(
+  transaction: TransactionLike | null,
+): InstructionLike[] {
+  const message = transaction?.transaction?.message;
+  return message?.instructions ?? message?.compiledInstructions ?? [];
+}
+
+function instructionProgramId(
+  instruction: InstructionLike,
+  accountKeys: string[],
+): string | null {
+  if (instruction.programId != null) {
+    return normalizeAccountKey(instruction.programId);
+  }
+  if (instruction.programIdIndex != null) {
+    return accountKeys[instruction.programIdIndex] ?? null;
+  }
+  return null;
+}
+
+function instructionAccounts(
+  instruction: InstructionLike,
+  accountKeys: string[],
+): string[] {
+  const indexes = instruction.accounts ?? instruction.accountKeyIndexes ?? [];
+  return indexes.flatMap((index) =>
+    accountKeys[index] == null ? [] : [accountKeys[index]],
+  );
+}
+
+function hasExpectedAgentPullInstruction(params: {
+  transaction: TransactionLike | null;
+  accountKeys: string[];
+  expected: VelaPaymentChallenge;
+}): boolean {
+  const expectedProgram =
+    params.expected.protocolProgram ?? PROGRAM_ID.toBase58();
+  return extractInstructions(params.transaction).some((instruction) => {
+    if (
+      instructionProgramId(instruction, params.accountKeys) !== expectedProgram
+    ) {
+      return false;
+    }
+
+    const accounts = instructionAccounts(instruction, params.accountKeys);
+    if (
+      !accounts.includes(params.expected.address) ||
+      !accounts.includes(params.expected.authority) ||
+      !accounts.includes(params.expected.destination)
+    ) {
+      return false;
+    }
+
+    const data = decodeInstructionData(instruction.data);
+    return data != null && sliceEquals(data, AGENT_PULL_DISCRIMINATOR);
+  });
+}
+
 function findTokenBalance(
   entries: TokenBalanceLike[] | null | undefined,
   accountIndex: number,
@@ -98,28 +224,37 @@ export async function verifyPaymentProof(params: {
 }): Promise<void> {
   const now = params.now ?? Date.now();
   if (isExpired(params.proof, now)) {
-    throw new Error("Payment proof expired");
+    throw new PaymentProofExpiredError();
   }
   if (params.proof.network !== params.expected.network) {
-    throw new Error("Payment proof network mismatch");
+    throw new PaymentProofMismatchError("network");
   }
   if (params.proof.amount !== params.expected.amount) {
-    throw new Error("Payment proof amount mismatch");
+    throw new PaymentProofMismatchError("amount");
   }
   if (params.proof.address !== params.expected.address) {
-    throw new Error("Payment proof address mismatch");
+    throw new PaymentProofMismatchError("address");
   }
   if (params.proof.authority !== params.expected.authority) {
-    throw new Error("Payment proof authority mismatch");
+    throw new PaymentProofMismatchError("authority");
   }
   if (params.proof.destination !== params.expected.destination) {
-    throw new Error("Payment proof destination mismatch");
+    throw new PaymentProofMismatchError("destination");
+  }
+  if (params.proof.service !== params.expected.service) {
+    throw new PaymentProofMismatchError("service");
+  }
+  if (params.proof.wrappedUsdcMint !== params.expected.wrappedUsdcMint) {
+    throw new PaymentProofMismatchError("mint");
+  }
+  if (params.proof.protocolProgram !== params.expected.protocolProgram) {
+    throw new PaymentProofMismatchError("protocol program");
   }
   if (params.proof.nonce !== params.expected.nonce) {
-    throw new Error("Payment proof nonce mismatch");
+    throw new PaymentProofMismatchError("nonce");
   }
   if (params.proof.expires !== params.expected.expires) {
-    throw new Error("Payment proof expiry mismatch");
+    throw new PaymentProofMismatchError("expiry");
   }
 
   const transaction = await params.connection.getTransaction(
@@ -130,21 +265,32 @@ export async function verifyPaymentProof(params: {
     } as any,
   );
   if (transaction == null) {
-    throw new Error("Payment transaction not found");
+    throw new PaymentTransactionVerificationError("transaction not found");
   }
   if (transaction.meta?.err != null) {
-    throw new Error("Payment transaction failed");
+    throw new PaymentTransactionVerificationError("transaction failed");
   }
 
   const accountKeys = extractAccountKeys(transaction as TransactionLike | null);
   if (!accountKeys.includes(params.expected.destination)) {
-    throw new Error("Payment transaction destination mismatch");
+    throw new PaymentTransactionVerificationError("destination mismatch");
   }
   if (!accountKeys.includes(params.expected.address)) {
-    throw new Error("Payment transaction agent mismatch");
+    throw new PaymentTransactionVerificationError("agent mismatch");
   }
   if (!accountKeys.includes(params.expected.authority)) {
-    throw new Error("Payment transaction authority mismatch");
+    throw new PaymentTransactionVerificationError("authority mismatch");
+  }
+  if (
+    !hasExpectedAgentPullInstruction({
+      transaction: transaction as TransactionLike | null,
+      accountKeys,
+      expected: params.expected,
+    })
+  ) {
+    throw new PaymentTransactionVerificationError(
+      "missing expected agent_pull instruction",
+    );
   }
 
   const destinationIndex = accountKeys.indexOf(params.expected.destination);
@@ -160,20 +306,22 @@ export async function verifyPaymentProof(params: {
   );
 
   if (preBalance == null && postBalance == null) {
-    throw new Error("Payment transaction token balances unavailable");
+    throw new PaymentTransactionVerificationError("token balances unavailable");
   }
 
-  const amountDelta = parseBalanceAmount(postBalance) - parseBalanceAmount(preBalance);
+  const amountDelta =
+    parseBalanceAmount(postBalance) - parseBalanceAmount(preBalance);
   if (amountDelta < parseRawAmount(params.expected.amount)) {
-    throw new Error("Payment transaction amount mismatch");
+    throw new PaymentTransactionVerificationError("amount mismatch");
   }
 
   const logMessages = transaction.meta?.logMessages ?? [];
   if (
-    logMessages.length > 0 &&
     !logMessages.some((message) => message.includes("Instruction: AgentPull"))
   ) {
-    throw new Error("Payment transaction missing agent_pull execution");
+    throw new PaymentTransactionVerificationError(
+      "missing agent_pull execution",
+    );
   }
 }
 
@@ -189,6 +337,7 @@ export function createX402Middleware(options: {
   destination: string | { toBase58(): string };
   service?: string | { toBase58(): string };
   wrappedUsdcMint?: string | { toBase58(): string };
+  protocolProgram?: string | { toBase58(): string };
   network?: string;
   challengeTtlMs?: number;
   connection: TransactionGetter;
@@ -209,6 +358,9 @@ export function createX402Middleware(options: {
       wrappedUsdcMint: options.wrappedUsdcMint
         ? ensureString(options.wrappedUsdcMint)
         : undefined,
+      protocolProgram: options.protocolProgram
+        ? ensureString(options.protocolProgram)
+        : PROGRAM_ID.toBase58(),
       network: options.network,
       ttlMs: options.challengeTtlMs,
       now: now(),

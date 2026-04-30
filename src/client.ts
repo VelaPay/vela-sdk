@@ -3,29 +3,30 @@ import { getAccount, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import type {
   Connection,
   PublicKey,
+  TransactionInstruction,
   VersionedTransaction,
 } from "@solana/web3.js";
 import {
   checkAgentBudget,
-  deserializeMandate,
-  PDAFactory,
   deriveAgentMandateAddress,
   deriveAgentMandateWrappedAta,
+  deserializeMandate,
   deserializePlan,
   fetchAgentMandate,
   getActiveSubscriptions,
-  listAgentMandates,
   getMerchantState,
   getPlanDetails,
+  listAgentMandates,
+  PDAFactory,
   verifyAgentMandate,
 } from "./accounts";
 import { deserializeProtocolConfig } from "./accounts/deserialize";
 import { ALTManager } from "./alt/lookup-table";
 import {
   type PreviewPlanChangeResult,
+  UpgradeBuilder,
   type UpgradeBuilderArgs,
   type UpgradePlanInput,
-  UpgradeBuilder,
 } from "./builders";
 import { PROGRAM_ID } from "./constants";
 import { translateError } from "./errors";
@@ -33,11 +34,17 @@ import { createHeliusConnection } from "./helius/provider";
 import { ensureAgentWebhook } from "./helius/webhooks";
 import { rawVelaIdl, withProgramAddress } from "./idl";
 import {
+  type ExplainedInstruction,
+  type ExplainedTransactionPlan,
+  explainInstruction,
+  explainInstructions,
+} from "./inspection";
+import {
   buildAdjustAgentMandateInstruction,
-  buildAgentPullInstruction,
   buildAdminCancelInstruction,
-  buildCancelPlanChangeInstruction,
+  buildAgentPullInstruction,
   buildCancelInstruction,
+  buildCancelPlanChangeInstruction,
   buildCreateAgentMandateInstruction,
   buildCreatePlanInstruction,
   buildDrainAgentMandateInstruction,
@@ -46,9 +53,9 @@ import {
   buildPauseAgentMandateInstruction,
   buildPauseProtocolInstruction,
   buildResumeAgentMandateInstruction,
+  buildRevokeAgentMandateInstruction,
   buildSchedulePlanChangeInstruction,
   buildSubscribeInstruction,
-  buildRevokeAgentMandateInstruction,
   buildUnpauseProtocolInstruction,
   buildUnwrapInstruction,
   buildUpdateKeeperConfigInstruction,
@@ -56,24 +63,25 @@ import {
   buildWrapAndSubscribeInstructions,
   buildWrapInstruction,
 } from "./instructions";
-import {
-  cancelBillingSchedule,
-  fetchKeeperConfig,
-  registerBillingSchedule,
-} from "./schedule";
 import type {
   CreatePortalSessionParams,
   PortalSession,
   PortalSessionsNamespace,
 } from "./portal-sessions";
+import { resolveVelaProgramPublicKeys } from "./protocol";
 import type { KeeperScheduleOptions } from "./schedule";
+import {
+  cancelBillingSchedule,
+  fetchKeeperConfig,
+  registerBillingSchedule,
+} from "./schedule";
 import { formatAmount } from "./token/format-amount";
 import { getEnabledTokens } from "./token/get-enabled-tokens";
 import { parseAmount } from "./token/parse-amount";
 import { resolveTokenConfig } from "./token/resolve-token-config";
 import type {
-  AgentMandate,
   AgentBudgetSummary,
+  AgentMandate,
   AgentMandateDrainResult,
   AgentMandateMethodResult,
   AgentMandateRevokeResult,
@@ -87,10 +95,16 @@ import type {
   InitKeeperConfigParams,
   KeeperConfig,
   ProtocolConfig,
+  SubscribablePlan,
+  SubscribeValidationResult,
   TokenConfigAccount,
+  UpdateKeeperConfigParams,
+  UsagePlanAccount,
+  UsageReportAccount,
   ValidateAgentPullParams,
-  VelaAdminCancelParams,
+  ValidationResult,
   VelaAdjustAgentMandateParams,
+  VelaAdminCancelParams,
   VelaAgentPullParams,
   VelaCancelParams,
   VelaClientConfig,
@@ -107,16 +121,10 @@ import type {
   VelaSubmitUsageReportParams,
   VelaSubscribeParams,
   VelaTopUpAgentMandateParams,
-  SubscribablePlan,
   VelaUnwrapParams,
   VelaUsagePlanParams,
   VelaWrapAndSubscribeParams,
   VelaWrapParams,
-  SubscribeValidationResult,
-  UpdateKeeperConfigParams,
-  UsagePlanAccount,
-  UsageReportAccount,
-  ValidationResult,
 } from "./types";
 import type { StreamMandate } from "./types/stream-mandate";
 import {
@@ -195,6 +203,13 @@ export interface VelaClient {
     newPlan: UpgradePlanInput,
     tokenConfig: TokenConfigAccount,
   ) => PreviewPlanChangeResult;
+  explainInstruction: (
+    instruction: TransactionInstruction,
+    label?: string,
+  ) => ExplainedInstruction;
+  explainInstructions: (
+    instructions: readonly TransactionInstruction[],
+  ) => ExplainedTransactionPlan;
   createUpgradeBuilder: (
     args: Omit<UpgradeBuilderArgs, "connection" | "program">,
   ) => UpgradeBuilder;
@@ -287,15 +302,17 @@ export interface VelaClient {
         credentialMintAddress?: PublicKey;
       },
     ) => ReturnType<typeof buildCancelInstruction>;
-    cancelPlanChange: (
-      params: { mandate: PublicKey },
-    ) => ReturnType<typeof buildCancelPlanChangeInstruction>;
-    schedulePlanChange: (
-      params: { mandate: PublicKey; newPlan: PublicKey },
-    ) => ReturnType<typeof buildSchedulePlanChangeInstruction>;
-    updateMandatePlan: (
-      params: { mandate: PublicKey; newPlan: PublicKey },
-    ) => ReturnType<typeof buildUpdateMandatePlanInstruction>;
+    cancelPlanChange: (params: {
+      mandate: PublicKey;
+    }) => ReturnType<typeof buildCancelPlanChangeInstruction>;
+    schedulePlanChange: (params: {
+      mandate: PublicKey;
+      newPlan: PublicKey;
+    }) => ReturnType<typeof buildSchedulePlanChangeInstruction>;
+    updateMandatePlan: (params: {
+      mandate: PublicKey;
+      newPlan: PublicKey;
+    }) => ReturnType<typeof buildUpdateMandatePlanInstruction>;
     wrap: (params: VelaWrapParams) => ReturnType<typeof buildWrapInstruction>;
     unwrap: (
       params: VelaUnwrapParams,
@@ -369,7 +386,13 @@ export interface VelaClient {
  * ```
  */
 export function createVelaClient(config: VelaClientConfig): VelaClient {
-  const { wallet, commitment = "confirmed", programId = PROGRAM_ID } = config;
+  const {
+    wallet,
+    commitment = "confirmed",
+    programId = config.cluster
+      ? resolveVelaProgramPublicKeys(config.cluster).velaProtocol
+      : PROGRAM_ID,
+  } = config;
   const dashboardApiUrl = config.dashboardApiUrl?.replace(/\/+$/, "");
   const apiKey = config.apiKey;
 
@@ -1203,6 +1226,9 @@ export function createVelaClient(config: VelaClientConfig): VelaClient {
 
     previewPlanChange: (mandate, newPlan, tokenConfig) =>
       UpgradeBuilder.previewPlanChange(mandate, newPlan, tokenConfig),
+
+    explainInstruction,
+    explainInstructions,
 
     createUpgradeBuilder: (args) =>
       new UpgradeBuilder({

@@ -10,9 +10,9 @@ import {
   OverflowError,
   PlanNotActiveError,
   PullTooEarlyError,
-  VelaError,
   translateError,
   UnauthorizedCancelError,
+  VelaError,
 } from "../../src/errors";
 
 describe("VelaError base class", () => {

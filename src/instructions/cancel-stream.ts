@@ -1,12 +1,18 @@
 import { sha256 } from "@noble/hashes/sha2.js";
-import { type Connection, PublicKey, TransactionInstruction } from "@solana/web3.js";
+import {
+  type Connection,
+  type PublicKey,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { fetchStreamMandate } from "../accounts/deserialize";
 import { PDAFactory } from "../accounts/pda";
 import { PROGRAM_ID } from "../constants";
 import { buildPauseStreamInstruction } from "./pause-stream";
 
 function instructionDiscriminator(name: string): Buffer {
-  return Buffer.from(sha256(new TextEncoder().encode(`global:${name}`)).slice(0, 8));
+  return Buffer.from(
+    sha256(new TextEncoder().encode(`global:${name}`)).slice(0, 8),
+  );
 }
 
 export async function buildCancelStreamInstruction(args: {

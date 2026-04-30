@@ -1,14 +1,7 @@
 import type { Program } from "@coral-xyz/anchor";
 import type { PublicKey } from "@solana/web3.js";
-import {
-  deserializePlan,
-  deserializeUsagePlan,
-} from "./deserialize";
-import type {
-  BillingType,
-  VelaUsagePlan,
-  SubscribablePlan,
-} from "../types";
+import type { BillingType, SubscribablePlan, VelaUsagePlan } from "../types";
+import { deserializePlan, deserializeUsagePlan } from "./deserialize";
 
 function isAccountMissing(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
@@ -43,7 +36,9 @@ export async function getSubscribablePlan(
     return deserializePlan(planAddress, raw);
   } catch (flatError) {
     if (!shouldTryUsageFallback(flatError)) {
-      throw flatError instanceof Error ? flatError : planAccountError(planAddress);
+      throw flatError instanceof Error
+        ? flatError
+        : planAccountError(planAddress);
     }
 
     try {
@@ -53,7 +48,9 @@ export async function getSubscribablePlan(
       if (isAccountMissing(flatError) && isAccountMissing(usageError)) {
         throw planAccountError(planAddress);
       }
-      throw usageError instanceof Error ? usageError : planAccountError(planAddress);
+      throw usageError instanceof Error
+        ? usageError
+        : planAccountError(planAddress);
     }
   }
 }
@@ -67,7 +64,9 @@ export interface ResolvedPlanContext {
   frequency: bigint;
 }
 
-export function resolvePlanContext(plan: SubscribablePlan): ResolvedPlanContext {
+export function resolvePlanContext(
+  plan: SubscribablePlan,
+): ResolvedPlanContext {
   if (plan.billingType === "usage") {
     return {
       plan,
@@ -89,8 +88,6 @@ export function resolvePlanContext(plan: SubscribablePlan): ResolvedPlanContext 
   };
 }
 
-export function isUsagePlan(
-  plan: SubscribablePlan,
-): plan is VelaUsagePlan {
+export function isUsagePlan(plan: SubscribablePlan): plan is VelaUsagePlan {
   return plan.billingType === "usage";
 }

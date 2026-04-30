@@ -103,7 +103,10 @@ function formatAgentServiceRow(
     serviceLimit.lastReset,
     now,
   );
-  const remaining = clampRemaining(serviceLimit.dailyLimit, serviceWindow.spent);
+  const remaining = clampRemaining(
+    serviceLimit.dailyLimit,
+    serviceWindow.spent,
+  );
   const selectedLabel =
     selectedServiceBase58 != null &&
     serviceLimit.service.toBase58() === selectedServiceBase58
@@ -144,7 +147,9 @@ export function formatAgentMandateBudget(
 
   if (selectedServiceBase58) {
     lines.push(`Service Requested: ${selectedServiceBase58}`);
-    lines.push(`Service Authorized: ${summary.serviceAuthorized ? "Yes" : "No"}`);
+    lines.push(
+      `Service Authorized: ${summary.serviceAuthorized ? "Yes" : "No"}`,
+    );
     lines.push(
       `Service Remaining: ${
         summary.serviceRemaining == null
@@ -168,9 +173,7 @@ export function formatAgentMandateBudget(
 
   lines.push("Services:");
   for (const serviceLimit of summary.mandate.services) {
-    lines.push(
-      formatAgentServiceRow(serviceLimit, now, selectedServiceBase58),
-    );
+    lines.push(formatAgentServiceRow(serviceLimit, now, selectedServiceBase58));
   }
 
   return lines.join("\n");

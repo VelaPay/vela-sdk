@@ -93,28 +93,44 @@ export class ProtocolPausedError extends VelaError {
 
 export class UnauthorizedAgentError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Only the authorized agent signer can execute this pull", 6030, context);
+    super(
+      "Only the authorized agent signer can execute this pull",
+      6030,
+      context,
+    );
     this.name = "UnauthorizedAgentError";
   }
 }
 
 export class UnauthorizedServiceError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Destination service is not authorized on this agent mandate", 6031, context);
+    super(
+      "Destination service is not authorized on this agent mandate",
+      6031,
+      context,
+    );
     this.name = "UnauthorizedServiceError";
   }
 }
 
 export class TooManyServicesError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Agent mandate service list exceeds the maximum allowed entries", 6032, context);
+    super(
+      "Agent mandate service list exceeds the maximum allowed entries",
+      6032,
+      context,
+    );
     this.name = "TooManyServicesError";
   }
 }
 
 export class DuplicateServiceError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Agent mandate service list contains a duplicate service", 6033, context);
+    super(
+      "Agent mandate service list contains a duplicate service",
+      6033,
+      context,
+    );
     this.name = "DuplicateServiceError";
   }
 }
@@ -135,7 +151,11 @@ export class MandateRevokedError extends VelaError {
 
 export class DailyLimitExceededError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Agent mandate daily limit would be exceeded by this pull", 6036, context);
+    super(
+      "Agent mandate daily limit would be exceeded by this pull",
+      6036,
+      context,
+    );
     this.name = "DailyLimitExceededError";
   }
 }
@@ -149,14 +169,22 @@ export class ServiceDailyLimitExceededError extends VelaError {
 
 export class LifetimeCapExceededError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Agent mandate lifetime cap would be exceeded by this pull", 6038, context);
+    super(
+      "Agent mandate lifetime cap would be exceeded by this pull",
+      6038,
+      context,
+    );
     this.name = "LifetimeCapExceededError";
   }
 }
 
 export class PullAmountTooSmallError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Pull amount is below the agent mandate minimum pull amount", 6039, context);
+    super(
+      "Pull amount is below the agent mandate minimum pull amount",
+      6039,
+      context,
+    );
     this.name = "PullAmountTooSmallError";
   }
 }
@@ -177,7 +205,11 @@ export class InvalidServiceListError extends VelaError {
 
 export class AgentMandateAlreadyExistsError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Agent mandate already exists for this authority and agent", 6042, context);
+    super(
+      "Agent mandate already exists for this authority and agent",
+      6042,
+      context,
+    );
     this.name = "AgentMandateAlreadyExistsError";
   }
 }
@@ -191,7 +223,11 @@ export class AgentMandateNotFoundError extends VelaError {
 
 export class InsufficientMandateBalanceError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Mandate-owned wrapped token account has insufficient balance", 6044, context);
+    super(
+      "Mandate-owned wrapped token account has insufficient balance",
+      6044,
+      context,
+    );
     this.name = "InsufficientMandateBalanceError";
   }
 }
@@ -205,14 +241,22 @@ export class NoFundsToDrainError extends VelaError {
 
 export class InvalidAgentMandateStatusTransitionError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Requested agent mandate status transition is invalid", 6046, context);
+    super(
+      "Requested agent mandate status transition is invalid",
+      6046,
+      context,
+    );
     this.name = "InvalidAgentMandateStatusTransitionError";
   }
 }
 
 export class UnauthorizedAgentMandateAuthorityError extends VelaError {
   constructor(context?: Record<string, unknown>) {
-    super("Only the agent mandate authority can perform this action", 6047, context);
+    super(
+      "Only the agent mandate authority can perform this action",
+      6047,
+      context,
+    );
     this.name = "UnauthorizedAgentMandateAuthorityError";
   }
 }

@@ -35,21 +35,24 @@ describe("VelaPaymentHandler", () => {
     const challenge = createChallenge();
     const calls: Array<{ headers?: HeadersInit }> = [];
     const paymentClient = {
-      verifyAgentMandate: async () => ({
-        valid: true,
-        reasons: [],
-      } as any),
-      checkAgentBudget: async () => ({
-        globalRemaining: 1_000_000n,
-        serviceRemaining: 1_000_000n,
-        mandateBalance: 1_000_000n,
-      } as any),
+      verifyAgentMandate: async () =>
+        ({
+          valid: true,
+          reasons: [],
+        }) as any,
+      checkAgentBudget: async () =>
+        ({
+          globalRemaining: 1_000_000n,
+          serviceRemaining: 1_000_000n,
+          mandateBalance: 1_000_000n,
+        }) as any,
       agentPull: async () => ({ signature: "tx-paid" }),
     };
     const handler = new VelaPaymentHandler({
       client: paymentClient,
       fetch: async (input, init) => {
-        const request = input instanceof Request ? input : new Request(input, init);
+        const request =
+          input instanceof Request ? input : new Request(input, init);
         calls.push({ headers: request.headers });
         if (calls.length === 1) {
           return new Response("pay first", {

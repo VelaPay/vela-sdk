@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { PublicKey } from "@solana/web3.js";
-import { UpgradeBuilder } from "../upgrade-builder";
 import type { TokenConfigAccount, VelaMandate } from "../../types";
+import { UpgradeBuilder } from "../upgrade-builder";
 
 const subscriber = new PublicKey("11111111111111111111111111111112");
 const merchant = new PublicKey("11111111111111111111111111111113");

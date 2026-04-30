@@ -1,10 +1,10 @@
-import { sha256 } from "@noble/hashes/sha2.js";
 import { describe, expect, test } from "bun:test";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { PublicKey } from "@solana/web3.js";
 import {
-  STREAM_MANDATE_DISCRIMINATOR,
   deserializeStreamMandate,
   fetchStreamMandate,
+  STREAM_MANDATE_DISCRIMINATOR,
   WrongAccountTypeError,
 } from "../../src/index";
 
@@ -153,9 +153,9 @@ describe("fetchStreamMandate", () => {
       }),
     } as any;
 
-    await expect(fetchStreamMandate(connection, address)).rejects.toBeInstanceOf(
-      WrongAccountTypeError,
-    );
+    await expect(
+      fetchStreamMandate(connection, address),
+    ).rejects.toBeInstanceOf(WrongAccountTypeError);
   });
 
   test("throws WrongAccountTypeError for random bytes", async () => {
@@ -169,8 +169,8 @@ describe("fetchStreamMandate", () => {
       }),
     } as any;
 
-    await expect(fetchStreamMandate(connection, address)).rejects.toBeInstanceOf(
-      WrongAccountTypeError,
-    );
+    await expect(
+      fetchStreamMandate(connection, address),
+    ).rejects.toBeInstanceOf(WrongAccountTypeError);
   });
 });

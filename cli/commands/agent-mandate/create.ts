@@ -30,7 +30,10 @@ export function registerAgentMandateCreate(parent: Command): void {
       "--min-pull-interval <seconds>",
       "Minimum seconds between pulls",
     )
-    .requiredOption("--funded-amount <amount>", "Initial funding amount in USDC")
+    .requiredOption(
+      "--funded-amount <amount>",
+      "Initial funding amount in USDC",
+    )
     .action(async (opts, command: Command) => {
       try {
         const { globalOpts, vela } = await createCliContext(command);
@@ -47,14 +50,8 @@ export function registerAgentMandateCreate(parent: Command): void {
           ),
           dailyLimit: parseUsdcAmount(opts.dailyLimit, "daily-limit"),
           lifetimeCap: parseUsdcAmount(opts.cap, "cap"),
-          minPullAmount: parseUsdcAmount(
-            opts.minPullAmount,
-            "min-pull-amount",
-          ),
-          minPullInterval: parseUint(
-            opts.minPullInterval,
-            "min-pull-interval",
-          ),
+          minPullAmount: parseUsdcAmount(opts.minPullAmount, "min-pull-amount"),
+          minPullInterval: parseUint(opts.minPullInterval, "min-pull-interval"),
           services:
             parseServiceLimitInputs(opts.services, opts.serviceLimits) ?? [],
           fundedAmount: parseUsdcAmount(opts.fundedAmount, "funded-amount"),

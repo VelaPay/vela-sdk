@@ -1,6 +1,6 @@
-import type { HeliusClient } from "helius-sdk";
 import type { Connection, VersionedTransaction } from "@solana/web3.js";
 import { Connection as Web3Connection } from "@solana/web3.js";
+import type { HeliusClient } from "helius-sdk";
 
 async function loadHeliusSdk() {
   try {

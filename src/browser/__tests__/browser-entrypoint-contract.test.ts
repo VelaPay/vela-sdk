@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import * as browser from "@velapay/sdk/browser";
 import type {
   PreviewPlanChangeResult as BrowserPreviewPlanChangeResult,
   StreamMandate as BrowserStreamMandate,
@@ -9,6 +8,7 @@ import type {
   UpgradePlanInput as BrowserUpgradePlanInput,
   VelaMandate as BrowserVelaMandate,
 } from "@velapay/sdk/browser";
+import * as browser from "@velapay/sdk/browser";
 
 type IsEqual<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
@@ -88,7 +88,7 @@ describe("@velapay/sdk/browser contract", () => {
     expect(packageJson).toContain('"./browser"');
     expect(packageJson).toContain("./dist/esm/index.js");
     expect(packageJson).toContain("./dist/cjs/index.cjs");
-    expect(buildScript).toContain('./src/browser/index.ts');
+    expect(buildScript).toContain("./src/browser/index.ts");
     expect(buildScript).toContain('target: "browser"');
   });
 
@@ -101,7 +101,7 @@ describe("@velapay/sdk/browser contract", () => {
     expect(browserIndex).toContain('from "./builders"');
     expect(browserIndex).toContain('from "./instructions"');
     expect(browserIndex).not.toContain("../index");
-    expect(browserBuilders).toContain('../builders/upgrade-builder');
+    expect(browserBuilders).toContain("../builders/upgrade-builder");
     expect(browserBuilders).not.toContain("../builders/index");
     expect(browserInstructions).toContain("../instructions/cancel");
     expect(browserInstructions).not.toContain("../instructions/index");

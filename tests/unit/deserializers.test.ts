@@ -152,7 +152,9 @@ describe("deserializeProtocolConfig", () => {
     expect(result.admin.equals(admin)).toBe(true);
     expect(result.wrappedUsdcMint.equals(wrappedUsdcMint)).toBe(true);
     expect(result.wrappingVault.equals(wrappingVault)).toBe(true);
-    expect(result.transferHookProgramId.equals(transferHookProgramId)).toBe(true);
+    expect(result.transferHookProgramId.equals(transferHookProgramId)).toBe(
+      true,
+    );
     expect(result.paused).toBe(false);
     expect(result.version).toBe(1);
   });

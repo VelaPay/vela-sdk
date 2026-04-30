@@ -25,7 +25,9 @@ export class AmountPrecisionExceeded extends Error {
     readonly value: string,
     readonly decimals: number,
   ) {
-    super(`Amount "${value}" exceeds the allowed precision of ${decimals} decimals`);
+    super(
+      `Amount "${value}" exceeds the allowed precision of ${decimals} decimals`,
+    );
     this.name = "AmountPrecisionExceeded";
     fixPrototype(this, new.target);
   }

@@ -1,12 +1,12 @@
 import type { Program } from "@coral-xyz/anchor";
-import { PublicKey, type Connection } from "@solana/web3.js";
+import { type Connection, PublicKey } from "@solana/web3.js";
 import {
   asBytes,
   type BufferLike,
   readI64LE,
+  readU8,
   readU32LE,
   readU64LE,
-  readU8,
   sliceEquals,
 } from "../browser/bytes";
 import type {
@@ -15,9 +15,9 @@ import type {
   AgentMandateVerificationResult,
   CheckAgentBudgetParams,
   MerchantState,
-  VerifyAgentMandateParams,
   VelaMandate,
   VelaPlan,
+  VerifyAgentMandateParams,
 } from "../types";
 import {
   deserializeAgentMandate,

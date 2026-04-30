@@ -1,9 +1,9 @@
 import { PublicKey } from "@solana/web3.js";
-import BN from "bn.js";
+import type BN from "bn.js";
 import { u64LE } from "../browser/bytes";
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   APPROVAL_SEED,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   BILLING_SEED,
   CONFIG_SEED,
   EXTRA_ACCOUNT_METAS_SEED,
@@ -11,8 +11,8 @@ import {
   MINT_AUTHORITY_SEED,
   PROGRAM_ID,
   SEED_PREFIXES,
-  TOKEN_CONFIG_SEED,
   TOKEN_2022_PROGRAM_ID,
+  TOKEN_CONFIG_SEED,
 } from "../constants";
 import {
   USAGE_CREDENTIAL_SEED,
@@ -293,7 +293,10 @@ export function deriveAgentMandateWrappedAta(
   agentMandateAddress: PublicKey,
   wrappedUsdcMint: PublicKey,
 ): PublicKey {
-  return PDAFactory.agentMandateWrappedAta(agentMandateAddress, wrappedUsdcMint);
+  return PDAFactory.agentMandateWrappedAta(
+    agentMandateAddress,
+    wrappedUsdcMint,
+  );
 }
 
 /** @deprecated Use PDAFactory.keeperConfig(). */

@@ -1,11 +1,17 @@
 import type { Program } from "@coral-xyz/anchor";
 import { sha256 } from "@noble/hashes/sha2.js";
-import { type Connection, PublicKey, type TransactionInstruction } from "@solana/web3.js";
+import {
+  type Connection,
+  PublicKey,
+  type TransactionInstruction,
+} from "@solana/web3.js";
 import { PDAFactory } from "../accounts/pda";
 import { PROGRAM_ID } from "../constants";
 
 // Arcium program ID (from arcium-client IDL: Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ)
-const ARCIUM_PROGRAM_ID = new PublicKey("Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ");
+const ARCIUM_PROGRAM_ID = new PublicKey(
+  "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ",
+);
 
 // Arcium PDA seeds (from arcium-anchor 0.9.3 crate constants)
 // derive_seed!(X) = stringify!(X).as_bytes()
@@ -66,7 +72,10 @@ function deriveExecpoolPda(clusterId: number): PublicKey {
   )[0];
 }
 
-function deriveComputationPda(clusterId: number, computationOffset: bigint): PublicKey {
+function deriveComputationPda(
+  clusterId: number,
+  computationOffset: bigint,
+): PublicKey {
   const clusterIdBuf = Buffer.alloc(4);
   clusterIdBuf.writeUInt32LE(clusterId);
   const offsetBuf = Buffer.alloc(8);
@@ -81,12 +90,18 @@ function deriveComputationPda(clusterId: number, computationOffset: bigint): Pub
 // sha256(circuitName.as_bytes())[0..4] as u32 LE
 function compDefOffset(circuitName: string): number {
   const hash = sha256(new TextEncoder().encode(circuitName));
-  return new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(0, true);
+  return new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(
+    0,
+    true,
+  );
 }
 
 // comp_def PDA: seeds = ["ComputationDefinitionAccount", vela_program_id_bytes, offset_le_bytes]
 // Derived from Arcium program
-function deriveCompDefPda(velaProgramId: PublicKey, circuitName: string): PublicKey {
+function deriveCompDefPda(
+  velaProgramId: PublicKey,
+  circuitName: string,
+): PublicKey {
   const offset = compDefOffset(circuitName);
   const offsetBuf = Buffer.alloc(4);
   offsetBuf.writeUInt32LE(offset);
@@ -172,15 +187,18 @@ export async function buildRequestBillingRecordInstruction(
 
   // Fetch ProtocolConfig for cluster info
   const [configAddress] = PDAFactory.config(programId);
-  const config = await (program.account as any).protocolConfig.fetch(configAddress) as {
+  const config = (await (program.account as any).protocolConfig.fetch(
+    configAddress,
+  )) as {
     clusterPubkey: PublicKey;
     clusterOffset: { toNumber?: () => number } | number;
     bump: number;
   };
 
-  const clusterOffset = typeof config.clusterOffset === "number"
-    ? config.clusterOffset
-    : (config.clusterOffset as { toNumber: () => number }).toNumber();
+  const clusterOffset =
+    typeof config.clusterOffset === "number"
+      ? config.clusterOffset
+      : (config.clusterOffset as { toNumber: () => number }).toNumber();
   const clusterId = clusterOffset; // cluster_id = cluster_offset cast to u32
 
   // Derive all Arcium PDAs
@@ -189,13 +207,18 @@ export async function buildRequestBillingRecordInstruction(
   const executingPool = deriveExecpoolPda(clusterId);
   const clusterAccount = deriveClusterPda(clusterId);
   const computationAccount = deriveComputationPda(clusterId, computationOffset);
-  const compDefAccount = deriveCompDefPda(programId, RECORD_BILLING_EVENT_CIRCUIT);
+  const compDefAccount = deriveCompDefPda(
+    programId,
+    RECORD_BILLING_EVENT_CIRCUIT,
+  );
   const signPdaAccount = deriveSignPda();
 
   // Fetch mandate to read pulls_executed for BillingEvent PDA derivation.
   // The on-chain constraint uses mandate.pulls_executed at instruction time —
   // we must mirror this exactly.
-  const mandateData = await (program.account as any).velaMandate.fetch(mandateAddress);
+  const mandateData = await (program.account as any).velaMandate.fetch(
+    mandateAddress,
+  );
   const pullsExecuted = BigInt(mandateData.pullsExecuted.toString());
 
   const [billingEventAddress] = PDAFactory.billing(

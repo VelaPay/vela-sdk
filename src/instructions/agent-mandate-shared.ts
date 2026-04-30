@@ -1,6 +1,6 @@
 import type { Program } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
+import type { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import { PDAFactory } from "../accounts/pda";
 import {
@@ -63,7 +63,7 @@ export function deriveAgentMandateContext(
   agent: PublicKey,
   wrappedUsdcMint: PublicKey,
   programId: PublicKey,
-  ): {
+): {
   mandateAddress: PublicKey;
   mandateWrappedAccount: PublicKey;
 } {
@@ -105,13 +105,14 @@ export async function resolveAgentProtocolAccounts(
     };
   }
 
-  const raw = await (program.account as any).protocolConfig.fetch(protocolConfig);
+  const raw = await (program.account as any).protocolConfig.fetch(
+    protocolConfig,
+  );
   return {
     protocolConfig,
     wrappedUsdcMint: overrides.wrappedUsdcMint ?? raw.wrappedUsdcMint,
     wrappingVault: overrides.wrappingVault ?? raw.wrappingVault,
-    hookProgramId:
-      overrides.hookProgramId ?? raw.transferHookProgramId,
+    hookProgramId: overrides.hookProgramId ?? raw.transferHookProgramId,
   };
 }
 

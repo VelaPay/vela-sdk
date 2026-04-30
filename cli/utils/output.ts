@@ -19,7 +19,10 @@ export function serializeForJson(value: unknown): unknown {
 
   if (isPlainObject(value)) {
     return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [key, serializeForJson(entry)]),
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        serializeForJson(entry),
+      ]),
     );
   }
 

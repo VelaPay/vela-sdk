@@ -15,13 +15,14 @@ import {
 import {
   Keypair,
   LAMPORTS_PER_SOL,
-  PublicKey,
+  type PublicKey,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
 import { LiteSVMProvider } from "anchor-litesvm";
 import { LiteSVM } from "anchor-litesvm/node_modules/litesvm";
+import { velaProgramIdl } from "../../src/idl";
 import {
   buildCancelInstruction,
   buildCreatePlanInstruction,
@@ -38,20 +39,19 @@ import {
   validateCancel,
   validatePullPayment,
 } from "../../src/index";
-import { velaProgramIdl } from "../../src/idl";
 import type { VelaMandate, VelaPlan } from "../../src/types";
+import {
+  hasProtocolBuildArtifacts,
+  requireProtocolProgramSo,
+} from "../helpers/protocol-artifacts";
 import {
   bootstrapMerchantCredential,
   bootstrapTokenConfig,
   createToken2022Ata,
   findHookSo,
-  installPhase7AdminState,
   insertPullApproval,
+  installPhase7AdminState,
 } from "./phase7-helpers";
-import {
-  hasProtocolBuildArtifacts,
-  requireProtocolProgramSo,
-} from "../helpers/protocol-artifacts";
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
 

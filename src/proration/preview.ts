@@ -29,9 +29,7 @@ export function computeProration(
     throw new RangeError("elapsedSeconds must be non-negative");
   }
   if (elapsedSeconds > periodTotalSeconds) {
-    throw new RangeError(
-      "elapsedSeconds must not exceed periodTotalSeconds",
-    );
+    throw new RangeError("elapsedSeconds must not exceed periodTotalSeconds");
   }
 
   const oldAmount = new Decimal(planAmountOld.toString());

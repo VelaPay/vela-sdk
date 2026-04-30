@@ -1,20 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import { PublicKey } from "@solana/web3.js";
+import type { StreamMandate } from "../../src/index";
 import {
   accruedNow,
   PDAFactory,
   PROGRAM_ID,
   StreamTerminalStatusError,
 } from "../../src/index";
-import type { StreamMandate } from "../../src/index";
 
 const subscriber = new PublicKey("11111111111111111111111111111112");
 const merchant = new PublicKey("11111111111111111111111111111113");
 const mint = new PublicKey("11111111111111111111111111111114");
 
-function makeMandate(
-  overrides: Partial<StreamMandate> = {},
-): StreamMandate {
+function makeMandate(overrides: Partial<StreamMandate> = {}): StreamMandate {
   return {
     address: new PublicKey("11111111111111111111111111111115"),
     version: 1,
@@ -71,9 +69,9 @@ describe("accruedNow", () => {
   });
 
   test("returns 0 for paused streams", () => {
-    expect(accruedNow(makeMandate({ status: "paused", pausedAt: 105n }), 110n)).toBe(
-      0n,
-    );
+    expect(
+      accruedNow(makeMandate({ status: "paused", pausedAt: 105n }), 110n),
+    ).toBe(0n);
   });
 
   test("throws StreamTerminalStatusError for cancelled streams", () => {

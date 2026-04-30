@@ -2,7 +2,6 @@ import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import type { Command } from "commander";
 import { deserializeMandate } from "../../src/accounts/deserialize";
-import { PROGRAM_ID } from "../../src/constants";
 import { VelaError } from "../../src/errors/base";
 import { velaProgramIdl } from "../../src/idl";
 import { createConnection } from "../utils/connection";

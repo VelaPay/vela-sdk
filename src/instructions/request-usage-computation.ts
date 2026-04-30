@@ -10,7 +10,9 @@ import { PROGRAM_ID } from "../constants";
 import type { VelaRequestUsageComputationParams } from "../types";
 
 // Arcium program ID (same as request-validation.ts)
-const ARCIUM_PROGRAM_ID = new PublicKey("Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ");
+const ARCIUM_PROGRAM_ID = new PublicKey(
+  "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ",
+);
 
 // Arcium PDA seeds (from arcium-anchor 0.9.3)
 const MXE_PDA_SEED = Buffer.from("MXEAccount");
@@ -68,7 +70,10 @@ function deriveExecpoolPda(clusterId: number): PublicKey {
   )[0];
 }
 
-function deriveComputationPda(clusterId: number, computationOffset: bigint): PublicKey {
+function deriveComputationPda(
+  clusterId: number,
+  computationOffset: bigint,
+): PublicKey {
   const clusterIdBuf = Buffer.alloc(4);
   clusterIdBuf.writeUInt32LE(clusterId);
   const offsetBuf = Buffer.alloc(8);
@@ -82,10 +87,16 @@ function deriveComputationPda(clusterId: number, computationOffset: bigint): Pub
 /** sha256(circuitName)[0..4] as u32 LE — mirrors arcium_anchor::comp_def_offset */
 function compDefOffset(circuitName: string): number {
   const hash = sha256(new TextEncoder().encode(circuitName));
-  return new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(0, true);
+  return new DataView(hash.buffer, hash.byteOffset, hash.byteLength).getUint32(
+    0,
+    true,
+  );
 }
 
-function deriveCompDefPda(velaProgramId: PublicKey, circuitName: string): PublicKey {
+function deriveCompDefPda(
+  velaProgramId: PublicKey,
+  circuitName: string,
+): PublicKey {
   const offset = compDefOffset(circuitName);
   const offsetBuf = Buffer.alloc(4);
   offsetBuf.writeUInt32LE(offset);
@@ -190,15 +201,18 @@ export async function buildRequestUsageComputationInstruction(
 
   // Fetch ProtocolConfig for cluster info
   const [configAddress] = PDAFactory.config(programId);
-  const config = await (program.account as any).protocolConfig.fetch(configAddress) as {
+  const config = (await (program.account as any).protocolConfig.fetch(
+    configAddress,
+  )) as {
     clusterPubkey: PublicKey;
     clusterOffset: { toNumber?: () => number } | number;
     bump: number;
   };
 
-  const clusterOffset = typeof config.clusterOffset === "number"
-    ? config.clusterOffset
-    : (config.clusterOffset as { toNumber: () => number }).toNumber();
+  const clusterOffset =
+    typeof config.clusterOffset === "number"
+      ? config.clusterOffset
+      : (config.clusterOffset as { toNumber: () => number }).toNumber();
   const clusterId = clusterOffset;
 
   // Derive all Arcium PDAs (same pattern as request-validation.ts)

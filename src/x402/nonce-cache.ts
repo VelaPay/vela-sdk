@@ -23,12 +23,19 @@ export function createNonceCache(): NonceCache {
     }
   }
 
-  function issueNonce(nonce: string, expiresAt: number, now = Date.now()): void {
+  function issueNonce(
+    nonce: string,
+    expiresAt: number,
+    now = Date.now(),
+  ): void {
     prune(now);
     issued.set(nonce, expiresAt);
   }
 
-  function getIssuedNonceExpiry(nonce: string, now = Date.now()): number | null {
+  function getIssuedNonceExpiry(
+    nonce: string,
+    now = Date.now(),
+  ): number | null {
     prune(now);
     return issued.get(nonce) ?? null;
   }

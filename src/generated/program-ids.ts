@@ -6,18 +6,24 @@ export const DEFAULT_CLUSTER = "devnet" as const;
 export const VELA_PROGRAM_IDS = {
   devnet: {
     velaProtocol: "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT",
-    velaTransferHook: "3agVoFp4NZFuKbVqCV8HbjSZn1xW4Utk4U1Wir3TKjZ9"
+    velaTransferHook: "3agVoFp4NZFuKbVqCV8HbjSZn1xW4Utk4U1Wir3TKjZ9",
   },
   localnet: {
     velaProtocol: "BhgXzh4E6e9xsgNrsPf9q1JqXKxETxjc9LBqx3D8cAKC",
-    velaTransferHook: "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX"
-  }
+    velaTransferHook: "93q91TJ6M9yGoehAeeCttgEc1SThFGXaw4rZS2ysr3uX",
+  },
 } as const;
 
 export const DEFAULT_VELA_PROGRAM_IDS = VELA_PROGRAM_IDS[DEFAULT_CLUSTER];
-export const DEFAULT_VELA_PROTOCOL_PROGRAM_ID = DEFAULT_VELA_PROGRAM_IDS.velaProtocol;
-export const DEFAULT_VELA_TRANSFER_HOOK_PROGRAM_ID = DEFAULT_VELA_PROGRAM_IDS.velaTransferHook;
-export const DEVNET_VELA_PROTOCOL_PROGRAM_ID = VELA_PROGRAM_IDS.devnet.velaProtocol;
-export const DEVNET_VELA_TRANSFER_HOOK_PROGRAM_ID = VELA_PROGRAM_IDS.devnet.velaTransferHook;
-export const LOCALNET_VELA_PROTOCOL_PROGRAM_ID = VELA_PROGRAM_IDS.localnet.velaProtocol;
-export const LOCALNET_VELA_TRANSFER_HOOK_PROGRAM_ID = VELA_PROGRAM_IDS.localnet.velaTransferHook;
+export const DEFAULT_VELA_PROTOCOL_PROGRAM_ID =
+  DEFAULT_VELA_PROGRAM_IDS.velaProtocol;
+export const DEFAULT_VELA_TRANSFER_HOOK_PROGRAM_ID =
+  DEFAULT_VELA_PROGRAM_IDS.velaTransferHook;
+export const DEVNET_VELA_PROTOCOL_PROGRAM_ID =
+  VELA_PROGRAM_IDS.devnet.velaProtocol;
+export const DEVNET_VELA_TRANSFER_HOOK_PROGRAM_ID =
+  VELA_PROGRAM_IDS.devnet.velaTransferHook;
+export const LOCALNET_VELA_PROTOCOL_PROGRAM_ID =
+  VELA_PROGRAM_IDS.localnet.velaProtocol;
+export const LOCALNET_VELA_TRANSFER_HOOK_PROGRAM_ID =
+  VELA_PROGRAM_IDS.localnet.velaTransferHook;

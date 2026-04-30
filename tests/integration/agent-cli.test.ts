@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { createCliProgram } from "../../cli/index";
 import { setConfirmActionImplementation } from "../../cli/utils/confirm";
-import { DEFAULT_KEYPAIR_PATH, resolveKeypairPath } from "../../cli/utils/keypair";
+import {
+  DEFAULT_KEYPAIR_PATH,
+  resolveKeypairPath,
+} from "../../cli/utils/keypair";
 import { renderOutput } from "../../cli/utils/output";
 import { setCliVelaClientFactory } from "../../cli/utils/sdk";
 import type {
@@ -21,7 +24,9 @@ let mandateListFixture: AgentMandate[];
 let methodResultFixture: AgentMandateMethodResult;
 let drainResultFixture: AgentMandateDrainResult;
 let revokeResultFixture: AgentMandateRevokeResult;
-const confirmActionMock = mock(async (_prompt: string, _opts?: unknown) => true);
+const confirmActionMock = mock(
+  async (_prompt: string, _opts?: unknown) => true,
+);
 const mockClient = {
   checkAgentBudget: mock(async (_params: unknown) => budgetSummaryFixture),
   listAgentMandates: mock(async (_authority?: unknown) => mandateListFixture),
@@ -294,14 +299,18 @@ describe("agent mandate CLI", () => {
     );
 
     expect(mockClient.listAgentMandates).toHaveBeenCalledTimes(1);
-    expect(mockClient.listAgentMandates).toHaveBeenCalledWith(envKeypair.publicKey);
+    expect(mockClient.listAgentMandates).toHaveBeenCalledWith(
+      envKeypair.publicKey,
+    );
     expect(stdout).toContain("MANDATE");
     expect(stdout).toContain("STATUS");
     expect(stdout).toContain("SERVICES");
   });
 
   test("agent-mandate list emits JSON with --json", async () => {
-    mandateListFixture = [createAgentMandate(explicitKeypair.publicKey, agent, service)];
+    mandateListFixture = [
+      createAgentMandate(explicitKeypair.publicKey, agent, service),
+    ];
     const program = createCliProgram();
     const { stdout } = await captureOutput(() =>
       program.parseAsync(

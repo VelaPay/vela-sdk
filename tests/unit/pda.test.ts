@@ -2,14 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import {
-  PDAFactory,
   deriveAgentMandateAddress,
   deriveConfigAddress,
   deriveCredentialMintAddress,
-  deriveMandateAddress,
   deriveKeeperConfigAddress,
+  deriveMandateAddress,
   deriveMerchantStateAddress,
   derivePlanAddress,
+  PDAFactory,
 } from "../../src/accounts";
 import {
   APPROVAL_SEED,
@@ -260,9 +260,9 @@ describe("PDAFactory.mandate (V2)", () => {
 describe("PDAFactory.mandateV1", () => {
   test("matches deprecated deriveMandateAddress output", () => {
     const [planAddress] = derivePlanAddress(merchant.publicKey, 0n);
-    expect(
-      PDAFactory.mandateV1(subscriber.publicKey, planAddress),
-    ).toEqual(deriveMandateAddress(subscriber.publicKey, planAddress));
+    expect(PDAFactory.mandateV1(subscriber.publicKey, planAddress)).toEqual(
+      deriveMandateAddress(subscriber.publicKey, planAddress),
+    );
   });
 });
 
@@ -274,10 +274,7 @@ describe("PDAFactory.mandate V2 vs V1", () => {
       merchant.publicKey,
       0n,
     );
-    const [v1Address] = PDAFactory.mandateV1(
-      subscriber.publicKey,
-      planAddress,
-    );
+    const [v1Address] = PDAFactory.mandateV1(subscriber.publicKey, planAddress);
     expect(v2Address.equals(v1Address)).toBe(false);
   });
 });
@@ -312,9 +309,9 @@ describe("PDAFactory.credential (V2 per-merchant)", () => {
 
 describe("PDAFactory.credentialV1", () => {
   test("matches deprecated deriveCredentialMintAddress output", () => {
-    expect(
-      PDAFactory.credentialV1(merchant.publicKey, 0n),
-    ).toEqual(deriveCredentialMintAddress(merchant.publicKey, 0n));
+    expect(PDAFactory.credentialV1(merchant.publicKey, 0n)).toEqual(
+      deriveCredentialMintAddress(merchant.publicKey, 0n),
+    );
   });
 });
 
@@ -348,9 +345,9 @@ describe("PDAFactory unchanged PDAs", () => {
   });
 
   test("agentMandate matches deriveAgentMandateAddress", () => {
-    expect(PDAFactory.agentMandate(merchant.publicKey, agent.publicKey)).toEqual(
-      deriveAgentMandateAddress(merchant.publicKey, agent.publicKey),
-    );
+    expect(
+      PDAFactory.agentMandate(merchant.publicKey, agent.publicKey),
+    ).toEqual(deriveAgentMandateAddress(merchant.publicKey, agent.publicKey));
   });
 });
 

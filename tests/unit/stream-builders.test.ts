@@ -1,8 +1,10 @@
-import { sha256 } from "@noble/hashes/sha2.js";
-import { getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { describe, expect, test } from "bun:test";
+import { sha256 } from "@noble/hashes/sha2.js";
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+} from "@solana/spl-token";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import * as instructionBarrel from "../../src/instructions";
 import * as root from "../../src/index";
 import {
   buildCancelStreamInstruction,
@@ -15,6 +17,7 @@ import {
   PROGRAM_ID,
   TRANSFER_HOOK_PROGRAM_ID,
 } from "../../src/index";
+import * as instructionBarrel from "../../src/instructions";
 
 const subscriber = new PublicKey("11111111111111111111111111111112");
 const merchant = new PublicKey("11111111111111111111111111111113");
@@ -95,13 +98,17 @@ function serializeProtocolConfig(): Buffer {
 }
 
 function serializeStreamMandate(mandateIndex = 7n): Buffer {
-  const [mandate] = PDAFactory.stream(subscriber, merchant, mandateIndex, PROGRAM_ID);
+  const [mandate] = PDAFactory.stream(
+    subscriber,
+    merchant,
+    mandateIndex,
+    PROGRAM_ID,
+  );
   const data = Buffer.alloc(225);
   let offset = 0;
-  Buffer.from(sha256(new TextEncoder().encode("account:StreamMandate")).slice(0, 8)).copy(
-    data,
-    offset,
-  );
+  Buffer.from(
+    sha256(new TextEncoder().encode("account:StreamMandate")).slice(0, 8),
+  ).copy(data, offset);
   offset += 8;
   data.writeUInt8(1, offset);
   offset += 1;
@@ -137,7 +144,12 @@ function serializeStreamMandate(mandateIndex = 7n): Buffer {
 function makeConnection(streamMandateCounter = 7n) {
   const [merchantState] = PDAFactory.merchantState(merchant, PROGRAM_ID);
   const [config] = PDAFactory.config(PROGRAM_ID);
-  const [mandate] = PDAFactory.stream(subscriber, merchant, streamMandateCounter, PROGRAM_ID);
+  const [mandate] = PDAFactory.stream(
+    subscriber,
+    merchant,
+    streamMandateCounter,
+    PROGRAM_ID,
+  );
   const accounts = new Map<string, Buffer>([
     [merchantState.toBase58(), serializeMerchantState(streamMandateCounter)],
     [config.toBase58(), serializeProtocolConfig()],
@@ -163,7 +175,9 @@ function makeConnection(streamMandateCounter = 7n) {
 }
 
 function assertMeta(
-  meta: { pubkey: PublicKey; isSigner: boolean; isWritable: boolean } | undefined,
+  meta:
+    | { pubkey: PublicKey; isSigner: boolean; isWritable: boolean }
+    | undefined,
   expected: { pubkey: PublicKey; isSigner: boolean; isWritable: boolean },
 ) {
   expect(meta?.pubkey.toBase58()).toBe(expected.pubkey.toBase58());
@@ -185,14 +199,21 @@ describe("stream instruction builders", () => {
       minSettleInterval: 60,
     });
 
-    const [expectedMandate] = PDAFactory.stream(subscriber, merchant, 7n, PROGRAM_ID);
+    const [expectedMandate] = PDAFactory.stream(
+      subscriber,
+      merchant,
+      7n,
+      PROGRAM_ID,
+    );
     expect(instruction.programId.toBase58()).toBe(PROGRAM_ID.toBase58());
     expect(instruction.keys).toHaveLength(7);
     expect(instruction.keys[0]?.pubkey.toBase58()).toBe(subscriber.toBase58());
     expect(instruction.keys[1]?.pubkey.toBase58()).toBe(
       PDAFactory.merchantState(merchant, PROGRAM_ID)[0].toBase58(),
     );
-    expect(instruction.keys[2]?.pubkey.toBase58()).toBe(expectedMandate.toBase58());
+    expect(instruction.keys[2]?.pubkey.toBase58()).toBe(
+      expectedMandate.toBase58(),
+    );
     expect(instruction.keys[4]?.pubkey.toBase58()).toBe(
       PDAFactory.tokenConfig(mint, PROGRAM_ID)[0].toBase58(),
     );
@@ -200,7 +221,11 @@ describe("stream instruction builders", () => {
     expect(instruction.keys[6]?.pubkey.toBase58()).toBe(
       SystemProgram.programId.toBase58(),
     );
-    expect(Buffer.from(instruction.data.subarray(0, 8)).equals(ixDiscriminator("create_stream_mandate"))).toBe(true);
+    expect(
+      Buffer.from(instruction.data.subarray(0, 8)).equals(
+        ixDiscriminator("create_stream_mandate"),
+      ),
+    ).toBe(true);
     expect(instruction.data.length).toBe(37);
   });
 
@@ -226,13 +251,21 @@ describe("stream instruction builders", () => {
 
     expect(instruction.programId.toBase58()).toBe(PROGRAM_ID.toBase58());
     expect(instruction.keys).toHaveLength(17);
-    assertMeta(instruction.keys[0], { pubkey: payer, isSigner: true, isWritable: true });
+    assertMeta(instruction.keys[0], {
+      pubkey: payer,
+      isSigner: true,
+      isWritable: true,
+    });
     assertMeta(instruction.keys[3], {
       pubkey: PDAFactory.keeperConfig(PROGRAM_ID)[0],
       isSigner: false,
       isWritable: false,
     });
-    assertMeta(instruction.keys[4], { pubkey: mandate, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[4], {
+      pubkey: mandate,
+      isSigner: false,
+      isWritable: true,
+    });
     assertMeta(instruction.keys[5], {
       pubkey: subscriberWrappedAccount,
       isSigner: false,
@@ -243,7 +276,11 @@ describe("stream instruction builders", () => {
       isSigner: false,
       isWritable: true,
     });
-    assertMeta(instruction.keys[7], { pubkey: mint, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[7], {
+      pubkey: mint,
+      isSigner: false,
+      isWritable: true,
+    });
     assertMeta(instruction.keys[8], {
       pubkey: PDAFactory.approval(mandate, PROGRAM_ID)[0],
       isSigner: false,
@@ -280,7 +317,11 @@ describe("stream instruction builders", () => {
     );
 
     expect(instruction.keys).toHaveLength(14);
-    assertMeta(instruction.keys[1], { pubkey: mandate, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[1], {
+      pubkey: mandate,
+      isSigner: false,
+      isWritable: true,
+    });
     assertMeta(instruction.keys[2], {
       pubkey: subscriberWrappedAccount,
       isSigner: false,
@@ -291,7 +332,11 @@ describe("stream instruction builders", () => {
       isSigner: false,
       isWritable: true,
     });
-    assertMeta(instruction.keys[4], { pubkey: mint, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[4], {
+      pubkey: mint,
+      isSigner: false,
+      isWritable: true,
+    });
     assertMeta(instruction.keys[5], {
       pubkey: PDAFactory.approval(mandate, PROGRAM_ID)[0],
       isSigner: false,
@@ -335,16 +380,30 @@ describe("stream instruction builders", () => {
 
     expect(instruction.keys).toHaveLength(14);
     assertMeta(instruction.keys[2], {
-      pubkey: getAssociatedTokenAddressSync(mint, mandate, true, TOKEN_2022_PROGRAM_ID),
+      pubkey: getAssociatedTokenAddressSync(
+        mint,
+        mandate,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+      ),
       isSigner: false,
       isWritable: true,
     });
     assertMeta(instruction.keys[3], {
-      pubkey: getAssociatedTokenAddressSync(mint, merchant, true, TOKEN_2022_PROGRAM_ID),
+      pubkey: getAssociatedTokenAddressSync(
+        mint,
+        merchant,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+      ),
       isSigner: false,
       isWritable: true,
     });
-    expect(Buffer.from(instruction.data.subarray(0, 8)).equals(ixDiscriminator("update_stream_rate"))).toBe(true);
+    expect(
+      Buffer.from(instruction.data.subarray(0, 8)).equals(
+        ixDiscriminator("update_stream_rate"),
+      ),
+    ).toBe(true);
     expect(instruction.data.length).toBe(26);
   });
 
@@ -357,9 +416,18 @@ describe("stream instruction builders", () => {
     });
 
     expect(instruction.keys).toHaveLength(14);
-    assertMeta(instruction.keys[1], { pubkey: mandate, isSigner: false, isWritable: true });
+    assertMeta(instruction.keys[1], {
+      pubkey: mandate,
+      isSigner: false,
+      isWritable: true,
+    });
     assertMeta(instruction.keys[2], {
-      pubkey: getAssociatedTokenAddressSync(mint, mandate, true, TOKEN_2022_PROGRAM_ID),
+      pubkey: getAssociatedTokenAddressSync(
+        mint,
+        mandate,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+      ),
       isSigner: false,
       isWritable: true,
     });

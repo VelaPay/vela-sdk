@@ -1,10 +1,10 @@
 import type { Program } from "@coral-xyz/anchor";
 import {
-  PublicKey,
+  type PublicKey,
   SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
-import BN from "bn.js";
+import type BN from "bn.js";
 import { PDAFactory } from "../accounts/pda";
 
 export interface BuildSubmitUsageReportResult {
@@ -27,11 +27,11 @@ export function deriveUsageReportAddress(
 export interface SubmitUsageReportParams {
   merchant: PublicKey;
   mandateAddress: PublicKey;
-  periodStart: BN;               // i64 timestamp — must equal mandate.next_payment_due
-  periodEnd: BN;                 // i64 timestamp
-  encryptedUsage: number[][];    // [[u8;32];4] — pre-encrypted by caller using Arcium RescueCipher
-  nonce: BN;                     // u128 encryption nonce
-  pubKey: number[];              // [u8;32] x25519 client public key
+  periodStart: BN; // i64 timestamp — must equal mandate.next_payment_due
+  periodEnd: BN; // i64 timestamp
+  encryptedUsage: number[][]; // [[u8;32];4] — pre-encrypted by caller using Arcium RescueCipher
+  nonce: BN; // u128 encryption nonce
+  pubKey: number[]; // [u8;32] x25519 client public key
 }
 
 /**
@@ -70,13 +70,7 @@ export async function buildSubmitUsageReportInstruction(
   );
 
   const instruction = await (program.methods as any)
-    .submitUsageReport(
-      periodStart,
-      periodEnd,
-      encryptedUsage,
-      nonce,
-      pubKey,
-    )
+    .submitUsageReport(periodStart, periodEnd, encryptedUsage, nonce, pubKey)
     .accounts({
       merchant,
       mandate: mandateAddress,

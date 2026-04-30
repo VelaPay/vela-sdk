@@ -12,7 +12,7 @@
         "@solana/web3.js": "^1.98.4",
         "commander": "^14.0.3",
         "decimal.js": "10.6.0",
-        "hono": "^4.12.12",
+        "hono": "^4.12.15",
         "zod": "^4.3.6",
       },
       "devDependencies": {
@@ -239,7 +239,7 @@
 
     "helius-sdk": ["helius-sdk@2.2.2", "", { "dependencies": { "@solana-program/compute-budget": "^0.11.0", "@solana-program/stake": "^0.5.0", "@solana-program/system": "^0.10.0", "@solana-program/token": "^0.9.0", "@solana/kit": "^5.0.0", "bs58": "^6.0.0", "tslib": "^2.8.1" } }, "sha512-T7H9fJOYAB9HUZomDQ47EnKYPE//SgweZz4PbWF6q0Y1/jA0J+7xY15kFpZLJHyAGd4AXXxDCSISRdABmpCjfQ=="],
 
-    "hono": ["hono@4.12.12", "", {}, "sha512-p1JfQMKaceuCbpJKAPKVqyqviZdS0eUxH9v82oWo1kb9xjQ5wA6iP3FNVAPDFlz5/p7d45lO+BpSk1tuSZMF4Q=="],
+    "hono": ["hono@4.12.15", "", {}, "sha512-qM0jDhFEaCBb4TxoW7f53Qrpv9RBiayUHo0S52JudprkhvpjIrGoU1mnnr29Fvd1U335ZFPZQY1wlkqgfGXyLg=="],
 
     "humanize-ms": ["humanize-ms@1.2.1", "", { "dependencies": { "ms": "^2.0.0" } }, "sha512-Fl70vYtsAFb/C06PTS9dZBo7ihau+Tu/DNCk/OyHhea07S+aeMWpFFkUaXRa8fI+ScZbEI8dfSxwY7gxZ9SAVQ=="],
 

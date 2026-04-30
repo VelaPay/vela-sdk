@@ -90,6 +90,8 @@ export async function buildCreatePlanInstruction(
 
 async function fetchDefaultBillingMint(program: Program): Promise<PublicKey> {
   const [protocolConfig] = PDAFactory.config(program.programId);
-  const raw = await (program.account as any).protocolConfig.fetch(protocolConfig);
+  const raw = await (program.account as any).protocolConfig.fetch(
+    protocolConfig,
+  );
   return raw.wrappedUsdcMint as PublicKey;
 }

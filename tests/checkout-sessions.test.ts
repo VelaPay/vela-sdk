@@ -53,13 +53,14 @@ function createClient(
 }
 
 beforeEach(() => {
-  mockFetch = mock(async () =>
-    new Response(JSON.stringify(defaultSession), {
-      status: 200,
-      headers: {
-        "content-type": "application/json",
-      },
-    }),
+  mockFetch = mock(
+    async () =>
+      new Response(JSON.stringify(defaultSession), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
   );
   globalThis.fetch = mockFetch as unknown as typeof fetch;
 });
@@ -133,13 +134,14 @@ describe("checkoutSessions", () => {
   });
 
   test("create() throws API error payloads on non-200 responses", async () => {
-    const failingFetch = mock(async () =>
-      new Response(JSON.stringify({ error: "Plan not found" }), {
-        status: 404,
-        headers: {
-          "content-type": "application/json",
-        },
-      }),
+    const failingFetch = mock(
+      async () =>
+        new Response(JSON.stringify({ error: "Plan not found" }), {
+          status: 404,
+          headers: {
+            "content-type": "application/json",
+          },
+        }),
     );
     globalThis.fetch = failingFetch as unknown as typeof fetch;
 
