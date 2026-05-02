@@ -3,6 +3,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import {
   type Connection,
   PublicKey,
+  SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
 import { PDAFactory } from "../accounts/pda";
@@ -129,6 +130,7 @@ export interface RequestBillingRecordParams {
 export interface BuildRequestBillingRecordResult {
   instruction: TransactionInstruction;
   billingEventAddress: PublicKey;
+  requestStateAddress: PublicKey;
   computationOffset: bigint;
 }
 
@@ -226,9 +228,14 @@ export async function buildRequestBillingRecordInstruction(
     pullsExecuted,
     programId,
   );
+  const [requestState] = PDAFactory.arciumBillingRecordRequest(
+    mandateAddress,
+    pullsExecuted,
+    programId,
+  );
 
   const instruction = await (program.methods as any)
-    .requestBillingRecord(computationOffset)
+    .requestBillingRecord(computationOffset, pullsExecuted)
     .accounts({
       payer,
       config: configAddress,
@@ -244,7 +251,8 @@ export async function buildRequestBillingRecordInstruction(
       plan: planAddress,
       mandate: mandateAddress,
       billingEvent: billingEventAddress,
-      systemProgram: PublicKey.default,
+      requestState,
+      systemProgram: SystemProgram.programId,
       arciumProgram: ARCIUM_PROGRAM_ID,
     })
     .instruction();
@@ -252,6 +260,7 @@ export async function buildRequestBillingRecordInstruction(
   return {
     instruction,
     billingEventAddress,
+    requestStateAddress: requestState,
     computationOffset,
   };
 }

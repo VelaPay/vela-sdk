@@ -1,6 +1,6 @@
 {
   "name": "@velapay/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript SDK for Vela — private, programmable payment authority on Solana",
   "license": "MIT",
   "repository": {
@@ -196,7 +196,7 @@
     "./idl/vela_protocol.json": "./idl/vela_protocol.json"
   },
   "bin": {
-    "vela": "./bin/vela"
+    "vela": "bin/vela"
   },
   "files": [
     "dist",
@@ -225,7 +225,6 @@
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "commander": "^14.0.3",
-    "decimal.js": "10.6.0",
     "hono": "^4.12.15",
     "zod": "^4.3.6"
   },

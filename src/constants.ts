@@ -28,6 +28,10 @@ export const EXTRA_ACCOUNT_METAS_SEED = seedBytes("extra-account-metas");
 export const CONFIG_SEED = seedBytes("config");
 export const APPROVAL_SEED = seedBytes("approval");
 export const BILLING_SEED = seedBytes("billing");
+export const ARCIUM_REQUEST_SEED = seedBytes("arcium_request");
+export const ARCIUM_REQUEST_VALIDATION_SEED = seedBytes("validation");
+export const ARCIUM_REQUEST_USAGE_COMPUTATION_SEED = seedBytes("usage");
+export const ARCIUM_REQUEST_BILLING_RECORD_SEED = seedBytes("billing");
 export const KEEPER_CONFIG_SEED = seedBytes("keeper-config");
 export const TOKEN_CONFIG_SEED = seedBytes("token_config");
 

@@ -1,7 +1,3 @@
-import Decimal from "decimal.js";
-
-Decimal.set({ precision: 30, rounding: Decimal.ROUND_HALF_EVEN });
-
 export type ProrationOutcome =
   | "ChargeNow"
   | "CreditNow"
@@ -32,19 +28,11 @@ export function computeProration(
     throw new RangeError("elapsedSeconds must not exceed periodTotalSeconds");
   }
 
-  const oldAmount = new Decimal(planAmountOld.toString());
-  const newAmount = new Decimal(planAmountNew.toString());
-  const elapsed = new Decimal(elapsedSeconds.toString());
-  const total = new Decimal(periodTotalSeconds.toString());
-  const remaining = total.minus(elapsed);
-
-  const usedOld = oldAmount.mul(elapsed).div(total);
-  const unusedOld = oldAmount.minus(usedOld);
-  const newForRemaining = newAmount.mul(remaining).div(total);
-  const signedDelta = newForRemaining.minus(unusedOld);
-  const truncatedAbs = signedDelta.abs().floor();
-  const signed = signedDelta.isNegative() ? truncatedAbs.neg() : truncatedAbs;
-  const raw = BigInt(signed.toFixed(0));
+  const remaining = periodTotalSeconds - elapsedSeconds;
+  const numerator = (planAmountNew - planAmountOld) * remaining;
+  const absNumerator = numerator < 0n ? -numerator : numerator;
+  const truncatedAbs = absNumerator / periodTotalSeconds;
+  const raw = numerator < 0n ? -truncatedAbs : truncatedAbs;
 
   if (raw === 0n) {
     return { outcome: "NoOp", prorationAmount: 0n };

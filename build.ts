@@ -105,6 +105,13 @@ async function build() {
   }
   copyDtsAsDcts("./dist/esm");
 
+  // The browser bundle is emitted at dist/{esm,cjs}/index.* from
+  // src/browser/index.ts. Put matching declarations beside it so TS consumers
+  // that resolve the concrete browser bundle still get the browser-safe types.
+  copyFileSync("./dist/esm/src/browser/index.d.ts", "./dist/esm/index.d.ts");
+  copyFileSync("./dist/esm/src/browser/index.d.cts", "./dist/esm/index.d.cts");
+  copyFileSync("./dist/esm/src/browser/index.d.cts", "./dist/cjs/index.d.cts");
+
   console.log(
     "Build complete: dist/esm/ (ESM) + dist/cjs/ (CJS) + .d.ts/.d.cts declarations",
   );

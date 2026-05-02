@@ -28,6 +28,9 @@ export {
 export {
   deriveAgentMandateAddress,
   deriveAgentMandateWrappedAta,
+  deriveArciumBillingRecordRequestAddress,
+  deriveArciumUsageComputationRequestAddress,
+  deriveArciumValidationRequestAddress,
   deriveConfigAddress,
   deriveCredentialMintAddress,
   deriveKeeperConfigAddress,

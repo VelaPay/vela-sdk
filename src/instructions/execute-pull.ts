@@ -79,8 +79,15 @@ export async function buildExecutePullInstruction(
     program,
     protocolConfig,
   );
-  const effectiveHookProgramId =
-    params.hookProgramId ?? protocolConfigValues.hookProgramId;
+  if (
+    params.hookProgramId &&
+    !params.hookProgramId.equals(protocolConfigValues.hookProgramId)
+  ) {
+    throw new Error(
+      `buildExecutePullInstruction: hookProgramId override ${params.hookProgramId.toBase58()} does not match ProtocolConfig.transferHookProgramId ${protocolConfigValues.hookProgramId.toBase58()}.`,
+    );
+  }
+  const effectiveHookProgramId = protocolConfigValues.hookProgramId;
   const [extraAccountMetaList] = PDAFactory.extraAccountMetas(
     billingMint,
     effectiveHookProgramId,

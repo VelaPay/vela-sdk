@@ -80,7 +80,7 @@ export async function createUsagePlan(
  * 1. Fetch MXE public key from on-chain Arcium program
  * 2. Generate ephemeral x25519 keypair
  * 3. Derive shared secret via ECDH
- * 4. Pack usage_units as a single plaintext u64 and encrypt with RescueCipher
+ * 4. Pack usage_units plus plan pricing inputs and encrypt with RescueCipher
  * 5. Submit ciphertext + pubkey + nonce to submit_usage_report instruction
  *
  * The on-chain program validates:
@@ -122,19 +122,45 @@ export async function submitUsageReport(
     const clientPublicKey = x25519.getPublicKey(clientPrivateKey);
     sharedSecret = x25519.getSharedSecret(clientPrivateKey, mxePublicKeyBytes);
 
-    // Encrypt: pack usage_units as a single u64 field, encrypt with RescueCipher
+    const usagePlan = (await (program.account as any).usagePlan.fetch(
+      params.usagePlanAddress,
+    )) as {
+      tiers: Array<{ upTo: BN; ratePerUnit: BN }>;
+      tierCount: number;
+      maxChargePerPeriod: BN;
+    };
+    const tierCount = Number(usagePlan.tierCount);
+    if (!Number.isInteger(tierCount) || tierCount < 1 || tierCount > 5) {
+      throw new Error(`usage plan tierCount must be between 1 and 5, got ${tierCount}`);
+    }
+
+    // Encrypt the full circuit input committed in UsageReport. The keeper later queues
+    // exactly this ciphertext, so it cannot swap usage or pricing values at request time.
     const usageUnitsNum = BigInt(params.usageUnits.toString());
+    const maxCharge = BigInt(usagePlan.maxChargePerPeriod.toString());
+    const plaintextFields =
+      tierCount === 1
+        ? [
+            usageUnitsNum,
+            BigInt(usagePlan.tiers[0].ratePerUnit.toString()),
+            maxCharge,
+          ]
+        : [
+            usageUnitsNum,
+            ...[0, 1, 2, 3, 4].map((i) =>
+              i < tierCount ? BigInt(usagePlan.tiers[i].upTo.toString()) : 0n,
+            ),
+            ...[0, 1, 2, 3, 4].map((i) =>
+              i < tierCount
+                ? BigInt(usagePlan.tiers[i].ratePerUnit.toString())
+                : 0n,
+            ),
+            BigInt(tierCount),
+            maxCharge,
+          ];
     const cipher = new RescueCipher(sharedSecret);
     const nonce = generateNonce();
-    const encryptedFields = cipher.encrypt([usageUnitsNum], nonce);
-
-    // Pad to [[u8;32];4] — the on-chain program expects exactly 4 ciphertext blocks
-    // Fill unused slots with zeros
-    const encryptedUsage: number[][] = [0, 1, 2, 3].map((i) =>
-      i < encryptedFields.length
-        ? encryptedFields[i]
-        : (new Array(32).fill(0) as number[]),
-    );
+    const computationCiphertext = cipher.encrypt(plaintextFields, nonce);
 
     const nonceU128 = nonceToU128(nonce);
     const nonceBN = new BN(nonceU128.toString());
@@ -144,9 +170,10 @@ export async function submitUsageReport(
       await buildSubmitUsageReportInstruction(program, {
         merchant: params.merchantPublicKey,
         mandateAddress: params.mandateAddress,
+        usagePlanAddress: params.usagePlanAddress,
         periodStart: params.periodStart,
         periodEnd: params.periodEnd,
-        encryptedUsage,
+        computationCiphertext,
         nonce: nonceBN,
         pubKey: pubKeyArray,
       });

@@ -5,6 +5,9 @@ export {
   checkAgentBudget,
   deriveAgentMandateAddress,
   deriveAgentMandateWrappedAta,
+  deriveArciumBillingRecordRequestAddress,
+  deriveArciumUsageComputationRequestAddress,
+  deriveArciumValidationRequestAddress,
   deriveConfigAddress,
   deriveCredentialMintAddress,
   deriveKeeperConfigAddress,
@@ -52,6 +55,10 @@ export type { VelaClient } from "./client";
 export { createVelaClient } from "./client";
 // Constants
 export {
+  ARCIUM_REQUEST_BILLING_RECORD_SEED,
+  ARCIUM_REQUEST_SEED,
+  ARCIUM_REQUEST_USAGE_COMPUTATION_SEED,
+  ARCIUM_REQUEST_VALIDATION_SEED,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   BILLING_SEED,
   DEVNET_USDC_MINT,

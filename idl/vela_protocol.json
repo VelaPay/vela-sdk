@@ -2634,6 +2634,54 @@
           "address": "Sysvar1nstructions1111111111111111111111111"
         },
         {
+          "name": "request_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  105,
+                  108,
+                  108,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "account",
+                "path": "mandate.pulls_executed",
+                "account": "VelaMandate"
+              }
+            ]
+          }
+        },
+        {
           "name": "billing_event",
           "writable": true,
           "pda": {
@@ -2842,6 +2890,53 @@
           "writable": true,
           "pda": {
             "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  105,
+                  108,
+                  108,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "arg",
+                "path": "pulls_executed_seed"
+              }
+            ]
+          }
+        },
+        {
+          "name": "request_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
               {
                 "kind": "const",
                 "value": [
@@ -3079,6 +3174,52 @@
           }
         },
         {
+          "name": "request_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  97,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "account",
+                "path": "usage_report.period_start",
+                "account": "UsageReport"
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         },
@@ -3091,30 +3232,6 @@
         {
           "name": "requested_computation_offset",
           "type": "u64"
-        },
-        {
-          "name": "ciphertext",
-          "type": {
-            "vec": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        },
-        {
-          "name": "pub_key",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "nonce",
-          "type": "u128"
         }
       ]
     },
@@ -3217,59 +3334,11 @@
           "writable": true
         },
         {
-          "name": "plan",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "plan.merchant",
-                "account": "VelaPlan"
-              },
-              {
-                "kind": "account",
-                "path": "plan.plan_id",
-                "account": "VelaPlan"
-              }
-            ]
-          }
+          "name": "plan"
         },
         {
           "name": "mandate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  97,
-                  110,
-                  100,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mandate.subscriber",
-                "account": "VelaMandate"
-              },
-              {
-                "kind": "account",
-                "path": "plan"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "pull_approval",
@@ -3297,6 +3366,56 @@
           }
         },
         {
+          "name": "request_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  105,
+                  100,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "arg",
+                "path": "next_payment_due_seed"
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         },
@@ -3309,6 +3428,10 @@
         {
           "name": "computation_offset",
           "type": "u64"
+        },
+        {
+          "name": "next_payment_due_seed",
+          "type": "i64"
         },
         {
           "name": "ciphertext",
@@ -3614,6 +3737,9 @@
           "name": "mandate"
         },
         {
+          "name": "usage_plan"
+        },
+        {
           "name": "usage_report",
           "writable": true,
           "pda": {
@@ -3661,17 +3787,14 @@
           "type": "i64"
         },
         {
-          "name": "encrypted_usage",
+          "name": "computation_ciphertext",
           "type": {
-            "array": [
-              {
-                "array": [
-                  "u8",
-                  32
-                ]
-              },
-              4
-            ]
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
           }
         },
         {
@@ -4671,6 +4794,52 @@
           "address": "Sysvar1nstructions1111111111111111111111111"
         },
         {
+          "name": "request_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  97,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "account",
+                "path": "usage_report.period_start",
+                "account": "UsageReport"
+              }
+            ]
+          }
+        },
+        {
           "name": "pull_approval",
           "writable": true,
           "pda": {
@@ -4718,7 +4887,37 @@
         },
         {
           "name": "usage_report",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  97,
+                  103,
+                  101,
+                  95,
+                  114,
+                  101,
+                  112,
+                  111,
+                  114,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "account",
+                "path": "usage_report.period_start",
+                "account": "UsageReport"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -4774,6 +4973,57 @@
         {
           "name": "instructions_sysvar",
           "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "request_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  105,
+                  100,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              },
+              {
+                "kind": "account",
+                "path": "mandate.next_payment_due",
+                "account": "VelaMandate"
+              }
+            ]
+          }
         },
         {
           "name": "pull_approval",
@@ -4959,6 +5209,19 @@
     }
   ],
   "accounts": [
+    {
+      "name": "ArciumRequestState",
+      "discriminator": [
+        36,
+        13,
+        17,
+        220,
+        234,
+        168,
+        137,
+        158
+      ]
+    },
     {
       "name": "ArciumSignerAccount",
       "discriminator": [
@@ -5755,6 +6018,21 @@
       "msg": "Usage report has already been settled"
     },
     {
+      "code": 6062,
+      "name": "ArciumRequestAlreadyPending",
+      "msg": "An Arcium request is already pending for this mandate and subject"
+    },
+    {
+      "code": 6063,
+      "name": "InvalidArciumRequestState",
+      "msg": "Arcium request state does not match the queued computation"
+    },
+    {
+      "code": 6064,
+      "name": "UsagePricingOverflowRisk",
+      "msg": "Usage pricing inputs exceed the overflow-safe protocol envelope"
+    },
+    {
       "code": 6100,
       "name": "MandateVersionUnsupported",
       "msg": "Mandate version is unsupported by this instruction"
@@ -6180,6 +6458,110 @@
           {
             "name": "remaining_balance",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArciumRequestFlow",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Validation"
+          },
+          {
+            "name": "UsageComputation"
+          },
+          {
+            "name": "BillingRecord"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArciumRequestState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "flow",
+            "type": {
+              "defined": {
+                "name": "ArciumRequestFlow"
+              }
+            }
+          },
+          {
+            "name": "subject",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "computation_offset",
+            "type": "u64"
+          },
+          {
+            "name": "request_nonce",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "ArciumRequestStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "completed_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArciumRequestStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Completed"
+          },
+          {
+            "name": "Aborted"
           }
         ]
       }
@@ -7597,7 +7979,7 @@
         "UsageReport PDA — encrypted usage data submitted by a merchant for a billing period.",
         "",
         "Seeds: [b\"usage_report\", mandate.key().as_ref(), period_start.to_le_bytes().as_ref()]",
-        "SIZE: 8 + 32 + 32 + 8 + 8 + (32 * 4) + 16 + 32 + 1 + 8 + 1 = 274 bytes"
+        "SIZE: 8 + 32 + 32 + 8 + 8 + (32 * 13) + 1 + 16 + 32 + 1 + 8 + 1 = 563 bytes"
       ],
       "type": {
         "kind": "struct",
@@ -7619,7 +8001,7 @@
             "type": "i64"
           },
           {
-            "name": "encrypted_usage",
+            "name": "computation_ciphertext",
             "type": {
               "array": [
                 {
@@ -7628,9 +8010,13 @@
                     32
                   ]
                 },
-                4
+                13
               ]
             }
+          },
+          {
+            "name": "ciphertext_count",
+            "type": "u8"
           },
           {
             "name": "nonce",

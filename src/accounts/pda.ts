@@ -3,6 +3,10 @@ import type BN from "bn.js";
 import { u64LE } from "../browser/bytes";
 import {
   APPROVAL_SEED,
+  ARCIUM_REQUEST_BILLING_RECORD_SEED,
+  ARCIUM_REQUEST_SEED,
+  ARCIUM_REQUEST_USAGE_COMPUTATION_SEED,
+  ARCIUM_REQUEST_VALIDATION_SEED,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   BILLING_SEED,
   CONFIG_SEED,
@@ -217,6 +221,54 @@ export class PDAFactory {
     );
   }
 
+  static arciumValidationRequest(
+    mandate: PublicKey,
+    nextPaymentDue: bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [
+        ARCIUM_REQUEST_SEED,
+        ARCIUM_REQUEST_VALIDATION_SEED,
+        mandate.toBytes(),
+        toLe8(nextPaymentDue),
+      ],
+      programId,
+    );
+  }
+
+  static arciumUsageComputationRequest(
+    mandate: PublicKey,
+    periodStart: bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [
+        ARCIUM_REQUEST_SEED,
+        ARCIUM_REQUEST_USAGE_COMPUTATION_SEED,
+        mandate.toBytes(),
+        toLe8(periodStart),
+      ],
+      programId,
+    );
+  }
+
+  static arciumBillingRecordRequest(
+    mandate: PublicKey,
+    pullsExecuted: bigint | number,
+    programId: PublicKey = PROGRAM_ID,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [
+        ARCIUM_REQUEST_SEED,
+        ARCIUM_REQUEST_BILLING_RECORD_SEED,
+        mandate.toBytes(),
+        toLe8(pullsExecuted),
+      ],
+      programId,
+    );
+  }
+
   static extraAccountMetas(
     mint: PublicKey,
     hookProgramId: PublicKey,
@@ -259,6 +311,38 @@ export function derivePlanAddress(
   programId?: PublicKey,
 ): [PublicKey, number] {
   return PDAFactory.plan(merchant, planId, programId);
+}
+
+export function deriveArciumValidationRequestAddress(
+  mandate: PublicKey,
+  nextPaymentDue: bigint | number,
+  programId?: PublicKey,
+): [PublicKey, number] {
+  return PDAFactory.arciumValidationRequest(mandate, nextPaymentDue, programId);
+}
+
+export function deriveArciumUsageComputationRequestAddress(
+  mandate: PublicKey,
+  periodStart: bigint | number,
+  programId?: PublicKey,
+): [PublicKey, number] {
+  return PDAFactory.arciumUsageComputationRequest(
+    mandate,
+    periodStart,
+    programId,
+  );
+}
+
+export function deriveArciumBillingRecordRequestAddress(
+  mandate: PublicKey,
+  pullsExecuted: bigint | number,
+  programId?: PublicKey,
+): [PublicKey, number] {
+  return PDAFactory.arciumBillingRecordRequest(
+    mandate,
+    pullsExecuted,
+    programId,
+  );
 }
 
 /** @deprecated Use PDAFactory.mandateV1() or PDAFactory.mandate() for V2 seeds. */

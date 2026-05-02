@@ -5,6 +5,9 @@ import {
   deriveAgentMandateAddress,
   deriveConfigAddress,
   deriveCredentialMintAddress,
+  deriveArciumBillingRecordRequestAddress,
+  deriveArciumUsageComputationRequestAddress,
+  deriveArciumValidationRequestAddress,
   deriveKeeperConfigAddress,
   deriveMandateAddress,
   deriveMerchantStateAddress,
@@ -13,6 +16,10 @@ import {
 } from "../../src/accounts";
 import {
   APPROVAL_SEED,
+  ARCIUM_REQUEST_BILLING_RECORD_SEED,
+  ARCIUM_REQUEST_SEED,
+  ARCIUM_REQUEST_USAGE_COMPUTATION_SEED,
+  ARCIUM_REQUEST_VALIDATION_SEED,
   BILLING_SEED,
   EXTRA_ACCOUNT_METAS_SEED,
   MINT_AUTHORITY_SEED,
@@ -382,6 +389,90 @@ describe("PDAFactory instruction-internal PDAs", () => {
     );
     const [address] = PDAFactory.billing(mandate, 2n);
     expect(address.equals(expected)).toBe(true);
+  });
+
+  test("Arcium validation request-state matches manual PDA derivation", () => {
+    const [mandate] = PDAFactory.mandate(
+      subscriber.publicKey,
+      merchant.publicKey,
+      11n,
+    );
+    const nextPaymentDue = 1_771_000_000n;
+    const [expected] = PublicKey.findProgramAddressSync(
+      [
+        ARCIUM_REQUEST_SEED,
+        ARCIUM_REQUEST_VALIDATION_SEED,
+        mandate.toBuffer(),
+        new BN(nextPaymentDue.toString()).toArrayLike(Buffer, "le", 8),
+      ],
+      PROGRAM_ID,
+    );
+    const [factoryAddress] = PDAFactory.arciumValidationRequest(
+      mandate,
+      nextPaymentDue,
+    );
+    const [helperAddress] = deriveArciumValidationRequestAddress(
+      mandate,
+      nextPaymentDue,
+    );
+    expect(factoryAddress.equals(expected)).toBe(true);
+    expect(helperAddress.equals(expected)).toBe(true);
+  });
+
+  test("Arcium usage request-state matches manual PDA derivation", () => {
+    const [mandate] = PDAFactory.mandate(
+      subscriber.publicKey,
+      merchant.publicKey,
+      12n,
+    );
+    const periodStart = 1_771_086_400n;
+    const [expected] = PublicKey.findProgramAddressSync(
+      [
+        ARCIUM_REQUEST_SEED,
+        ARCIUM_REQUEST_USAGE_COMPUTATION_SEED,
+        mandate.toBuffer(),
+        new BN(periodStart.toString()).toArrayLike(Buffer, "le", 8),
+      ],
+      PROGRAM_ID,
+    );
+    const [factoryAddress] = PDAFactory.arciumUsageComputationRequest(
+      mandate,
+      periodStart,
+    );
+    const [helperAddress] = deriveArciumUsageComputationRequestAddress(
+      mandate,
+      periodStart,
+    );
+    expect(factoryAddress.equals(expected)).toBe(true);
+    expect(helperAddress.equals(expected)).toBe(true);
+  });
+
+  test("Arcium billing request-state matches manual PDA derivation", () => {
+    const [mandate] = PDAFactory.mandate(
+      subscriber.publicKey,
+      merchant.publicKey,
+      13n,
+    );
+    const pullsExecuted = 4n;
+    const [expected] = PublicKey.findProgramAddressSync(
+      [
+        ARCIUM_REQUEST_SEED,
+        ARCIUM_REQUEST_BILLING_RECORD_SEED,
+        mandate.toBuffer(),
+        new BN(pullsExecuted.toString()).toArrayLike(Buffer, "le", 8),
+      ],
+      PROGRAM_ID,
+    );
+    const [factoryAddress] = PDAFactory.arciumBillingRecordRequest(
+      mandate,
+      pullsExecuted,
+    );
+    const [helperAddress] = deriveArciumBillingRecordRequestAddress(
+      mandate,
+      pullsExecuted,
+    );
+    expect(factoryAddress.equals(expected)).toBe(true);
+    expect(helperAddress.equals(expected)).toBe(true);
   });
 
   test("extraAccountMetas matches manual PDA derivation", () => {

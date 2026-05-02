@@ -145,7 +145,7 @@ function findKey(
 }
 
 describe("buildExecutePullInstruction — dynamic hook program ID resolution", () => {
-  test("explicit hookProgramId override wins over ProtocolConfig", async () => {
+  test("explicit hookProgramId override must match ProtocolConfig", async () => {
     const configHook = Keypair.generate().publicKey;
     const overrideHook = Keypair.generate().publicKey;
     const program = createReadOnlyProgramWithConfigStub({
@@ -155,22 +155,19 @@ describe("buildExecutePullInstruction — dynamic hook program ID resolution", (
 
     const params = fixedParams();
     const connection = createConnectionStub(params);
+    await expect(
+      buildExecutePullInstruction(program, connection, {
+        ...params,
+        hookProgramId: overrideHook,
+      }),
+    ).rejects.toThrow("does not match ProtocolConfig.transferHookProgramId");
+
     const { instruction } = await buildExecutePullInstruction(
       program,
       connection,
-      { ...params, hookProgramId: overrideHook },
+      { ...params, hookProgramId: configHook },
     );
-
-    // hookProgram account must be the override, not the config value.
-    expect(findKey(instruction, overrideHook)).toBe(true);
-    expect(findKey(instruction, configHook)).toBe(false);
-
-    // extraAccountMetas PDA is derived against the override.
-    const [expectedMetas] = PDAFactory.extraAccountMetas(
-      params.wrappedUsdcMint,
-      overrideHook,
-    );
-    expect(findKey(instruction, expectedMetas)).toBe(true);
+    expect(findKey(instruction, configHook)).toBe(true);
   });
 
   test("ProtocolConfig-sourced hookProgramId is used when no override is passed", async () => {

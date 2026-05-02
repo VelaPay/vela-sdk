@@ -142,6 +142,7 @@ export function deriveUsageComputationOffset(
 export interface BuildRequestUsageComputationResult {
   instruction: TransactionInstruction;
   pullApprovalAddress: PublicKey;
+  requestStateAddress: PublicKey;
   computationOffset: bigint;
 }
 
@@ -151,10 +152,10 @@ const TIERED_PRICING_CIRCUIT = "tiered_pricing";
 /**
  * Builds the `request_usage_computation` TransactionInstruction.
  *
- * The keeper uses this to submit encrypted usage data to the Arcium MXE for computation.
- * The circuit is inferred from the ciphertext shape:
- * - 3 fields => usage_charge
- * - 13 fields => tiered_pricing
+ * The keeper queues the ciphertext already committed in the UsageReport account.
+ * The circuit is inferred from the usage plan tier count:
+ * - 1 tier => usage_charge
+ * - 2-5 tiers => tiered_pricing
  * After submission, Arcium writes the computed charge back to the PullApproval PDA.
  *
  * Callers must provide:
@@ -162,9 +163,6 @@ const TIERED_PRICING_CIRCUIT = "tiered_pricing";
  * - usagePlanAddress: the UsagePlan PDA
  * - usageReportAddress: the UsageReport PDA for this period
  * - computationOffset: derived via deriveUsageComputationOffset
- * - ciphertext: encrypted usage fields in circuit order
- * - pubKey: caller's x25519 ephemeral public key (32 bytes)
- * - nonce: u128 encryption nonce
  */
 export async function buildRequestUsageComputationInstruction(
   program: Program,
@@ -176,26 +174,7 @@ export async function buildRequestUsageComputationInstruction(
     usagePlanAddress,
     usageReportAddress,
     computationOffset,
-    ciphertext,
-    pubKey,
-    nonce,
   } = params;
-
-  if (pubKey.length !== 32) {
-    throw new Error(`pubKey must be exactly 32 bytes, got ${pubKey.length}`);
-  }
-
-  const circuitName =
-    ciphertext.length === 3
-      ? USAGE_CHARGE_CIRCUIT
-      : ciphertext.length === 13
-        ? TIERED_PRICING_CIRCUIT
-        : null;
-  if (!circuitName) {
-    throw new Error(
-      `ciphertext must contain 3 fields for usage_charge or 13 fields for tiered_pricing, got ${ciphertext.length}`,
-    );
-  }
 
   const programId = program.programId ?? PROGRAM_ID;
 
@@ -215,6 +194,26 @@ export async function buildRequestUsageComputationInstruction(
       : (config.clusterOffset as { toNumber: () => number }).toNumber();
   const clusterId = clusterOffset;
 
+  const usagePlan = (await (program.account as any).usagePlan.fetch(
+    usagePlanAddress,
+  )) as { tierCount: number };
+  const tierCount = Number(usagePlan.tierCount);
+  if (!Number.isInteger(tierCount) || tierCount < 1 || tierCount > 5) {
+    throw new Error(`usage plan tierCount must be between 1 and 5, got ${tierCount}`);
+  }
+  const circuitName =
+    tierCount === 1 ? USAGE_CHARGE_CIRCUIT : TIERED_PRICING_CIRCUIT;
+
+  const usageReport = (await (program.account as any).usageReport.fetch(
+    usageReportAddress,
+  )) as { periodStart: { toString: () => string } | number | bigint };
+  const periodStart =
+    typeof usageReport.periodStart === "bigint"
+      ? usageReport.periodStart
+      : typeof usageReport.periodStart === "number"
+        ? BigInt(usageReport.periodStart)
+        : BigInt(usageReport.periodStart.toString());
+
   // Derive all Arcium PDAs (same pattern as request-validation.ts)
   const mxeAccount = deriveMxePda();
   const mempoolAccount = deriveMempoolPda(clusterId);
@@ -225,17 +224,14 @@ export async function buildRequestUsageComputationInstruction(
   const signPdaAccount = deriveSignPda();
 
   const [pullApproval] = PDAFactory.approval(mandateAddress, programId);
-
-  // Convert ciphertext to number[][] format expected by Anchor
-  const ciphertextArrays = ciphertext.map((ct) => Array.from(ct));
+  const [requestState] = PDAFactory.arciumUsageComputationRequest(
+    mandateAddress,
+    periodStart,
+    programId,
+  );
 
   const instruction = await (program.methods as any)
-    .requestUsageComputation(
-      computationOffset,
-      ciphertextArrays,
-      Array.from(pubKey),
-      nonce,
-    )
+    .requestUsageComputation(computationOffset)
     .accounts({
       payer,
       config: configAddress,
@@ -252,6 +248,7 @@ export async function buildRequestUsageComputationInstruction(
       mandate: mandateAddress,
       usageReport: usageReportAddress,
       pullApproval,
+      requestState,
       systemProgram: SystemProgram.programId,
       arciumProgram: ARCIUM_PROGRAM_ID,
     })
@@ -260,6 +257,7 @@ export async function buildRequestUsageComputationInstruction(
   return {
     instruction,
     pullApprovalAddress: pullApproval,
+    requestStateAddress: requestState,
     computationOffset,
   };
 }

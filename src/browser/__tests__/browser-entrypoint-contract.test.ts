@@ -89,6 +89,8 @@ describe("@velapay/sdk/browser contract", () => {
     expect(packageJson).toContain("./dist/esm/index.js");
     expect(packageJson).toContain("./dist/cjs/index.cjs");
     expect(buildScript).toContain("./src/browser/index.ts");
+    expect(buildScript).toContain("./dist/esm/index.d.ts");
+    expect(buildScript).toContain("./dist/cjs/index.d.cts");
     expect(buildScript).toContain('target: "browser"');
   });
 

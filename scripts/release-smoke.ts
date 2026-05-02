@@ -15,7 +15,7 @@ async function run(cmd: string[], cwd: string, label: string): Promise<string> {
     cwd,
     stdout: "pipe",
     stderr: "pipe",
-    env: process.env,
+    env: { ...process.env, npm_config_dry_run: "false" },
   });
 
   const [stdout, stderr, exitCode] = await Promise.all([
@@ -43,7 +43,7 @@ async function main(): Promise<void> {
     mkdirSync(consumerDir, { recursive: true });
 
     await run(
-      ["npm", "pack", "--pack-destination", packDir],
+      ["npm", "pack", "--dry-run=false", "--pack-destination", packDir],
       packageRoot,
       "npm pack",
     );

@@ -595,6 +595,7 @@ export interface VelaUsagePlanParams {
 
 export interface VelaSubmitUsageReportParams {
   mandateAddress: PublicKey;
+  usagePlanAddress: PublicKey;
   periodStart: BN; // i64 timestamp
   periodEnd: BN; // i64 timestamp
   usageUnits: BN; // plaintext units (SDK encrypts before submitting)
@@ -606,9 +607,6 @@ export interface VelaRequestUsageComputationParams {
   usagePlanAddress: PublicKey;
   usageReportAddress: PublicKey;
   computationOffset: bigint;
-  ciphertext: Uint8Array[]; // encrypted fields for Arcium circuit
-  pubKey: Uint8Array; // x25519 public key, 32 bytes
-  nonce: bigint; // u128
 }
 
 export type BillingType = "flat" | "usage";
@@ -638,7 +636,8 @@ export interface UsageReportAccount {
   merchant: PublicKey;
   periodStart: BN;
   periodEnd: BN;
-  encryptedUsage: number[][];
+  computationCiphertext: number[][];
+  ciphertextCount: number;
   nonce: BN;
   pubKey: number[];
   settled: boolean;

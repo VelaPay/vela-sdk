@@ -96,6 +96,34 @@ describe("instructions/ regression: no inline findProgramAddressSync for Vela PD
     expect(src).not.toContain("deriveMandateAddress(");
   });
 
+  test("Arcium request builders include request-state PDAs", () => {
+    const validation = readSource("instructions/request-validation.ts");
+    expect(validation).toContain("PDAFactory.arciumValidationRequest(");
+    expect(validation).toMatch(/requestState(?:,|:\s*requestState)/);
+    expect(validation).toContain("params.nextPaymentDue");
+
+    const usage = readSource("instructions/request-usage-computation.ts");
+    expect(usage).toContain("PDAFactory.arciumUsageComputationRequest(");
+    expect(usage).toMatch(/requestState(?:,|:\s*requestState)/);
+    expect(usage).toContain(".requestUsageComputation(computationOffset)");
+    expect(usage).not.toContain("ciphertextArrays");
+
+    const billing = readSource("instructions/request-billing-record.ts");
+    expect(billing).toContain("PDAFactory.arciumBillingRecordRequest(");
+    expect(billing).toMatch(/requestState(?:,|:\s*requestState)/);
+    expect(billing).toContain(
+      ".requestBillingRecord(computationOffset, pullsExecuted)",
+    );
+  });
+
+  test("submit-usage-report.ts commits full computation ciphertext and usage plan", () => {
+    const src = readSource("instructions/submit-usage-report.ts");
+    expect(src).toContain("usagePlanAddress");
+    expect(src).toContain("computationCiphertext");
+    expect(src).toMatch(/usagePlan:\s*usagePlanAddress/);
+    expect(src).not.toContain("encryptedUsage");
+  });
+
   test("preflight.ts uses PDAFactory.mandate and no V1 mandate derivation", () => {
     const src = readSource("validators/preflight.ts");
     expect(src).toContain("PDAFactory.mandate(");

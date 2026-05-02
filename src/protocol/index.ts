@@ -35,27 +35,27 @@ export interface VelaProtocolCompatibility {
 
 export const VELA_PROTOCOL_COMPATIBILITY = {
   sdkPackage: "@velapay/sdk",
-  sdkVersion: "0.1.0",
+  sdkVersion: "0.1.1",
   defaultCluster: DEFAULT_CLUSTER,
   supportedClusters: Object.keys(VELA_PROGRAM_IDS) as VelaCluster[],
   protocol: {
     name: "vela_protocol",
-    idlVersion: "0.2.0",
+    idlVersion: "N/A",
     idlSha256:
-      "633bda392a12feddd4ccca45302e4e76d161ae26e2e191f656495a199d2cd3f9",
+      "307dab6852b8d9284085db675457c134d5586c91d758d7f555a0abb5b6cb52e1",
     instructionCount: 49,
-    accountCount: 10,
+    accountCount: 11,
   },
   transferHook: {
     name: "vela_transfer_hook",
-    idlVersion: "0.1.0",
+    idlVersion: "N/A",
     idlSha256:
       "15e13223280fb597547367731e61a5f76bdc0637edf258693d22d80dcd2ff1af",
     instructionCount: 3,
   },
   generatedFrom: {
     protocolRepo: "vela-protocol",
-    protocolCommit: "974673f8e3bb394fc225a45b47f8716b252cf24a",
+    protocolCommit: "e93bf164f6ba4495c92b3ee485f4c29c0d14cc95",
   },
   programIds: VELA_PROGRAM_IDS,
 } as const satisfies VelaProtocolCompatibility;

@@ -27,9 +27,10 @@ export function deriveUsageReportAddress(
 export interface SubmitUsageReportParams {
   merchant: PublicKey;
   mandateAddress: PublicKey;
+  usagePlanAddress: PublicKey;
   periodStart: BN; // i64 timestamp — must equal mandate.next_payment_due
   periodEnd: BN; // i64 timestamp
-  encryptedUsage: number[][]; // [[u8;32];4] — pre-encrypted by caller using Arcium RescueCipher
+  computationCiphertext: number[][]; // 3 or 13 encrypted fields committed for Arcium computation
   nonce: BN; // u128 encryption nonce
   pubKey: number[]; // [u8;32] x25519 client public key
 }
@@ -37,7 +38,7 @@ export interface SubmitUsageReportParams {
 /**
  * Builds a raw `submit_usage_report` TransactionInstruction without signing or sending.
  *
- * The caller is responsible for encrypting usageUnits before calling this function.
+ * The caller is responsible for encrypting the full usage computation payload before calling this function.
  * Use the usage.ts submitUsageReport convenience function for automatic encryption.
  *
  * The on-chain program validates:
@@ -53,9 +54,10 @@ export async function buildSubmitUsageReportInstruction(
   const {
     merchant,
     mandateAddress,
+    usagePlanAddress,
     periodStart,
     periodEnd,
-    encryptedUsage,
+    computationCiphertext,
     nonce,
     pubKey,
   } = params;
@@ -70,10 +72,11 @@ export async function buildSubmitUsageReportInstruction(
   );
 
   const instruction = await (program.methods as any)
-    .submitUsageReport(periodStart, periodEnd, encryptedUsage, nonce, pubKey)
+    .submitUsageReport(periodStart, periodEnd, computationCiphertext, nonce, pubKey)
     .accounts({
       merchant,
       mandate: mandateAddress,
+      usagePlan: usagePlanAddress,
       usageReport: usageReportAddress,
       systemProgram: SystemProgram.programId,
     })

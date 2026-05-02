@@ -92,27 +92,24 @@ export async function resolveAgentProtocolAccounts(
 }> {
   const [protocolConfig] = PDAFactory.config(program.programId);
 
-  if (
-    overrides.wrappedUsdcMint &&
-    overrides.wrappingVault &&
-    overrides.hookProgramId
-  ) {
-    return {
-      protocolConfig,
-      wrappedUsdcMint: overrides.wrappedUsdcMint,
-      wrappingVault: overrides.wrappingVault,
-      hookProgramId: overrides.hookProgramId,
-    };
-  }
-
   const raw = await (program.account as any).protocolConfig.fetch(
     protocolConfig,
   );
+  const hookProgramId = raw.transferHookProgramId;
+  if (
+    overrides.hookProgramId &&
+    !overrides.hookProgramId.equals(hookProgramId)
+  ) {
+    throw new Error(
+      `resolveAgentProtocolAccounts: hookProgramId override ${overrides.hookProgramId.toBase58()} does not match ProtocolConfig.transferHookProgramId ${hookProgramId.toBase58()}.`,
+    );
+  }
+
   return {
     protocolConfig,
     wrappedUsdcMint: overrides.wrappedUsdcMint ?? raw.wrappedUsdcMint,
     wrappingVault: overrides.wrappingVault ?? raw.wrappingVault,
-    hookProgramId: overrides.hookProgramId ?? raw.transferHookProgramId,
+    hookProgramId,
   };
 }
 

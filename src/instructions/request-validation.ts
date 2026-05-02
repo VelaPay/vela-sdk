@@ -3,6 +3,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import {
   type Connection,
   PublicKey,
+  SystemProgram,
   type TransactionInstruction,
 } from "@solana/web3.js";
 import { PDAFactory } from "../accounts/pda";
@@ -125,6 +126,7 @@ export interface RequestValidationParams {
   payer: PublicKey;
   mandateAddress: PublicKey;
   planAddress: PublicKey;
+  nextPaymentDue: bigint;
   subscriberAddress?: PublicKey; // Optional -- only needed if mandateAddress not yet known
   computationOffset: bigint;
   ciphertext: Uint8Array[]; // 8 elements, each 32 bytes
@@ -135,6 +137,7 @@ export interface RequestValidationParams {
 export interface BuildRequestValidationResult {
   instruction: TransactionInstruction;
   pullApprovalAddress: PublicKey;
+  requestStateAddress: PublicKey;
   computationOffset: bigint;
 }
 
@@ -173,6 +176,7 @@ export function deriveValidationComputationOffset(
  * Callers must provide:
  * - mandateAddress: the VelaMandate PDA (already known to keeper)
  * - planAddress: the VelaPlan PDA
+ * - nextPaymentDue: mandate.next_payment_due, used as the request-state PDA subject
  * - computationOffset: derived via deriveValidationComputationOffset
  * - ciphertext: 8 x25519-encrypted u64/i64 fields in circuit order:
  *   mandate_amount, plan_amount, subscriber_balance, current_timestamp,
@@ -237,6 +241,11 @@ export async function buildRequestValidationInstruction(
 
   // Derive PullApproval PDA: seeds = [b"approval", mandate.key()]
   const [pullApproval] = PDAFactory.approval(params.mandateAddress, programId);
+  const [requestState] = PDAFactory.arciumValidationRequest(
+    params.mandateAddress,
+    params.nextPaymentDue,
+    programId,
+  );
 
   // Convert ciphertext Vec<[u8;32]> to the Anchor-expected format (array of number arrays)
   const ciphertextArrays = params.ciphertext.map((ct) => Array.from(ct));
@@ -244,6 +253,7 @@ export async function buildRequestValidationInstruction(
   const instruction = await (program.methods as any)
     .requestValidation(
       params.computationOffset,
+      params.nextPaymentDue,
       ciphertextArrays,
       Array.from(params.pubKey),
       params.nonce,
@@ -263,7 +273,8 @@ export async function buildRequestValidationInstruction(
       plan: params.planAddress,
       mandate: params.mandateAddress,
       pullApproval,
-      systemProgram: PublicKey.default,
+      requestState,
+      systemProgram: SystemProgram.programId,
       arciumProgram: ARCIUM_PROGRAM_ID,
     })
     .instruction();
@@ -271,6 +282,7 @@ export async function buildRequestValidationInstruction(
   return {
     instruction,
     pullApprovalAddress: pullApproval,
+    requestStateAddress: requestState,
     computationOffset: params.computationOffset,
   };
 }
