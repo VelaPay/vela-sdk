@@ -35,7 +35,7 @@ export interface VelaProtocolCompatibility {
 
 export const VELA_PROTOCOL_COMPATIBILITY = {
   sdkPackage: "@velapay/sdk",
-  sdkVersion: "0.1.1",
+  sdkVersion: "0.1.2",
   defaultCluster: DEFAULT_CLUSTER,
   supportedClusters: Object.keys(VELA_PROGRAM_IDS) as VelaCluster[],
   protocol: {
