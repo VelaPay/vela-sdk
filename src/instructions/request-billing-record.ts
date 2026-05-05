@@ -1,4 +1,4 @@
-import type { Program } from "@coral-xyz/anchor";
+import { BN, type Program } from "@coral-xyz/anchor";
 import { sha256 } from "@noble/hashes/sha2.js";
 import {
   type Connection,
@@ -37,10 +37,10 @@ const ARCIUM_FEE_POOL_ACCOUNT_ADDRESS = PublicKey.findProgramAddressSync(
   ARCIUM_PROGRAM_ID,
 )[0];
 
-// MXE PDA: seeds = ["MXEAccount", arcium_program_id_bytes]
-function deriveMxePda(): PublicKey {
+// MXE PDA: seeds = ["MXEAccount", vela_program_id_bytes], owned by Arcium.
+function deriveMxePda(velaProgramId: PublicKey): PublicKey {
   return PublicKey.findProgramAddressSync(
-    [MXE_PDA_SEED, ARCIUM_PROGRAM_ID.toBuffer()],
+    [MXE_PDA_SEED, velaProgramId.toBuffer()],
     ARCIUM_PROGRAM_ID,
   )[0];
 }
@@ -100,8 +100,8 @@ function compDefOffset(circuitName: string): number {
 // comp_def PDA: seeds = ["ComputationDefinitionAccount", vela_program_id_bytes, offset_le_bytes]
 // Derived from Arcium program
 function deriveCompDefPda(
-  velaProgramId: PublicKey,
   circuitName: string,
+  velaProgramId: PublicKey,
 ): PublicKey {
   const offset = compDefOffset(circuitName);
   const offsetBuf = Buffer.alloc(4);
@@ -113,11 +113,8 @@ function deriveCompDefPda(
 }
 
 // sign_pda: seeds = ["ArciumSignerAccount"], derived from Arcium program
-function deriveSignPda(): PublicKey {
-  return PublicKey.findProgramAddressSync(
-    [SIGN_PDA_SEED],
-    ARCIUM_PROGRAM_ID,
-  )[0];
+function deriveSignPda(velaProgramId: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync([SIGN_PDA_SEED], velaProgramId)[0];
 }
 
 export interface RequestBillingRecordParams {
@@ -204,16 +201,16 @@ export async function buildRequestBillingRecordInstruction(
   const clusterId = clusterOffset; // cluster_id = cluster_offset cast to u32
 
   // Derive all Arcium PDAs
-  const mxeAccount = deriveMxePda();
+  const mxeAccount = deriveMxePda(programId);
   const mempoolAccount = deriveMempoolPda(clusterId);
   const executingPool = deriveExecpoolPda(clusterId);
   const clusterAccount = deriveClusterPda(clusterId);
   const computationAccount = deriveComputationPda(clusterId, computationOffset);
   const compDefAccount = deriveCompDefPda(
-    programId,
     RECORD_BILLING_EVENT_CIRCUIT,
+    programId,
   );
-  const signPdaAccount = deriveSignPda();
+  const signPdaAccount = deriveSignPda(programId);
 
   // Fetch mandate to read pulls_executed for BillingEvent PDA derivation.
   // The on-chain constraint uses mandate.pulls_executed at instruction time —
@@ -235,7 +232,10 @@ export async function buildRequestBillingRecordInstruction(
   );
 
   const instruction = await (program.methods as any)
-    .requestBillingRecord(computationOffset, pullsExecuted)
+    .requestBillingRecord(
+      new BN(computationOffset.toString()),
+      new BN(pullsExecuted.toString()),
+    )
     .accounts({
       payer,
       config: configAddress,

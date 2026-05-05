@@ -14,6 +14,8 @@ export interface BuildCreateUsagePlanResult {
   instruction: TransactionInstruction;
   usagePlanAddress: PublicKey;
   credentialMintAddress: PublicKey;
+  billingMintAddress: PublicKey;
+  tokenConfigAddress: PublicKey;
 }
 
 /**
@@ -72,6 +74,12 @@ export async function buildCreateUsagePlanInstruction(
     planId,
     programId,
   );
+  const billingMintAddress =
+    params.billingMint ?? (await fetchDefaultBillingMint(program));
+  const [tokenConfigAddress] = PDAFactory.tokenConfig(
+    billingMintAddress,
+    programId,
+  );
 
   // Convert unit_name: Uint8Array (32 bytes) to number[] for Anchor
   const unitNameArray: number[] = Array.from(
@@ -103,11 +111,27 @@ export async function buildCreateUsagePlanInstruction(
       merchant,
       usagePlan: usagePlanAddress,
       credentialMint: credentialMintAddress,
+      billingMint: billingMintAddress,
+      tokenConfig: tokenConfigAddress,
       systemProgram: SystemProgram.programId,
       token2022Program: TOKEN_2022_PROGRAM_ID,
       rent: SYSVAR_RENT_PUBKEY,
     })
     .instruction();
 
-  return { instruction, usagePlanAddress, credentialMintAddress };
+  return {
+    instruction,
+    usagePlanAddress,
+    credentialMintAddress,
+    billingMintAddress,
+    tokenConfigAddress,
+  };
+}
+
+async function fetchDefaultBillingMint(program: Program): Promise<PublicKey> {
+  const [protocolConfig] = PDAFactory.config(program.programId);
+  const raw = await (program.account as any).protocolConfig.fetch(
+    protocolConfig,
+  );
+  return raw.wrappedUsdcMint as PublicKey;
 }

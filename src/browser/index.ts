@@ -6,6 +6,8 @@ export {
   TOKEN_2022_PROGRAM_ID,
   USDC_DECIMALS,
   USDC_MINT,
+  VELAUSD_DECIMALS,
+  VELAUSD_DEVNET_MINT,
 } from "../constants";
 export { formatAmount } from "../token/format-amount";
 export { getEnabledTokens } from "../token/get-enabled-tokens";
@@ -40,6 +42,8 @@ export {
   buildCancelInstruction,
   buildCancelPlanChangeInstruction,
   buildCreatePlanInstruction,
+  buildCreateStreamMandateInstruction,
+  buildExecuteStreamInstruction,
   buildSchedulePlanChangeInstruction,
   buildSubscribeInstruction,
   buildUpdateMandatePlanInstruction,

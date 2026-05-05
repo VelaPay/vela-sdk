@@ -117,6 +117,7 @@ interface AnchorVelaUsagePlan {
   settlementFrequency: AnchorNumeric;
   status: AnchorEnumVariant<"active" | "inactive">;
   credentialMint: PublicKey;
+  billingMint?: PublicKey;
   bump: number;
   version?: number;
   _reserved?: AnchorBytes;
@@ -677,6 +678,10 @@ export function deserializeUsagePlan(
     settlementFrequency: BigInt(raw.settlementFrequency.toString()),
     status: mapPlanStatus(raw.status),
     credentialMint: raw.credentialMint,
+    billingMint:
+      raw.billingMint && !raw.billingMint.equals(PublicKey.default)
+        ? raw.billingMint
+        : undefined,
     bump: raw.bump,
     version: raw.version,
     _reserved: toReserved(raw._reserved),

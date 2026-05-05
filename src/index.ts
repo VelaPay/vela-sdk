@@ -72,6 +72,8 @@ export {
   TRANSFER_HOOK_PROGRAM_ID,
   USDC_DECIMALS,
   USDC_MINT,
+  VELAUSD_DECIMALS,
+  VELAUSD_DEVNET_MINT,
 } from "./constants";
 // Errors
 export {

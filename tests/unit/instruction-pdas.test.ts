@@ -105,15 +105,17 @@ describe("instructions/ regression: no inline findProgramAddressSync for Vela PD
     const usage = readSource("instructions/request-usage-computation.ts");
     expect(usage).toContain("PDAFactory.arciumUsageComputationRequest(");
     expect(usage).toMatch(/requestState(?:,|:\s*requestState)/);
-    expect(usage).toContain(".requestUsageComputation(computationOffset)");
+    expect(usage).toContain(
+      ".requestUsageComputation(new BN(computationOffset.toString()))",
+    );
     expect(usage).not.toContain("ciphertextArrays");
 
     const billing = readSource("instructions/request-billing-record.ts");
     expect(billing).toContain("PDAFactory.arciumBillingRecordRequest(");
     expect(billing).toMatch(/requestState(?:,|:\s*requestState)/);
-    expect(billing).toContain(
-      ".requestBillingRecord(computationOffset, pullsExecuted)",
-    );
+    expect(billing).toContain(".requestBillingRecord(");
+    expect(billing).toContain("new BN(computationOffset.toString())");
+    expect(billing).toContain("new BN(pullsExecuted.toString())");
   });
 
   test("submit-usage-report.ts commits full computation ciphertext and usage plan", () => {

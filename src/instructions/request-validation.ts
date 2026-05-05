@@ -1,4 +1,4 @@
-import type { Program } from "@coral-xyz/anchor";
+import { BN, type Program } from "@coral-xyz/anchor";
 import { sha256 } from "@noble/hashes/sha2.js";
 import {
   type Connection,
@@ -37,10 +37,10 @@ const ARCIUM_FEE_POOL_ACCOUNT_ADDRESS = PublicKey.findProgramAddressSync(
   ARCIUM_PROGRAM_ID,
 )[0];
 
-// MXE PDA: seeds = ["MXEAccount", arcium_program_id_bytes]
-function deriveMxePda(): PublicKey {
+// MXE PDA: seeds = ["MXEAccount", vela_program_id_bytes], owned by Arcium.
+function deriveMxePda(velaProgramId: PublicKey): PublicKey {
   return PublicKey.findProgramAddressSync(
-    [MXE_PDA_SEED, ARCIUM_PROGRAM_ID.toBuffer()],
+    [MXE_PDA_SEED, velaProgramId.toBuffer()],
     ARCIUM_PROGRAM_ID,
   )[0];
 }
@@ -102,8 +102,8 @@ function compDefOffset(circuitName: string): number {
 // comp_def PDA: seeds = ["ComputationDefinitionAccount", vela_program_id_bytes, offset_le_bytes]
 // Derived from Arcium program
 function deriveCompDefPda(
-  velaProgramId: PublicKey,
   circuitName: string,
+  velaProgramId: PublicKey,
 ): PublicKey {
   const offset = compDefOffset(circuitName);
   const offsetBuf = Buffer.alloc(4);
@@ -114,12 +114,9 @@ function deriveCompDefPda(
   )[0];
 }
 
-// sign_pda: seeds = ["ArciumSignerAccount"], derived from Arcium program
-function deriveSignPda(): PublicKey {
-  return PublicKey.findProgramAddressSync(
-    [SIGN_PDA_SEED],
-    ARCIUM_PROGRAM_ID,
-  )[0];
+// sign_pda: seeds = ["ArciumSignerAccount"], derived from the Vela program.
+function deriveSignPda(velaProgramId: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync([SIGN_PDA_SEED], velaProgramId)[0];
 }
 
 export interface RequestValidationParams {
@@ -228,7 +225,7 @@ export async function buildRequestValidationInstruction(
   const clusterId = clusterOffset; // cluster_id = cluster_offset cast to u32
 
   // Derive all Arcium PDAs
-  const mxeAccount = deriveMxePda();
+  const mxeAccount = deriveMxePda(programId);
   const mempoolAccount = deriveMempoolPda(clusterId);
   const executingPool = deriveExecpoolPda(clusterId);
   const clusterAccount = deriveClusterPda(clusterId);
@@ -236,8 +233,8 @@ export async function buildRequestValidationInstruction(
     clusterId,
     params.computationOffset,
   );
-  const compDefAccount = deriveCompDefPda(programId, "validate_mandate");
-  const signPdaAccount = deriveSignPda();
+  const compDefAccount = deriveCompDefPda("validate_mandate", programId);
+  const signPdaAccount = deriveSignPda(programId);
 
   // Derive PullApproval PDA: seeds = [b"approval", mandate.key()]
   const [pullApproval] = PDAFactory.approval(params.mandateAddress, programId);
@@ -252,11 +249,11 @@ export async function buildRequestValidationInstruction(
 
   const instruction = await (program.methods as any)
     .requestValidation(
-      params.computationOffset,
-      params.nextPaymentDue,
+      new BN(params.computationOffset.toString()),
+      new BN(params.nextPaymentDue.toString()),
       ciphertextArrays,
       Array.from(params.pubKey),
-      params.nonce,
+      new BN(params.nonce.toString()),
     )
     .accounts({
       payer: params.payer,

@@ -1,4 +1,4 @@
-import type { Program } from "@coral-xyz/anchor";
+import { BN, type Program } from "@coral-xyz/anchor";
 import { sha256 } from "@noble/hashes/sha2.js";
 import {
   PublicKey,
@@ -36,9 +36,9 @@ const ARCIUM_FEE_POOL_ACCOUNT_ADDRESS = PublicKey.findProgramAddressSync(
   ARCIUM_PROGRAM_ID,
 )[0];
 
-function deriveMxePda(): PublicKey {
+function deriveMxePda(velaProgramId: PublicKey): PublicKey {
   return PublicKey.findProgramAddressSync(
-    [MXE_PDA_SEED, ARCIUM_PROGRAM_ID.toBuffer()],
+    [MXE_PDA_SEED, velaProgramId.toBuffer()],
     ARCIUM_PROGRAM_ID,
   )[0];
 }
@@ -94,8 +94,8 @@ function compDefOffset(circuitName: string): number {
 }
 
 function deriveCompDefPda(
-  velaProgramId: PublicKey,
   circuitName: string,
+  velaProgramId: PublicKey,
 ): PublicKey {
   const offset = compDefOffset(circuitName);
   const offsetBuf = Buffer.alloc(4);
@@ -106,11 +106,8 @@ function deriveCompDefPda(
   )[0];
 }
 
-function deriveSignPda(): PublicKey {
-  return PublicKey.findProgramAddressSync(
-    [SIGN_PDA_SEED],
-    ARCIUM_PROGRAM_ID,
-  )[0];
+function deriveSignPda(velaProgramId: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync([SIGN_PDA_SEED], velaProgramId)[0];
 }
 
 /**
@@ -199,7 +196,9 @@ export async function buildRequestUsageComputationInstruction(
   )) as { tierCount: number };
   const tierCount = Number(usagePlan.tierCount);
   if (!Number.isInteger(tierCount) || tierCount < 1 || tierCount > 5) {
-    throw new Error(`usage plan tierCount must be between 1 and 5, got ${tierCount}`);
+    throw new Error(
+      `usage plan tierCount must be between 1 and 5, got ${tierCount}`,
+    );
   }
   const circuitName =
     tierCount === 1 ? USAGE_CHARGE_CIRCUIT : TIERED_PRICING_CIRCUIT;
@@ -215,13 +214,13 @@ export async function buildRequestUsageComputationInstruction(
         : BigInt(usageReport.periodStart.toString());
 
   // Derive all Arcium PDAs (same pattern as request-validation.ts)
-  const mxeAccount = deriveMxePda();
+  const mxeAccount = deriveMxePda(programId);
   const mempoolAccount = deriveMempoolPda(clusterId);
   const executingPool = deriveExecpoolPda(clusterId);
   const clusterAccount = deriveClusterPda(clusterId);
   const computationAccount = deriveComputationPda(clusterId, computationOffset);
-  const compDefAccount = deriveCompDefPda(programId, circuitName);
-  const signPdaAccount = deriveSignPda();
+  const compDefAccount = deriveCompDefPda(circuitName, programId);
+  const signPdaAccount = deriveSignPda(programId);
 
   const [pullApproval] = PDAFactory.approval(mandateAddress, programId);
   const [requestState] = PDAFactory.arciumUsageComputationRequest(
@@ -231,7 +230,7 @@ export async function buildRequestUsageComputationInstruction(
   );
 
   const instruction = await (program.methods as any)
-    .requestUsageComputation(computationOffset)
+    .requestUsageComputation(new BN(computationOffset.toString()))
     .accounts({
       payer,
       config: configAddress,

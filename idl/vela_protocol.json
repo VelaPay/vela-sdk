@@ -4,7 +4,8 @@
     "name": "vela_protocol",
     "version": "0.2.0",
     "spec": "0.1.0",
-    "description": "Created with Anchor"
+    "description": "Vela Protocol — private, programmable payment authority on Solana",
+    "repository": "https://github.com/VelaPay/vela-protocol"
   },
   "instructions": [
     {
@@ -470,8 +471,7 @@
           "writable": true
         },
         {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+          "name": "token_program"
         }
       ],
       "args": []
@@ -1205,6 +1205,37 @@
           }
         },
         {
+          "name": "billing_mint"
+        },
+        {
+          "name": "token_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "billing_mint"
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         },
@@ -1247,6 +1278,94 @@
         {
           "name": "settlement_frequency",
           "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "demo_approve_pull",
+      "discriminator": [
+        83,
+        80,
+        102,
+        221,
+        59,
+        206,
+        223,
+        245
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "keeper_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  101,
+                  101,
+                  112,
+                  101,
+                  114,
+                  45,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mandate",
+          "writable": true
+        },
+        {
+          "name": "pull_approval",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  112,
+                  112,
+                  114,
+                  111,
+                  118,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mandate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "approved_amount",
+          "type": "u64"
+        },
+        {
+          "name": "ttl_seconds",
+          "type": "i64"
         }
       ]
     },
@@ -5472,6 +5591,19 @@
       ]
     },
     {
+      "name": "DemoPullApprovedEvent",
+      "discriminator": [
+        42,
+        76,
+        206,
+        175,
+        103,
+        163,
+        148,
+        224
+      ]
+    },
+    {
       "name": "KeeperConfigInitialized",
       "discriminator": [
         16,
@@ -6715,6 +6847,26 @@
       }
     },
     {
+      "name": "DemoPullApprovedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mandate",
+            "type": "pubkey"
+          },
+          {
+            "name": "approved_amount",
+            "type": "u64"
+          },
+          {
+            "name": "valid_until",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "InitConfigIx",
       "type": {
         "kind": "struct",
@@ -7850,7 +8002,7 @@
         "UsagePlan PDA — a merchant's usage-based pricing plan with up to 5 tiers.",
         "",
         "Seeds: [b\"usage_plan\", merchant.key().as_ref(), plan_id.to_le_bytes().as_ref()]",
-        "SIZE: 8 + 32 + 8 + 32 + (24 * 5) + 1 + 8 + 8 + 32 + 1 + 1 + 1 + 64 = 317 bytes"
+        "SIZE: 8 + 32 + 8 + 32 + (24 * 5) + 1 + 8 + 8 + 32 + 32 + 1 + 1 + 1 + 32 = 317 bytes"
       ],
       "type": {
         "kind": "struct",
@@ -7902,6 +8054,10 @@
             "type": "pubkey"
           },
           {
+            "name": "billing_mint",
+            "type": "pubkey"
+          },
+          {
             "name": "status",
             "type": {
               "defined": {
@@ -7922,7 +8078,7 @@
             "type": {
               "array": [
                 "u8",
-                64
+                32
               ]
             }
           }

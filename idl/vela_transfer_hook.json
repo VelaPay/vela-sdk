@@ -4,7 +4,8 @@
     "name": "vela_transfer_hook",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "Dedicated transfer-hook validator for Vela wrapped USDC"
+    "description": "Dedicated transfer-hook validator for Vela wrapped USDC",
+    "repository": "https://github.com/VelaPay/vela-protocol"
   },
   "instructions": [
     {

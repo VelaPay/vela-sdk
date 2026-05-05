@@ -37,6 +37,11 @@ export const TOKEN_CONFIG_SEED = seedBytes("token_config");
 
 // Token constants
 export const USDC_DECIMALS = 6;
+export const VELAUSD_DECIMALS = 6;
+/** Devnet-only VelaUSD Token-2022 mint used by demos, examples, and partner testing. */
+export const VELAUSD_DEVNET_MINT = new PublicKey(
+  "Fx217d3isRNyu8VtW7WQvuHwwRWeXbwdXhpAmhT9Xdgx",
+);
 export const DEVNET_USDC_MINT = new PublicKey(
   "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
 );

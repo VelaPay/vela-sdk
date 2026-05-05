@@ -159,6 +159,7 @@ export interface VelaUsagePlan {
   settlementFrequency: bigint;
   status: PlanStatus;
   credentialMint: PublicKey;
+  billingMint?: PublicKey;
   bump: number;
   version?: number;
   _reserved?: number[];
@@ -591,6 +592,7 @@ export interface VelaUsagePlanParams {
   tiers: PricingTier[];
   maxChargePerPeriod: BN;
   settlementFrequency: BN;
+  billingMint?: PublicKey;
 }
 
 export interface VelaSubmitUsageReportParams {
@@ -626,6 +628,7 @@ export interface UsagePlanAccount {
   maxChargePerPeriod: BN;
   settlementFrequency: BN;
   credentialMint: PublicKey;
+  billingMint?: PublicKey;
   status: Record<string, unknown>;
   bump: number;
 }
