@@ -313,6 +313,9 @@ describe.skipIf(!hasProtocolBuildArtifacts())(
         insertPullApproval({
           svm,
           mandate: mandateAddress,
+          periodStart:
+            BigInt(mandate.nextPaymentDue) - BigInt(mandate.frequency),
+          periodEnd: BigInt(mandate.nextPaymentDue),
           validUntil: BigInt(mandate.nextPaymentDue),
           approvedAmount: planAmount,
         });

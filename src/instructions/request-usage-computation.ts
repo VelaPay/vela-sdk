@@ -36,9 +36,21 @@ const ARCIUM_FEE_POOL_ACCOUNT_ADDRESS = PublicKey.findProgramAddressSync(
   ARCIUM_PROGRAM_ID,
 )[0];
 
-function deriveMxePda(velaProgramId: PublicKey): PublicKey {
+const DEFAULT_PUBLIC_KEY = new PublicKey("11111111111111111111111111111111");
+
+function effectiveMxeProgramId(
+  configMxeProgramId: PublicKey | undefined,
+  programId: PublicKey,
+): PublicKey {
+  if (!configMxeProgramId || configMxeProgramId.equals(DEFAULT_PUBLIC_KEY)) {
+    return programId;
+  }
+  return configMxeProgramId;
+}
+
+function deriveMxePda(mxeProgramId: PublicKey): PublicKey {
   return PublicKey.findProgramAddressSync(
-    [MXE_PDA_SEED, velaProgramId.toBuffer()],
+    [MXE_PDA_SEED, mxeProgramId.toBuffer()],
     ARCIUM_PROGRAM_ID,
   )[0];
 }
@@ -95,13 +107,13 @@ function compDefOffset(circuitName: string): number {
 
 function deriveCompDefPda(
   circuitName: string,
-  velaProgramId: PublicKey,
+  mxeProgramId: PublicKey,
 ): PublicKey {
   const offset = compDefOffset(circuitName);
   const offsetBuf = Buffer.alloc(4);
   offsetBuf.writeUInt32LE(offset);
   return PublicKey.findProgramAddressSync(
-    [COMP_DEF_PDA_SEED, velaProgramId.toBuffer(), offsetBuf],
+    [COMP_DEF_PDA_SEED, mxeProgramId.toBuffer(), offsetBuf],
     ARCIUM_PROGRAM_ID,
   )[0];
 }
@@ -143,13 +155,14 @@ export interface BuildRequestUsageComputationResult {
   computationOffset: bigint;
 }
 
-const USAGE_CHARGE_CIRCUIT = "usage_charge";
-const TIERED_PRICING_CIRCUIT = "tiered_pricing";
+const USAGE_CHARGE_CIRCUIT = "usage_charge_v2";
+const TIERED_PRICING_CIRCUIT = "tiered_pricing_v2";
 
 /**
  * Builds the `request_usage_computation` TransactionInstruction.
  *
- * The keeper queues the ciphertext already committed in the UsageReport account.
+ * The keeper queues encrypted usage units from the UsageReport account and on-chain
+ * plaintext pricing terms from the UsagePlan snapshot.
  * The circuit is inferred from the usage plan tier count:
  * - 1 tier => usage_charge
  * - 2-5 tiers => tiered_pricing
@@ -182,6 +195,7 @@ export async function buildRequestUsageComputationInstruction(
   )) as {
     clusterPubkey: PublicKey;
     clusterOffset: { toNumber?: () => number } | number;
+    mxeProgramId?: PublicKey;
     bump: number;
   };
 
@@ -190,6 +204,7 @@ export async function buildRequestUsageComputationInstruction(
       ? config.clusterOffset
       : (config.clusterOffset as { toNumber: () => number }).toNumber();
   const clusterId = clusterOffset;
+  const mxeProgramId = effectiveMxeProgramId(config.mxeProgramId, programId);
 
   const usagePlan = (await (program.account as any).usagePlan.fetch(
     usagePlanAddress,
@@ -214,12 +229,12 @@ export async function buildRequestUsageComputationInstruction(
         : BigInt(usageReport.periodStart.toString());
 
   // Derive all Arcium PDAs (same pattern as request-validation.ts)
-  const mxeAccount = deriveMxePda(programId);
+  const mxeAccount = deriveMxePda(mxeProgramId);
   const mempoolAccount = deriveMempoolPda(clusterId);
   const executingPool = deriveExecpoolPda(clusterId);
   const clusterAccount = deriveClusterPda(clusterId);
   const computationAccount = deriveComputationPda(clusterId, computationOffset);
-  const compDefAccount = deriveCompDefPda(circuitName, programId);
+  const compDefAccount = deriveCompDefPda(circuitName, mxeProgramId);
   const signPdaAccount = deriveSignPda(programId);
 
   const [pullApproval] = PDAFactory.approval(mandateAddress, programId);

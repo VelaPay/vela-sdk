@@ -62,6 +62,8 @@ function serializeProtocolConfig(): Buffer {
   data.writeUInt8(254, offset);
   offset += 1;
   data.writeUInt8(1, offset);
+  offset += 1;
+  PublicKey.default.toBuffer().copy(data, offset);
   return data;
 }
 

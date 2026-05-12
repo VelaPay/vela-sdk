@@ -273,6 +273,8 @@ describe.skipIf(!hasProtocolBuildArtifacts())("emergency instructions", () => {
       insertPullApproval({
         svm,
         mandate: mandateAddress,
+        periodStart: mandate.nextPaymentDue - mandate.frequency,
+        periodEnd: mandate.nextPaymentDue,
         validUntil: mandate.nextPaymentDue,
         approvedAmount: PLAN_AMOUNT,
       });
@@ -335,6 +337,8 @@ describe.skipIf(!hasProtocolBuildArtifacts())("emergency instructions", () => {
       insertPullApproval({
         svm,
         mandate: mandateAddress,
+        periodStart: mandate.nextPaymentDue - mandate.frequency,
+        periodEnd: mandate.nextPaymentDue,
         validUntil: mandate.nextPaymentDue,
         approvedAmount: PLAN_AMOUNT,
       });

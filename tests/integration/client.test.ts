@@ -480,6 +480,10 @@ describe.skipIf(!hasProtocolBuildArtifacts())("SDK Client Integration", () => {
     insertPullApproval({
       svm,
       mandate: wrappedMandateAddress,
+      periodStart:
+        BigInt(wrappedMandate.nextPaymentDue) -
+        BigInt(wrappedMandate.frequency),
+      periodEnd: BigInt(wrappedMandate.nextPaymentDue),
       validUntil: BigInt(wrappedMandate.nextPaymentDue),
       approvedAmount: PLAN_AMOUNT,
     });
@@ -572,6 +576,10 @@ describe.skipIf(!hasProtocolBuildArtifacts())("SDK Client Integration", () => {
     insertPullApproval({
       svm,
       mandate: wrappedMandateAddress,
+      periodStart:
+        BigInt(wrappedMandate.nextPaymentDue) -
+        BigInt(wrappedMandate.frequency),
+      periodEnd: BigInt(wrappedMandate.nextPaymentDue),
       validUntil: BigInt(wrappedMandate.nextPaymentDue),
       approvedAmount: PLAN_AMOUNT,
     });

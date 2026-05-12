@@ -37,10 +37,22 @@ const ARCIUM_FEE_POOL_ACCOUNT_ADDRESS = PublicKey.findProgramAddressSync(
   ARCIUM_PROGRAM_ID,
 )[0];
 
-// MXE PDA: seeds = ["MXEAccount", vela_program_id_bytes], owned by Arcium.
-function deriveMxePda(velaProgramId: PublicKey): PublicKey {
+const DEFAULT_PUBLIC_KEY = new PublicKey("11111111111111111111111111111111");
+
+function effectiveMxeProgramId(
+  configMxeProgramId: PublicKey | undefined,
+  programId: PublicKey,
+): PublicKey {
+  if (!configMxeProgramId || configMxeProgramId.equals(DEFAULT_PUBLIC_KEY)) {
+    return programId;
+  }
+  return configMxeProgramId;
+}
+
+// MXE PDA: seeds = ["MXEAccount", mxe_program_id_bytes], owned by Arcium.
+function deriveMxePda(mxeProgramId: PublicKey): PublicKey {
   return PublicKey.findProgramAddressSync(
-    [MXE_PDA_SEED, velaProgramId.toBuffer()],
+    [MXE_PDA_SEED, mxeProgramId.toBuffer()],
     ARCIUM_PROGRAM_ID,
   )[0];
 }
@@ -99,17 +111,17 @@ function compDefOffset(circuitName: string): number {
   );
 }
 
-// comp_def PDA: seeds = ["ComputationDefinitionAccount", vela_program_id_bytes, offset_le_bytes]
+// comp_def PDA: seeds = ["ComputationDefinitionAccount", mxe_program_id_bytes, offset_le_bytes]
 // Derived from Arcium program
 function deriveCompDefPda(
   circuitName: string,
-  velaProgramId: PublicKey,
+  mxeProgramId: PublicKey,
 ): PublicKey {
   const offset = compDefOffset(circuitName);
   const offsetBuf = Buffer.alloc(4);
   offsetBuf.writeUInt32LE(offset);
   return PublicKey.findProgramAddressSync(
-    [COMP_DEF_PDA_SEED, velaProgramId.toBuffer(), offsetBuf],
+    [COMP_DEF_PDA_SEED, mxeProgramId.toBuffer(), offsetBuf],
     ARCIUM_PROGRAM_ID,
   )[0];
 }
@@ -215,6 +227,7 @@ export async function buildRequestValidationInstruction(
   )) as {
     clusterPubkey: PublicKey;
     clusterOffset: { toNumber?: () => number } | number;
+    mxeProgramId?: PublicKey;
     bump: number;
   };
 
@@ -223,9 +236,10 @@ export async function buildRequestValidationInstruction(
       ? config.clusterOffset
       : (config.clusterOffset as { toNumber: () => number }).toNumber();
   const clusterId = clusterOffset; // cluster_id = cluster_offset cast to u32
+  const mxeProgramId = effectiveMxeProgramId(config.mxeProgramId, programId);
 
   // Derive all Arcium PDAs
-  const mxeAccount = deriveMxePda(programId);
+  const mxeAccount = deriveMxePda(mxeProgramId);
   const mempoolAccount = deriveMempoolPda(clusterId);
   const executingPool = deriveExecpoolPda(clusterId);
   const clusterAccount = deriveClusterPda(clusterId);
@@ -233,7 +247,7 @@ export async function buildRequestValidationInstruction(
     clusterId,
     params.computationOffset,
   );
-  const compDefAccount = deriveCompDefPda("validate_mandate", programId);
+  const compDefAccount = deriveCompDefPda("validate_mandate_v2", mxeProgramId);
   const signPdaAccount = deriveSignPda(programId);
 
   // Derive PullApproval PDA: seeds = [b"approval", mandate.key()]

@@ -14,6 +14,7 @@ import { registerCreatePlan } from "./commands/create-plan";
 import { registerPull } from "./commands/pull";
 import { registerSimulate } from "./commands/simulate";
 import { registerStatus } from "./commands/status";
+import { registerStream } from "./commands/stream";
 import { registerSubscribe } from "./commands/subscribe";
 
 export function createCliProgram(): Command {
@@ -22,7 +23,7 @@ export function createCliProgram(): Command {
   program
     .name("vela")
     .description("VelaPay CLI - Subscription billing on Solana")
-    .version("0.1.0");
+    .version("0.1.3");
 
   // Global options available to all subcommands
   program.option("-k, --keypair <path>", "Path to Solana keypair file");
@@ -36,6 +37,7 @@ export function createCliProgram(): Command {
   registerCancel(program);
   registerSimulate(program);
   registerStatus(program);
+  registerStream(program);
 
   const agentMandate = program
     .command("agent-mandate")

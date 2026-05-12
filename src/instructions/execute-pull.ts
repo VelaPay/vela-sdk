@@ -135,23 +135,33 @@ export async function buildExecutePullInstruction(
     })
     .instruction();
 
+  const extraKeys = [];
+  if (params.usageReportAddress) {
+    extraKeys.push({
+      pubkey: params.usageReportAddress,
+      isSigner: false,
+      isWritable: true,
+    });
+  }
+
   if (
     mandate.pendingChangeType === 2 &&
     mandate.pendingNewPlan &&
     mandate.pendingEffectiveAt !== undefined &&
     BigInt(Math.floor(Date.now() / 1000)) >= mandate.pendingEffectiveAt
   ) {
+    extraKeys.push({
+      pubkey: mandate.pendingNewPlan,
+      isSigner: false,
+      isWritable: false,
+    });
+  }
+
+  if (extraKeys.length > 0) {
     return {
       instruction: new TransactionInstruction({
         programId: baseInstruction.programId,
-        keys: [
-          ...baseInstruction.keys,
-          {
-            pubkey: mandate.pendingNewPlan,
-            isSigner: false,
-            isWritable: false,
-          },
-        ],
+        keys: [...baseInstruction.keys, ...extraKeys],
         data: baseInstruction.data,
       }),
       mandateAddress,

@@ -36,12 +36,12 @@ const EMPTY_PUBKEY = new PublicKey(new Uint8Array(32));
 // ProtocolConfig layout:
 // discriminator(8) + admin(32) + cluster_pubkey(32) + cluster_type(1) +
 // cluster_offset(8) + wrapped_usdc_mint(32) + wrapping_vault(32) + paused(1) +
-// paused_at(8) + transfer_hook_program_id(32) + bump(1) + version(1) + reserved(32) = 220
+// paused_at(8) + transfer_hook_program_id(32) + bump(1) + version(1) + mxe_program_id(32) = 220
 const PROTOCOL_CONFIG_SIZE = 220;
 // KeeperConfig layout: discriminator(8) + admin(32) + mode(1) + keeper_endpoint([u8;128]) +
 //   endpoint_len(1) + keeper_authority(32) + bump(1) = 203
 const KEEPER_CONFIG_SIZE = 203;
-const PULL_APPROVAL_SIZE = 66;
+const PULL_APPROVAL_SIZE = 82;
 
 function discriminator(namespace: "global" | "account", name: string): Buffer {
   return createHash("sha256")
@@ -110,7 +110,8 @@ function serializeProtocolConfig(admin: PublicKey, bump: number): Uint8Array {
   data.writeUInt8(bump, 186);
   // offset 187: version (1 byte)
   data.writeUInt8(1, 187);
-  // offset 188..219: reserved bytes already zeroed by Buffer.alloc
+  // offset 188: mxe_program_id (32 bytes) -- zero falls back to Vela program ID
+  EMPTY_PUBKEY.toBuffer().copy(data, 188);
   return data;
 }
 
@@ -139,6 +140,8 @@ function serializeKeeperConfig(
 
 function serializePullApproval(args: {
   mandate: PublicKey;
+  periodStart?: bigint;
+  periodEnd?: bigint;
   validUntil: bigint;
   approved: boolean;
   approvedAmount: bigint;
@@ -148,11 +151,13 @@ function serializePullApproval(args: {
   const data = Buffer.alloc(PULL_APPROVAL_SIZE);
   discriminator("account", "PullApproval").copy(data, 0);
   args.mandate.toBuffer().copy(data, 8);
-  data.writeBigInt64LE(args.validUntil, 40);
-  data.writeUInt8(args.approved ? 1 : 0, 48);
-  data.writeBigUInt64LE(args.approvedAmount, 49);
-  data.writeBigInt64LE(args.createdAt, 57);
-  data.writeUInt8(args.bump, 65);
+  data.writeBigInt64LE(args.periodStart ?? 0n, 40);
+  data.writeBigInt64LE(args.periodEnd ?? 0n, 48);
+  data.writeBigInt64LE(args.validUntil, 56);
+  data.writeUInt8(args.approved ? 1 : 0, 64);
+  data.writeBigUInt64LE(args.approvedAmount, 65);
+  data.writeBigInt64LE(args.createdAt, 73);
+  data.writeUInt8(args.bump, 81);
   return data;
 }
 
@@ -307,6 +312,8 @@ export async function installPhase7AdminState(args: {
 export function insertPullApproval(args: {
   svm: LiteSVM;
   mandate: PublicKey;
+  periodStart?: bigint;
+  periodEnd?: bigint;
   validUntil: bigint;
   approvedAmount: bigint;
   approved?: boolean;
@@ -321,6 +328,8 @@ export function insertPullApproval(args: {
     ),
     data: serializePullApproval({
       mandate,
+      periodStart: args.periodStart,
+      periodEnd: args.periodEnd,
       validUntil,
       approved,
       approvedAmount,

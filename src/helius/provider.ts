@@ -1,6 +1,9 @@
 import type { Connection, VersionedTransaction } from "@solana/web3.js";
 import { Connection as Web3Connection } from "@solana/web3.js";
-import type { HeliusClient } from "helius-sdk";
+
+type HeliusConnectionClient = {
+  connection?: Connection;
+};
 
 async function loadHeliusSdk() {
   try {
@@ -59,9 +62,10 @@ export async function createHeliusConnection(
   apiKey: string,
   cluster: string = "devnet",
 ): Promise<Connection> {
-  const helius = (await createHelius(apiKey, cluster)) as HeliusClient & {
-    connection?: Connection;
-  };
+  const helius = (await createHelius(
+    apiKey,
+    cluster,
+  )) as HeliusConnectionClient;
   if (helius.connection) {
     return helius.connection;
   }

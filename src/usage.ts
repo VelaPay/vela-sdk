@@ -80,13 +80,14 @@ export async function createUsagePlan(
  * 1. Fetch MXE public key from on-chain Arcium program
  * 2. Generate ephemeral x25519 keypair
  * 3. Derive shared secret via ECDH
- * 4. Pack usage_units plus plan pricing inputs and encrypt with RescueCipher
+ * 4. Pack only usage_units and encrypt with RescueCipher
  * 5. Submit ciphertext + pubkey + nonce to submit_usage_report instruction
  *
  * The on-chain program validates:
  * - merchant == mandate.merchant (signature authority)
  * - mandate.billing_type == Usage
- * - period_start == mandate.next_payment_due (strict period alignment)
+ * - period_start == mandate.next_payment_due - mandate.frequency
+ * - period_end == mandate.next_payment_due
  *
  * @param program    - Anchor program instance with merchant as signer
  * @param params     - Usage report parameters including plaintext usageUnits
@@ -131,33 +132,15 @@ export async function submitUsageReport(
     };
     const tierCount = Number(usagePlan.tierCount);
     if (!Number.isInteger(tierCount) || tierCount < 1 || tierCount > 5) {
-      throw new Error(`usage plan tierCount must be between 1 and 5, got ${tierCount}`);
+      throw new Error(
+        `usage plan tierCount must be between 1 and 5, got ${tierCount}`,
+      );
     }
 
-    // Encrypt the full circuit input committed in UsageReport. The keeper later queues
-    // exactly this ciphertext, so it cannot swap usage or pricing values at request time.
+    // Encrypt only metered usage. The protocol snapshots on-chain UsagePlan terms in the
+    // UsageReport and queues those plaintext terms during request_usage_computation.
     const usageUnitsNum = BigInt(params.usageUnits.toString());
-    const maxCharge = BigInt(usagePlan.maxChargePerPeriod.toString());
-    const plaintextFields =
-      tierCount === 1
-        ? [
-            usageUnitsNum,
-            BigInt(usagePlan.tiers[0].ratePerUnit.toString()),
-            maxCharge,
-          ]
-        : [
-            usageUnitsNum,
-            ...[0, 1, 2, 3, 4].map((i) =>
-              i < tierCount ? BigInt(usagePlan.tiers[i].upTo.toString()) : 0n,
-            ),
-            ...[0, 1, 2, 3, 4].map((i) =>
-              i < tierCount
-                ? BigInt(usagePlan.tiers[i].ratePerUnit.toString())
-                : 0n,
-            ),
-            BigInt(tierCount),
-            maxCharge,
-          ];
+    const plaintextFields = [usageUnitsNum];
     const cipher = new RescueCipher(sharedSecret);
     const nonce = generateNonce();
     const computationCiphertext = cipher.encrypt(plaintextFields, nonce);

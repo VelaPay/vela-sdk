@@ -1,6 +1,6 @@
 {
   "name": "@velapay/sdk",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "TypeScript SDK for Vela — private, programmable payment authority on Solana",
   "license": "MIT",
   "repository": {
@@ -33,165 +33,72 @@
   },
   "main": "./dist/cjs/src/index.cjs",
   "module": "./dist/esm/src/index.js",
-  "types": "./dist/esm/src/index.d.ts",
-  "typesVersions": {
-    "*": {
-      "browser": [
-        "./dist/esm/src/browser/index.d.ts"
-      ],
-      "accounts": [
-        "./dist/esm/src/accounts/index.d.ts"
-      ],
-      "errors": [
-        "./dist/esm/src/errors/index.d.ts"
-      ],
-      "events": [
-        "./dist/esm/src/events/index.d.ts"
-      ],
-      "inspection": [
-        "./dist/esm/src/inspection/index.d.ts"
-      ],
-      "instructions": [
-        "./dist/esm/src/instructions/index.d.ts"
-      ],
-      "protocol": [
-        "./dist/esm/src/protocol/index.d.ts"
-      ],
-      "security": [
-        "./dist/esm/src/security/index.d.ts"
-      ],
-      "token": [
-        "./dist/esm/src/token/index.d.ts"
-      ],
-      "x402": [
-        "./dist/esm/src/x402/index.d.ts"
-      ],
-      "*": [
-        "./dist/esm/src/index.d.ts"
-      ]
-    }
-  },
   "exports": {
     ".": {
-      "types": "./dist/esm/src/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/index.d.ts",
-        "default": "./dist/esm/src/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/index.d.cts",
-        "default": "./dist/cjs/src/index.cjs"
-      }
+      "bun": "./dist/esm/src/index.js",
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.cjs",
+      "default": "./dist/esm/src/index.js"
     },
     "./accounts": {
-      "types": "./dist/esm/src/accounts/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/accounts/index.d.ts",
-        "default": "./dist/esm/src/accounts/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/accounts/index.d.cts",
-        "default": "./dist/cjs/src/accounts/index.cjs"
-      }
+      "bun": "./dist/esm/src/accounts/index.js",
+      "import": "./dist/esm/src/accounts/index.js",
+      "require": "./dist/cjs/src/accounts/index.cjs",
+      "default": "./dist/esm/src/accounts/index.js"
     },
     "./errors": {
-      "types": "./dist/esm/src/errors/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/errors/index.d.ts",
-        "default": "./dist/esm/src/errors/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/errors/index.d.cts",
-        "default": "./dist/cjs/src/errors/index.cjs"
-      }
+      "bun": "./dist/esm/src/errors/index.js",
+      "import": "./dist/esm/src/errors/index.js",
+      "require": "./dist/cjs/src/errors/index.cjs",
+      "default": "./dist/esm/src/errors/index.js"
     },
     "./x402": {
-      "types": "./dist/esm/src/x402/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/x402/index.d.ts",
-        "default": "./dist/esm/src/x402/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/x402/index.d.cts",
-        "default": "./dist/cjs/src/x402/index.cjs"
-      }
+      "bun": "./dist/esm/src/x402/index.js",
+      "import": "./dist/esm/src/x402/index.js",
+      "require": "./dist/cjs/src/x402/index.cjs",
+      "default": "./dist/esm/src/x402/index.js"
     },
     "./events": {
-      "types": "./dist/esm/src/events/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/events/index.d.ts",
-        "default": "./dist/esm/src/events/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/events/index.d.cts",
-        "default": "./dist/cjs/src/events/index.cjs"
-      }
+      "bun": "./dist/esm/src/events/index.js",
+      "import": "./dist/esm/src/events/index.js",
+      "require": "./dist/cjs/src/events/index.cjs",
+      "default": "./dist/esm/src/events/index.js"
     },
     "./inspection": {
-      "types": "./dist/esm/src/inspection/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/inspection/index.d.ts",
-        "default": "./dist/esm/src/inspection/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/inspection/index.d.cts",
-        "default": "./dist/cjs/src/inspection/index.cjs"
-      }
+      "bun": "./dist/esm/src/inspection/index.js",
+      "import": "./dist/esm/src/inspection/index.js",
+      "require": "./dist/cjs/src/inspection/index.cjs",
+      "default": "./dist/esm/src/inspection/index.js"
     },
     "./instructions": {
-      "types": "./dist/esm/src/instructions/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/instructions/index.d.ts",
-        "default": "./dist/esm/src/instructions/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/instructions/index.d.cts",
-        "default": "./dist/cjs/src/instructions/index.cjs"
-      }
+      "bun": "./dist/esm/src/instructions/index.js",
+      "import": "./dist/esm/src/instructions/index.js",
+      "require": "./dist/cjs/src/instructions/index.cjs",
+      "default": "./dist/esm/src/instructions/index.js"
     },
     "./protocol": {
-      "types": "./dist/esm/src/protocol/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/protocol/index.d.ts",
-        "default": "./dist/esm/src/protocol/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/protocol/index.d.cts",
-        "default": "./dist/cjs/src/protocol/index.cjs"
-      }
+      "bun": "./dist/esm/src/protocol/index.js",
+      "import": "./dist/esm/src/protocol/index.js",
+      "require": "./dist/cjs/src/protocol/index.cjs",
+      "default": "./dist/esm/src/protocol/index.js"
     },
     "./security": {
-      "types": "./dist/esm/src/security/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/security/index.d.ts",
-        "default": "./dist/esm/src/security/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/security/index.d.cts",
-        "default": "./dist/cjs/src/security/index.cjs"
-      }
+      "bun": "./dist/esm/src/security/index.js",
+      "import": "./dist/esm/src/security/index.js",
+      "require": "./dist/cjs/src/security/index.cjs",
+      "default": "./dist/esm/src/security/index.js"
     },
     "./token": {
-      "types": "./dist/esm/src/token/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/token/index.d.ts",
-        "default": "./dist/esm/src/token/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/token/index.d.cts",
-        "default": "./dist/cjs/src/token/index.cjs"
-      }
+      "bun": "./dist/esm/src/token/index.js",
+      "import": "./dist/esm/src/token/index.js",
+      "require": "./dist/cjs/src/token/index.cjs",
+      "default": "./dist/esm/src/token/index.js"
     },
     "./browser": {
-      "types": "./dist/esm/src/browser/index.d.ts",
-      "import": {
-        "types": "./dist/esm/src/browser/index.d.ts",
-        "default": "./dist/esm/index.js"
-      },
-      "require": {
-        "types": "./dist/esm/src/browser/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
+      "bun": "./dist/esm/index.js",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs",
+      "default": "./dist/esm/index.js"
     },
     "./idl/vela_protocol.json": "./idl/vela_protocol.json"
   },
@@ -219,13 +126,13 @@
     "format": "bunx @biomejs/biome format --write src/ cli/ tests/ scripts/"
   },
   "dependencies": {
-    "@arcium-hq/client": "0.9.3",
+    "@arcium-hq/client": "0.9.7",
     "@coral-xyz/anchor": "0.32.1",
     "@noble/hashes": "^2.0.1",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "commander": "^14.0.3",
-    "hono": "^4.12.15",
+    "hono": "^4.12.18",
     "zod": "^4.3.6"
   },
   "devDependencies": {

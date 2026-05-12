@@ -4,6 +4,12 @@
     "moduleResolution": "bundler",
     "target": "ES2022",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@velapay/sdk": ["./src/index.ts"],
+      "@velapay/sdk/browser": ["./src/browser/index.ts"],
+      "@velapay/sdk/*": ["./src/*"]
+    }
   }
 }

@@ -22,6 +22,7 @@ import type {
   MerchantState,
   PlanStatus,
   ProtocolConfig,
+  PullApprovalAccount,
   TokenConfig,
   TokenConfigAccount,
   VelaMandate,
@@ -138,6 +139,7 @@ interface AnchorProtocolConfig {
   wrappedUsdcMint: PublicKey;
   wrappingVault: PublicKey;
   transferHookProgramId: PublicKey;
+  mxeProgramId?: PublicKey;
   paused: boolean;
   version?: number;
 }
@@ -285,6 +287,89 @@ export const STREAM_MANDATE_DISCRIMINATOR =
   accountDiscriminator("StreamMandate");
 export const VELA_MANDATE_DISCRIMINATOR = accountDiscriminator("VelaMandate");
 export const TOKEN_CONFIG_DISCRIMINATOR = accountDiscriminator("TokenConfig");
+export const PULL_APPROVAL_DISCRIMINATOR = accountDiscriminator("PullApproval");
+
+export function deserializePullApprovalAccount(
+  address: PublicKey,
+  raw: BufferLike,
+): PullApprovalAccount {
+  const data = asBytes(raw);
+  if (data.length < 82) {
+    throw new Error(`PullApproval account ${address.toBase58()} is truncated`);
+  }
+  const gotDiscriminator = data.subarray(0, 8);
+  if (!sliceEquals(gotDiscriminator, PULL_APPROVAL_DISCRIMINATOR)) {
+    throw new WrongAccountTypeError(
+      address,
+      "PullApproval",
+      discriminatorHex(gotDiscriminator),
+    );
+  }
+
+  let offset = 8;
+  const mandate = new PublicKey(data.subarray(offset, offset + 32));
+  offset += 32;
+  const periodStart = readI64LE(data, offset);
+  offset += 8;
+  const periodEnd = readI64LE(data, offset);
+  offset += 8;
+  const validUntil = readI64LE(data, offset);
+  offset += 8;
+  const approved = readU8(data, offset) !== 0;
+  offset += 1;
+  const approvedAmount = readU64LE(data, offset);
+  offset += 8;
+  const createdAt = readI64LE(data, offset);
+  offset += 8;
+  const bump = readU8(data, offset);
+
+  return {
+    address,
+    mandate,
+    periodStart,
+    periodEnd,
+    validUntil,
+    approved,
+    approvedAmount,
+    createdAt,
+    bump,
+  };
+}
+
+export async function fetchPullApproval(
+  connection: Connection,
+  address: PublicKey,
+): Promise<PullApprovalAccount | null> {
+  const info = await connection.getAccountInfo(address);
+  return info ? deserializePullApprovalAccount(address, info.data) : null;
+}
+
+export interface PullApprovalStatusInput {
+  expectedMandate: PublicKey;
+  expectedPeriodStart: bigint | number;
+  expectedPeriodEnd: bigint | number;
+  now?: bigint | number;
+  minAmount?: bigint | number;
+}
+
+export function isPullApprovalCurrent(
+  approval: PullApprovalAccount,
+  input: PullApprovalStatusInput,
+): boolean {
+  const now =
+    input.now == null
+      ? BigInt(Math.floor(Date.now() / 1000))
+      : BigInt(input.now);
+  const minAmount = input.minAmount == null ? 0n : BigInt(input.minAmount);
+  return (
+    approval.approved &&
+    approval.mandate.equals(input.expectedMandate) &&
+    approval.periodStart === BigInt(input.expectedPeriodStart) &&
+    approval.periodEnd === BigInt(input.expectedPeriodEnd) &&
+    approval.validUntil >= now &&
+    approval.approvedAmount >= minAmount
+  );
+}
 
 export function deserializeStreamMandate(
   address: PublicKey,
@@ -716,6 +801,7 @@ export function deserializeProtocolConfig(
     wrappedUsdcMint: raw.wrappedUsdcMint,
     wrappingVault: raw.wrappingVault,
     transferHookProgramId: raw.transferHookProgramId,
+    mxeProgramId: raw.mxeProgramId,
     paused: raw.paused,
     version: Number(raw.version ?? 0),
   };

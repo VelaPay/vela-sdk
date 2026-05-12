@@ -3,11 +3,11 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import {
   deriveAgentMandateAddress,
-  deriveConfigAddress,
-  deriveCredentialMintAddress,
   deriveArciumBillingRecordRequestAddress,
   deriveArciumUsageComputationRequestAddress,
   deriveArciumValidationRequestAddress,
+  deriveConfigAddress,
+  deriveCredentialMintAddress,
   deriveKeeperConfigAddress,
   deriveMandateAddress,
   deriveMerchantStateAddress,

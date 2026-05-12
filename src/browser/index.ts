@@ -41,9 +41,12 @@ export type {
 export {
   buildCancelInstruction,
   buildCancelPlanChangeInstruction,
+  buildCancelStreamInstruction,
   buildCreatePlanInstruction,
   buildCreateStreamMandateInstruction,
   buildExecuteStreamInstruction,
+  buildPauseStreamInstruction,
+  buildResumeStreamInstruction,
   buildSchedulePlanChangeInstruction,
   buildSubscribeInstruction,
   buildUpdateMandatePlanInstruction,

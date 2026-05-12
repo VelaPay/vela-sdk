@@ -122,6 +122,10 @@ await vela.pullPayment({
 });
 ```
 
+Usage-based pulls must also pass the writable `usageReportAddress` for the
+current closed period. The protocol marks that report settled only after the
+pull succeeds.
+
 Cancel the mandate when the subscriber revokes authority:
 
 ```ts
@@ -170,13 +174,35 @@ The SDK exports PDA helpers, account fetchers, and deserializers so downstream s
 import {
   derivePlanAddress,
   deserializePlan,
+  deserializePullApprovalAccount,
   fetchTokenConfig,
   getActiveSubscriptions,
+  isPullApprovalCurrent,
   getSubscribablePlan,
 } from "@velapay/sdk";
 ```
 
 Plan deserialization exposes `billingMint` for flat plans. Consumers should treat the mint as authoritative for settlement and token identity.
+
+`PullApproval` accounts are period-bound. Keepers and indexers should use
+`deserializePullApprovalAccount` and `isPullApprovalCurrent` instead of hardcoded
+byte offsets.
+
+## Breaking Protocol Notes
+
+Version `0.2.0` targets the hardened devnet protocol:
+
+- `demo_approve_pull` is removed from the production IDL.
+- Usage reports are merchant-only and contain exactly one encrypted field:
+  `usage_units`.
+- Usage pricing terms come from the on-chain `UsagePlan`; clients must not
+  submit encrypted pricing terms.
+- Usage `execute_pull` requires the current `UsageReport` as a writable
+  remaining account.
+- `ProtocolConfig.mxeProgramId` is the Arcium MXE namespace for request
+  builders; legacy zero configs fall back to the Vela program ID.
+- Arcium computation definitions must be rebuilt, initialized, and uploaded for
+  `usage_charge` and `tiered_pricing` before usage billing can settle.
 
 ## Events
 
@@ -208,12 +234,32 @@ The package includes a `vela` CLI for local development and operator workflows.
 ```sh
 bun install -g @velapay/sdk
 
-vela create-plan --amount 10000000 --frequency 2592000 --keypair ~/.config/solana/id.json
-vela subscribe --plan <address> --merchant <address> --keypair ~/.config/solana/id.json
-vela pull --mandate <address> --keypair ~/.config/solana/id.json
-vela cancel --mandate <address> --keypair ~/.config/solana/id.json
-vela status --mandate <address>
-vela simulate --mandate <address>
+export SOLANA_RPC_URL="https://devnet.helius-rpc.com/?api-key=<key>"
+
+vela create-plan --amount 10000000 --frequency 2592000 --max-pulls 12 --keypair ~/.config/solana/id.json
+vela subscribe <plan> --merchant <merchant> --usdc-mint <mint> --keypair ~/.config/solana/id.json
+vela pull <mandate> --subscriber <subscriber> --merchant <merchant> --plan <plan> --usdc-mint <mint>
+vela cancel <mandate> --subscriber <subscriber> --plan <plan> --usdc-mint <mint>
+vela status <mandate>
+vela simulate
+```
+
+Stream mandates are available under the `stream` command group. Amounts are raw
+token base units.
+
+```sh
+vela stream create \
+  --merchant <merchant> \
+  --mint <token-2022-mint> \
+  --rate-per-second 1000 \
+  --authorized-max-rate 1000 \
+  --min-settle-interval 30
+
+vela stream settle <stream-mandate>
+vela stream pause <stream-mandate>
+vela stream resume <stream-mandate>
+vela stream cancel <stream-mandate>
+vela stream status <stream-mandate>
 ```
 
 ## Subpath Exports

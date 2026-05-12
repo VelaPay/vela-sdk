@@ -183,6 +183,7 @@ export interface ProtocolConfig {
   wrappedUsdcMint: PublicKey;
   wrappingVault: PublicKey;
   transferHookProgramId: PublicKey;
+  mxeProgramId?: PublicKey;
   paused: boolean;
   version: number;
 }
@@ -235,6 +236,8 @@ export interface VelaPullParams {
   wrappingVault?: PublicKey;
   /** Optional override for dynamic transfer-hook resolution. */
   hookProgramId?: PublicKey;
+  /** Required remaining account for usage-billing execute_pull settlements. */
+  usageReportAddress?: PublicKey;
 }
 
 export interface VelaCreateAgentMandateParams {
@@ -645,5 +648,17 @@ export interface UsageReportAccount {
   pubKey: number[];
   settled: boolean;
   createdAt: BN;
+  bump: number;
+}
+
+export interface PullApprovalAccount {
+  address: PublicKey;
+  mandate: PublicKey;
+  periodStart: bigint;
+  periodEnd: bigint;
+  validUntil: bigint;
+  approved: boolean;
+  approvedAmount: bigint;
+  createdAt: bigint;
   bump: number;
 }

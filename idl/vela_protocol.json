@@ -1282,94 +1282,6 @@
       ]
     },
     {
-      "name": "demo_approve_pull",
-      "discriminator": [
-        83,
-        80,
-        102,
-        221,
-        59,
-        206,
-        223,
-        245
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "keeper_config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  107,
-                  101,
-                  101,
-                  112,
-                  101,
-                  114,
-                  45,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "mandate",
-          "writable": true
-        },
-        {
-          "name": "pull_approval",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  97,
-                  112,
-                  112,
-                  114,
-                  111,
-                  118,
-                  97,
-                  108
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mandate"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "approved_amount",
-          "type": "u64"
-        },
-        {
-          "name": "ttl_seconds",
-          "type": "i64"
-        }
-      ]
-    },
-    {
       "name": "drain_agent_mandate",
       "discriminator": [
         223,
@@ -1855,6 +1767,16 @@
           "signer": true
         },
         {
+          "name": "program",
+          "address": "CVM6UqbwKgHckZzm8R2qbN3BWhCTdk1PsSeEQLchkwKT"
+        },
+        {
+          "name": "program_data"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
           "name": "config",
           "writable": true,
           "pda": {
@@ -2055,6 +1977,57 @@
           "signer": true
         },
         {
+          "name": "mxe_program"
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_tiered_pricing_comp_def",
+      "discriminator": [
+        73,
+        134,
+        117,
+        126,
+        158,
+        226,
+        201,
+        86
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_program"
+        },
+        {
           "name": "mxe_account",
           "writable": true
         },
@@ -2169,6 +2142,54 @@
       ]
     },
     {
+      "name": "init_usage_charge_comp_def",
+      "discriminator": [
+        247,
+        168,
+        127,
+        227,
+        113,
+        42,
+        84,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_program"
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "init_validate_mandate_comp_def",
       "discriminator": [
         121,
@@ -2185,6 +2206,9 @@
           "name": "payer",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "mxe_program"
         },
         {
           "name": "mxe_account",
@@ -4239,6 +4263,9 @@
           }
         },
         {
+          "name": "mxe_account"
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -5591,19 +5618,6 @@
       ]
     },
     {
-      "name": "DemoPullApprovedEvent",
-      "discriminator": [
-        42,
-        76,
-        206,
-        175,
-        103,
-        163,
-        148,
-        224
-      ]
-    },
-    {
       "name": "KeeperConfigInitialized",
       "discriminator": [
         16,
@@ -6847,26 +6861,6 @@
       }
     },
     {
-      "name": "DemoPullApprovedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "mandate",
-            "type": "pubkey"
-          },
-          {
-            "name": "approved_amount",
-            "type": "u64"
-          },
-          {
-            "name": "valid_until",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "InitConfigIx",
       "type": {
         "kind": "struct",
@@ -6886,6 +6880,10 @@
           {
             "name": "cluster_offset",
             "type": "u64"
+          },
+          {
+            "name": "mxe_program_id",
+            "type": "pubkey"
           }
         ]
       }
@@ -7413,13 +7411,8 @@
             "type": "u8"
           },
           {
-            "name": "_reserved",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
+            "name": "mxe_program_id",
+            "type": "pubkey"
           }
         ]
       }
@@ -7432,6 +7425,14 @@
           {
             "name": "mandate",
             "type": "pubkey"
+          },
+          {
+            "name": "period_start",
+            "type": "i64"
+          },
+          {
+            "name": "period_end",
+            "type": "i64"
           },
           {
             "name": "valid_until",
@@ -7936,6 +7937,10 @@
           {
             "name": "cluster_offset",
             "type": "u64"
+          },
+          {
+            "name": "mxe_program_id",
+            "type": "pubkey"
           }
         ]
       }
