@@ -26,6 +26,11 @@ export { buildDrainAgentMandateInstruction } from "./drain-agent-mandate";
 export type { BuildExecutePullResult } from "./execute-pull";
 export { buildExecutePullInstruction } from "./execute-pull";
 export { buildExecuteStreamInstruction } from "./execute-stream";
+export type {
+  BuildFundAuthorityFromWalletParams,
+  BuildFundAuthorityFromWalletResult,
+} from "./fund-authority";
+export { buildFundAuthorityFromWalletInstructions } from "./fund-authority";
 export type { BuildInitKeeperConfigResult } from "./init-keeper-config";
 export { buildInitKeeperConfigInstruction } from "./init-keeper-config";
 export type {

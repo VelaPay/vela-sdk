@@ -6,6 +6,9 @@ describe("Phase 7 SDK exports", () => {
     expect(typeof sdk.buildWrapInstruction).toBe("function");
     expect(typeof sdk.buildUnwrapInstruction).toBe("function");
     expect(typeof sdk.buildWrapAndSubscribeInstructions).toBe("function");
+    expect(typeof sdk.buildFundAuthorityFromWalletInstructions).toBe(
+      "function",
+    );
   });
 
   test("root index re-exports VelaUSD devnet constants", () => {

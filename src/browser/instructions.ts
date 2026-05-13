@@ -7,6 +7,11 @@ export type { BuildCreatePlanResult } from "../instructions/create-plan";
 export { buildCreatePlanInstruction } from "../instructions/create-plan";
 export { buildCreateStreamMandateInstruction } from "../instructions/create-stream";
 export { buildExecuteStreamInstruction } from "../instructions/execute-stream";
+export type {
+  BuildFundAuthorityFromWalletParams,
+  BuildFundAuthorityFromWalletResult,
+} from "../instructions/fund-authority";
+export { buildFundAuthorityFromWalletInstructions } from "../instructions/fund-authority";
 export { buildPauseStreamInstruction } from "../instructions/pause-stream";
 export { buildResumeStreamInstruction } from "../instructions/resume-stream";
 export type { BuildSchedulePlanChangeResult } from "../instructions/schedule-plan-change";

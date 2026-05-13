@@ -1,4 +1,5 @@
-import { BN, type Program } from "@coral-xyz/anchor";
+import type { Program } from "@coral-xyz/anchor";
+import BN from "bn.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import {
   type Connection,
